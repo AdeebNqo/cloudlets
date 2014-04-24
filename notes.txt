@@ -1,0 +1,22 @@
+Creating ad hoc network using Raspberry Pi:
+
+1. Raspberry Pi Tutorial – Connect to WiFi or Create An Encrypted DHCP Enabled Ad-hoc Network as Fallback
+http://lcdev.dk/2012/11/18/raspberry-pi-tutorial-connect-to-wifi-or-create-an-encrypted-dhcp-enabled-ad-hoc-network-as-fallback/
+
+2. Sonic Bike Hacklab Part 3: The anti-cloud – towards bike to bike mesh networking
+http://www.pawfal.org/dave/blog/tag/ad-hoc-network/
+
+3. How to get a raspberry Pi to set up a wireless ad-hoc network, but only if it is not already connected 
+http://www.novitiate.co.uk/?p=183
+
+4. Raspberry Pi ad-hoc networking
+http://stackoverflow.com/questions/15423325/raspberry-pi-ad-hoc-networking
+
+
+Papers:
+
+1. Verbelen, T., Simoens, P., De Turck, F., & Dhoedt, B. (2012). Cloudlets: Bringing the cloud to the mobile user. Proceedings of the Third ACM Workshop on Mobile Cloud Computing and Services, 29-36. 
+
+2. Qureshi, S. S., Ahmad, T., Rafique, K., & Shuja-ul-islam. (2011). Mobile cloud computing as future for mobile applications - implementation methods and challenging issues. Cloud Computing and Intelligence Systems (CCIS), 2011 IEEE International Conference on, 467-471. doi:10.1109/CCIS.2011.6045111
+
+3. Andersen, F., de Meer, H., Dedinski, I., Kappler, C., Mäder, A., Oberender, J. O., & Tutschku, K. (2004). An architecture concept for mobile P2P file sharing services. GI Jahrestagung (2), 51, 229-233.
