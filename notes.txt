@@ -20,3 +20,5 @@ Papers:
 2. Qureshi, S. S., Ahmad, T., Rafique, K., & Shuja-ul-islam. (2011). Mobile cloud computing as future for mobile applications - implementation methods and challenging issues. Cloud Computing and Intelligence Systems (CCIS), 2011 IEEE International Conference on, 467-471. doi:10.1109/CCIS.2011.6045111
 
 3. Andersen, F., de Meer, H., Dedinski, I., Kappler, C., Mäder, A., Oberender, J. O., & Tutschku, K. (2004). An architecture concept for mobile P2P file sharing services. GI Jahrestagung (2), 51, 229-233.
+
+4. Niroshinie Fernando, Seng W. Loke, Wenny Rahayu, Mobile cloud computing: A survey, Future Generation Computer Systems, Volume 29, Issue 1, January 2013, Pages 84-106, ISSN 0167-739X, http://dx.doi.org/10.1016/j.future.2012.05.023.
