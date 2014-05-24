@@ -12,6 +12,8 @@ http://www.novitiate.co.uk/?p=183
 4. Raspberry Pi ad-hoc networking
 http://stackoverflow.com/questions/15423325/raspberry-pi-ad-hoc-networking
 
+5. setting wifi hotspot using hostadp and isc-dhcp-server
+http://askubuntu.com/questions/180733/how-to-setup-a-wi-fi-hotspot-access-point-mode
 
 Papers:
 
