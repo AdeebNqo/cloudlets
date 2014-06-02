@@ -1,0 +1,59 @@
+------------
+Introduction
+------------
+
+In 2001, Kraut et al [6] coined the term “strong ties”. This was to refer to the things which strengthen
+human relationships such as frequent contact, and deep feelings of affection and obligation. This project
+aims to investigate the use of mobile devices and cloudlets that can also be used to strengthen human relationships.
+Cloud computing has been a powerful computing paradigm which has changed the way we deliver services to users.
+We make use of cloud services because they provide us with unique ways to collaborate, stay in touch, and engage with media
+socially. These services have been used to connect and make sharing easier for people across the globe.
+The same technologies that power cloud service providers, namely web servers, data stores, and
+databases, can also run at a smaller scale on embedded systems, such as the Raspberry Pi. Computer
+hobbyists have revealed that the Raspberry Pi could make as an attractive solution for a small
+lightweight server because of its solid state storage, no noise, small form factor and low power
+consumption[4]. This project aims to make use of a Raspberry Pi extended with a battery, WiFi radio
+and local storage to provide a group of co-located friends with opportunities to share and engage
+with media amongst themselves. These cloudlets can be used to exhange files, document collaboration, in essence,
+for all cloud services on a lower scale. The advantage being less network latency. This research is interested in the
+Human-computer interaction aspects, that is, which services can be offered to enhance co-located device use.
+
+	-------------------
+	Research questions
+	-------------------
+
+	1. Is an embedded system viable for creating cloudlets considering battery use, etc?
+	2. When users are given control over their data, lucid privacy control, etc -- do they
+	consider cloudlets usable to enhance co-located use.
+
+	-------------
+	Significance
+	-------------
+	The significance of this project is that it will continue on the work done by Reitmaier & Benz. They have shown
+	that people believe that cloudlet can be effective, however, they have concerns over privancy, data control, etc.
+	This project will address those, an then evaluate cloudlets to see if they are fully viable for enhancing co-located use.
+	In addition, they will test the feasibility of using embedded systems as the backbone of a cloudlet. If they are feasible,
+	this will mean people can easily buy portable "devices" to help them connect to each other.
+
+
+------------------
+Literature review
+------------------
+
+Cloudlets are relatively new in research, as such, they have been under the microscope as a number of researchers have consider using
+them for computation offloading. The literature that has been studied focuses on offloading computation, co-located device use, file sharing
+in ad-hoc network for mobile devices, providing collaboration services for mobile devices.
+
+<insert discussions of the papers here>
+
+<dicuss thomas' and pierre's work last>
+<then conclude this section with where our work fits in>
+
+
+------------
+Methodology
+------------
+
+The project has been segmented into front-end and back-end. The front-end is the Android application. Naturally, it's goal is
+provide an abstraction of the data control and sharing logic. The aim to is to setup focus groups to test the viability of the front-end.
+Viability, being how intuitive and responsive is the application.
