@@ -44,7 +44,13 @@ Cloudlets are relatively new in research, as such, they have been under the micr
 them for computation offloading. The literature that has been studied focuses on offloading computation, co-located device use, file sharing
 in ad-hoc network for mobile devices, providing collaboration services for mobile devices.
 
-<insert discussions of the papers here>
+We have observed online media sharing become popular with the advent
+of services such as Dropbox, Google+, Google Drive, etc. Walton et al[16] have shown, however,
+that in places such as Khayelitsha (Cape Town, South Africa), co-located phone use surpassed online sharing.
+The media stored on the mobile devices became public personae, that is, played the role of social media 'profiles'[16].
+Trends in the use of technology is highly dependant on the infrastructure at our disposal.
+
+<discuss more papers>
 
 <dicuss thomas' and pierre's work last>
 <then conclude this section with where our work fits in>
@@ -54,6 +60,6 @@ in ad-hoc network for mobile devices, providing collaboration services for mobil
 Methodology
 ------------
 
-The project has been segmented into front-end and back-end. The front-end is the Android application. Naturally, it's goal is
+The project has been segmented into front-end and back-end. The front-end is an Android application. Naturally, it's goal is
 provide an abstraction of the data control and sharing logic. The aim to is to setup focus groups to test the viability of the front-end.
 Viability, being how intuitive and responsive is the application.
