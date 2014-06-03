@@ -44,23 +44,40 @@ Cloudlets are relatively new in research, as such, they have been under the micr
 them for computation offloading. The literature that has been studied focuses on offloading computation, co-located device use, file sharing
 in ad-hoc network for mobile devices, providing collaboration services for mobile devices.
 
-We have observed online media sharing become popular with the advent
-of services such as Dropbox, Google+, Google Drive, etc. Walton et al[16] have shown, however,
+The ways we used technology is massively affected by the infrastructure that is available to us. We have observed online media sharing become popular with the advent of services such as Dropbox, Google+, Google Drive, etc. Walton et al[16] have shown, however,
 that in places such as Khayelitsha (Cape Town, South Africa), co-located phone use surpassed online sharing.
-The media stored on the mobile devices became public personae, that is, played the role of social media 'profiles'[16].
-Trends in the use of technology is highly dependant on the infrastructure at our disposal.<highlight trust models, begin with
-how tech use is different based on geo region then mention walton next.>
+The media stored on the mobile devices became public personae, that is, played the role of social media 'profiles'[16]. An important finding they presented was that in this case, people already knew each other. This meant that they gave each other access to files as they became the 'profile', however, they still required privacy. This means a trust model that takes into account that users know each is important.
 
-<discuss more papers>
+Ah Kun and Marsden[8] implemented an application for photo sharing in a co-located scenario. Their goal was to study the interaction  between the users. This application allowed simultaneous access to the same file. They explored using a number of access control mechanisms, the interesting ones being:
 
-<dicuss thomas' and pierre's work last>
-<then conclude this section with where our work fits in>
+Ad-hoc: This is a policy whereby any user
+can control a resource at any time. Here, there
+are no software locks. A social protocol is
+expected to arise from the users[8].
 
+Three-second: This is a policy whereby
+control is passed around among the users. A
+user acquires control and performs an action.
+When there is no action from the user on a given
+time limit (three seconds), control is passed to
+another user. A user will require control by
+attempting to perform an action[8].
+
+These mechanisms had advantages and disadvantages. For instance, in the three-second policy, the users adapted the policy to meet their needs. It showed no signs of turning chaotic. 
+
+A more prevalent application of cloudlets, however, is the offloading of computation. In 2009, Satyanarayanan et al[8] proposed that less portable computing devices such as desktop computers, could be used to carry out computationally intensive processes in the fields of natural language processing; speech recognition; computer vision; machine learning; and augmented reality, on behalf of “resource-poor” mobile devices. They went on to suggest a new architecture where mobile devices use virtual machine technology to run on cloudlets that are within physical proximity
+of the device and are access via wireless local area network. Each cloudlet would contain at least one computer with a relatively high processing and memory that is connected to the Internet (with reasonable speed) and is available for use by mobile devices within the area of the LAN. This application
+of cloudlets is not within the scope of this project
+
+Our work is closely related to the work done by Reitmaier and Benz et al[7].
+They have looked into various methods in which co-located people
+share information with each other. Their conclusion was an intuitive albeit a subtle one: people’s sharing patterns changed according to the situation they were in even if they were sharing with the same people. This point was supported with the Mobiphos study done by Clawson et al[3], whereby
+photos are automatically shared to people in a predefined group. The conclusion was that people’s sharing behaviors changes based on the individuals in a group[3]. Psycho-social behavior like this has to be taken into account especially for this project because the success of the implementations may hinge heavily on this.
+
+<mention what the work the project aims to do>
 
 ------------
 Methodology
 ------------
 
-The project has been segmented into front-end and back-end. The front-end is an Android application. Naturally, it's goal is
-provide an abstraction of the data control and sharing logic. The aim to is to setup focus groups to test the viability of the front-end.
-Viability, being how intuitive and responsive is the application.
+The project has been segmented into front-end and back-end. The front-end is an Android application. Naturally, it's goal is provide an abstraction of the data control and sharing logic. The aim to is to setup focus groups to test the viability of the front-end. Viability, being how intuitive and responsive is the application.
