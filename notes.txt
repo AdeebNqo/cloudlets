@@ -18,6 +18,9 @@ http://askubuntu.com/questions/180733/how-to-setup-a-wi-fi-hotspot-access-point-
 6. Paper on testing techniques
 http://www.idt.mdh.se/kurser/ct3340/ht11/MINICONFERENCE/FinalPapers/ircse11_submission_15.pdf
 
+7. Article on osgi
+http://www.vogella.com/tutorials/OSGi/article.html#osgiintro_overview
+
 Papers:
 
 1. Verbelen, T., Simoens, P., De Turck, F., & Dhoedt, B. (2012). Cloudlets: Bringing the cloud to the mobile user. Proceedings of the Third ACM Workshop on Mobile Cloud Computing and Services, 29-36. 
