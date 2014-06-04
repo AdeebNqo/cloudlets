@@ -1,6 +1,5 @@
-------------
-Introduction
-------------
+
+1. Introduction
 
 In 2001, Kraut et al [6] coined the term “strong ties”. This was to refer to the things which strengthen
 human relationships such as frequent contact, and deep feelings of affection and obligation. This project
@@ -18,27 +17,30 @@ with media amongst themselves. These cloudlets can be used to exhange files, doc
 for all cloud services on a lower scale. The advantage being less network latency. This research is interested in the
 Human-computer interaction aspects, that is, which services can be offered to enhance co-located device use.
 
-	-------------------
-	Research questions
-	-------------------
+1.1  Research questions
+
 
 	1. Is an embedded system viable for creating cloudlets considering battery use, etc?
 	2. When users are given control over their data, lucid privacy control, etc -- do they
 	consider cloudlets usable to enhance co-located use.
 
-	-------------
-	Significance
-	-------------
+1.2 Significance
+
 	The significance of this project is that it will continue on the work done by Reitmaier & Benz. They have shown
 	that people believe that cloudlet can be effective, however, they have concerns over privancy, data control, etc.
 	This project will address those, an then evaluate cloudlets to see if they are fully viable for enhancing co-located use.
 	In addition, they will test the feasibility of using embedded systems as the backbone of a cloudlet. If they are feasible,
 	this will mean people can easily buy portable "devices" to help them connect to each other.
+	
+	Currently, sharing can be done through a variety of technologies such Bluetooth, Wifi direct, etc. These technologies focus
+	solely on sharing files on a one-to-one basis. The proposed system aims to offer a multitude of services, file sharing being
+	only one of them. We aim to provide a system that can offer services such file suggestions from friends, sharing with multiple
+	people at once, temporary sharing of images similar to snapchat, etc. We aim to provide a system that can support a number of services,
+	the goal is not for us to develop and provide all these services.
+	
 
 
-------------------
-Literature review
-------------------
+2. Literature review
 
 Cloudlets are relatively new in research, as such, they have been under the microscope as a number of researchers have consider using
 them for computation offloading. The literature that has been studied focuses on offloading computation, co-located device use, file sharing
@@ -74,10 +76,15 @@ They have looked into various methods in which co-located people
 share information with each other. Their conclusion was an intuitive albeit a subtle one: people’s sharing patterns changed according to the situation they were in even if they were sharing with the same people. This point was supported with the Mobiphos study done by Clawson et al[3], whereby
 photos are automatically shared to people in a predefined group. The conclusion was that people’s sharing behaviors changes based on the individuals in a group[3]. Psycho-social behavior like this has to be taken into account especially for this project because the success of the implementations may hinge heavily on this.
 
-<mention what the work the project aims to do>
+<mention goal of project perhaps?>
 
-------------
-Methodology
-------------
 
-The project has been segmented into front-end and back-end. The front-end is an Android application. Naturally, it's goal is provide an abstraction of the data control and sharing logic. The aim to is to setup focus groups to test the viability of the front-end. Viability, being how intuitive and responsive is the application.
+3. Methodology
+
+The project has been segmented into front-end and back-end. The front-end is an Android application.
+Naturally, it's goal is provide an abstraction of the data control and sharing logic.
+The aim to is to setup focus groups to test the viability of the front-end. Viability, being how intuitive and responsive is the application.
+The back-end will follow a quantative research approach, the aim is to investigate the viability of embedded systems for the creation of cloudlets thus
+
+4. Testing
+
