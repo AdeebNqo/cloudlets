@@ -7,6 +7,10 @@ Class for handling network services.
 http://www.gnu.org/licenses/gpl-3.0.txt
 
 */
+import java.io.InputStream;
+import java.util.Scanner;
+import java.io.File;
+
 public class NetworkService{
 
 	public NetworkService(){
@@ -40,7 +44,7 @@ public class NetworkService{
 	*/
 	public boolean isInstalled(String appname){
 		InputStream[] response = run("apt-cache policy "+appname);
-		Scanner input = new Scanner(reponse[0]);
+		Scanner input = new Scanner(response[0]);
 		input.nextLine();
 		String installedLine = input.nextLine();
 		if (installedLine.endsWith(" (none)")){
