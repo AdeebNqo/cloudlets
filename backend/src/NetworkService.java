@@ -27,17 +27,30 @@ public class NetworkService{
 	____________________________________
 	*/
 	public boolean startNetwork() throws Exception{
+		System.err.println("Starting network...");
 		//checking if isc-dhcp-server and hostapd are installed
 		boolean hostapdinstallstatus = isInstalled("hostapd");
 		boolean dhcpinstallstatus = isInstalled("isc-dhcp-server");
 		if (hostapdinstallstatus && dhcpinstallstatus){
+			System.err.println("hostapd and isc-dhcp-server are installed.");
 			/*
 			Starting services
 			*/
 			InputStream[] dhcpresponse = run("sudo service isc-dhcp-server start");
 			InputStream[] hostapdresponse = run("sudo service hostapd start");
+			Scanner err1 = new Scanner(dhcpresponse[1]);
+			Scanner err2 = new Scanner(hostapdresponse[1]);
+			//printing out the application start errors
+			while(err1.hasNextLine()){
+				System.err.println(err1.nextLine());
+			}
+			while(err2.hasNextLine()){
+				System.err.println(err2.nextLine());
+			}
+			return true;
 		}
 		else{
+			System.err.println("hostapd and isc-dhcp-server are not installed.");
 			throw new Exception("Missing application: hostapd and/or isc-dhcp-server");
 		}
 		return false;
