@@ -7,6 +7,14 @@ Class for handling network services.
 http://www.gnu.org/licenses/gpl-3.0.txt
 
 */
+import java.io.InputStream;
+import java.util.Scanner;
+import java.io.File;
+import java.io.OutputStreamWriter;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.util.Vector;
+
 public class NetworkService{
 
 	public NetworkService(){
@@ -18,7 +26,7 @@ public class NetworkService{
 	Method for starting network service
 	____________________________________
 	*/
-	public boolean startNetwork(){
+	public boolean startNetwork() throws Exception{
 		//checking if isc-dhcp-server and hostapd are installed
 		boolean hostapdinstallstatus = isInstalled("hostapd");
 		boolean dhcpinstallstatus = isInstalled("isc-dhcp-server");
@@ -32,15 +40,16 @@ public class NetworkService{
 		else{
 			throw new Exception("Missing application: hostapd and/or isc-dhcp-server");
 		}
+		return false;
 	}
 	/*
 	
 	Method for checking if application is installed
 
 	*/
-	public boolean isInstalled(String appname){
+	public boolean isInstalled(String appname)  throws Exception{
 		InputStream[] response = run("apt-cache policy "+appname);
-		Scanner input = new Scanner(reponse[0]);
+		Scanner input = new Scanner(response[0]);
 		input.nextLine();
 		String installedLine = input.nextLine();
 		if (installedLine.endsWith(" (none)")){
@@ -55,7 +64,7 @@ public class NetworkService{
 	*/
 	public InputStream[] run(String cmd) throws Exception{
 		ProcessBuilder procBuilder = new ProcessBuilder(cmd.split("\\s+"));
-		procBuilder.directory(new File(working_directory));
+		//procBuilder.directory(new File(working_directory));
 		Process proc = procBuilder.start();//Runtime.getRuntime().exec(cmd);
 		//Output of the cmd
 		InputStream out = proc.getInputStream();
@@ -71,6 +80,7 @@ public class NetworkService{
 
 	*/
 	public InputStream run_piped(String cmd){
+		String working_directory = "/";
 		int last_pos =0;
 		Vector<String> commands = new Vector<String>();
 		int string_length = cmd.length();
