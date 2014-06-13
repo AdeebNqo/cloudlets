@@ -14,6 +14,7 @@ import java.util.Scanner;
 import java.io.InputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.FileNotFoundException;
 
 public class NetworkManager{
 	//variables to start and stop the network
@@ -33,6 +34,7 @@ public class NetworkManager{
 
 	*/
 	public void setCredentials(String name, String password) throws IOException{
+		System.err.println("Setting credentials");
 
 		//writing in hostapd main config
 		FileOutputStream config = new FileOutputStream("/etc/hostapd/hostapd.conf",false);
@@ -53,26 +55,26 @@ public class NetworkManager{
 	
 		//reading in hostapd conf manager
 		FileOutputStream config1 = new FileOutputStream("/etc/default/hostapd",false);
-		Scanner packagedconfig = new Scanner(new File("user.dir/config","hostapd_manager"));
-		while(packagedconfig.hasNextLine()){
-			config1.write(packagedconfig.nextLine().getBytes());
+		Scanner hostapdpackagedconfig = new Scanner(new File("user.dir/config","hostapd_manager"));
+		while(hostapdpackagedconfig.hasNextLine()){
+			config1.write(hostapdpackagedconfig.nextLine().getBytes());
 		}
 		config1.close();
 
 		//reading in dhcp-server conf manager
 		FileOutputStream config2 = new FileOutputStream("/etc/default/isc-dhcp-server",false);
-		Scanner packagedconfig = new Scanner(new File("user.dir/config","dhcpserver_manager"));
-		while(packagedconfig.hasNextLine()){
-			config2.write(packagedconfig.nextLine().getBytes());
+		Scanner dhcppackagedconfig = new Scanner(new File("user.dir/config","dhcpserver_manager"));
+		while(dhcppackagedconfig.hasNextLine()){
+			config2.write(dhcppackagedconfig.nextLine().getBytes());
 		}
 		config2.close();
 
 
 		//writing in main dhcp-server conf
 		FileOutputStream config3 = new FileOutputStream("/etc/dhcp/dhcpd.conf",false);
-		Scanner packagedconfig = new Scanner(new File("user.dir/config","dhcpserver_config"));
-		while(packagedconfig.hasNextLine()){
-			config3.write(packagedconfig.nextLine().getBytes());
+		Scanner dhcppackagedconfig2 = new Scanner(new File("user.dir/config","dhcpserver_config"));
+		while(dhcppackagedconfig2.hasNextLine()){
+			config3.write(dhcppackagedconfig2.nextLine().getBytes());
 		}
 		config3.close();
 
@@ -125,21 +127,22 @@ public class NetworkManager{
 			config4.write(four.getBytes());
 			config4.close();
 		}
+		System.err.println("Done.");
 	}
 	/*
 
 	Method for retrieving password and password
 
 	*/
-	private void retreiveCredentials(){
+	private void retreiveCredentials() throws FileNotFoundException{
 		Scanner config = new Scanner(new File("/etc/hostapd/hostapd.conf"));
 		while(config.hasNextLine()){
 			String line = config.nextLine();
 			if (line.startsWith("ssid")){
-				String vals = line.split("=");
+				String[] vals = line.split("=");
 				networkname = vals[1];
 			}else if (line.startsWith("wpa_passphrase")){
-				String vals = line.split("=");
+				String[] vals = line.split("=");
 				networkpassword = vals[1];
 			}
 		}
@@ -149,7 +152,10 @@ public class NetworkManager{
 	Method for getting password
 
 	*/
-	public String getPassword(){
+	public String getPassword() throws FileNotFoundException{
+		if (networkpassword.equals("\\s+")){
+			retreiveCredentials();
+		}
 		return networkpassword;
 	}
 	/*
@@ -157,7 +163,10 @@ public class NetworkManager{
 	Method for getting network name
 
 	*/
-	public String getNetworkName(){
+	public String getNetworkName() throws FileNotFoundException{
+		if (networkname.equals("\\s+")){
+			retreiveCredentials();
+		}
 		return networkname;
 	}
 	/*
@@ -166,6 +175,14 @@ public class NetworkManager{
 	
 	*/
 	public boolean setStatus(int status) throws IOException,MissingApplicationException{
+		if (status==NetworkManager.START){
+			System.err.println("Starting network...");
+		}
+		else{
+			System.err.println("Stopping network...");
+		}
+
+
 		String stringstatus = (status==NetworkManager.START) ? "start" : "stop";
 
 		//checking if isc-dhcp-server and hostapd are installed
