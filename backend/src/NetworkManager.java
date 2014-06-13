@@ -33,6 +33,8 @@ public class NetworkManager{
 
 	*/
 	public void setCredentials(String name, String password) throws IOException{
+
+		//writing in hostapd main config
 		FileOutputStream config = new FileOutputStream("/etc/hostapd/hostapd.conf",false);
 		config.write("interface=wlan0".getBytes());
 		config.write("driver=nl80211".getBytes());
@@ -49,12 +51,80 @@ public class NetworkManager{
 		config.write("rsn_pairwise=CCMP".getBytes());
 		config.close();
 	
+		//reading in hostapd conf manager
 		FileOutputStream config1 = new FileOutputStream("/etc/default/hostapd",false);
 		Scanner packagedconfig = new Scanner(new File("user.dir/config","hostapd_manager"));
 		while(packagedconfig.hasNextLine()){
 			config1.write(packagedconfig.nextLine().getBytes());
 		}
 		config1.close();
+
+		//reading in dhcp-server conf manager
+		FileOutputStream config2 = new FileOutputStream("/etc/default/isc-dhcp-server",false);
+		Scanner packagedconfig = new Scanner(new File("user.dir/config","dhcpserver_manager"));
+		while(packagedconfig.hasNextLine()){
+			config2.write(packagedconfig.nextLine().getBytes());
+		}
+		config2.close();
+
+
+		//writing in main dhcp-server conf
+		FileOutputStream config3 = new FileOutputStream("/etc/dhcp/dhcpd.conf",false);
+		Scanner packagedconfig = new Scanner(new File("user.dir/config","dhcpserver_config"));
+		while(packagedconfig.hasNextLine()){
+			config3.write(packagedconfig.nextLine().getBytes());
+		}
+		config3.close();
+
+		Scanner interfacesconfig = new Scanner(new File("/etc/network/interfaces"));
+		boolean add = true; int count = 0; boolean stop = false;
+		String one = "auto wlan0"; 
+		String two = "iface wlan0 inet static";
+		String three = "address 10.10.0.1";
+		String four = "netmask 255.255.255.0";
+		while(interfacesconfig.hasNextLine() && !stop){
+			String line = interfacesconfig.nextLine();
+			switch(count){
+				case 0:
+					if (line.equals(one)){
+						++count;
+					}
+					break;
+				case 1:
+					if (line.equals(two)){
+						++count;
+					}
+					else{
+						count = 0;					
+					}
+					break;
+				case 2:
+					if (line.equals(three)){
+						++count;
+					}
+					else{
+						count = 0;					
+					}
+					break;
+				case 4:
+					if (line.equals(four)){
+						stop = true;
+						add = false;
+					}
+					else{
+						count = 0;
+					}
+					break;
+			}
+		}
+		if (add){
+			FileOutputStream config4 = new FileOutputStream("/etc/network/interfaces",true);
+			config4.write(one.getBytes());
+			config4.write(two.getBytes());
+			config4.write(three.getBytes());
+			config4.write(four.getBytes());
+			config4.close();
+		}
 	}
 	/*
 
