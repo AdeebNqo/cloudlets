@@ -55,7 +55,7 @@ public class NetworkManager{
 	
 		//reading in hostapd conf manager
 		FileOutputStream config1 = new FileOutputStream("/etc/default/hostapd",false);
-		Scanner hostapdpackagedconfig = new Scanner(new File("user.dir/config","hostapd_manager"));
+		Scanner hostapdpackagedconfig = new Scanner(new File(System.getProperty("user.dir")+"/config","hostapd_manager"));
 		while(hostapdpackagedconfig.hasNextLine()){
 			config1.write(hostapdpackagedconfig.nextLine().getBytes());
 		}
@@ -63,7 +63,7 @@ public class NetworkManager{
 
 		//reading in dhcp-server conf manager
 		FileOutputStream config2 = new FileOutputStream("/etc/default/isc-dhcp-server",false);
-		Scanner dhcppackagedconfig = new Scanner(new File("user.dir/config","dhcpserver_manager"));
+		Scanner dhcppackagedconfig = new Scanner(new File(System.getProperty("user.dir")+"/config","dhcpserver_manager"));
 		while(dhcppackagedconfig.hasNextLine()){
 			config2.write(dhcppackagedconfig.nextLine().getBytes());
 		}
@@ -72,7 +72,7 @@ public class NetworkManager{
 
 		//writing in main dhcp-server conf
 		FileOutputStream config3 = new FileOutputStream("/etc/dhcp/dhcpd.conf",false);
-		Scanner dhcppackagedconfig2 = new Scanner(new File("user.dir/config","dhcpserver_config"));
+		Scanner dhcppackagedconfig2 = new Scanner(new File(System.getProperty("user.dir")+"/config","dhcpserver_config"));
 		while(dhcppackagedconfig2.hasNextLine()){
 			config3.write(dhcppackagedconfig2.nextLine().getBytes());
 		}
@@ -153,7 +153,7 @@ public class NetworkManager{
 
 	*/
 	public String getPassword() throws FileNotFoundException{
-		if (networkpassword.equals("\\s+")){
+		if (networkpassword!=null && networkpassword.equals("\\s+")){
 			retreiveCredentials();
 		}
 		return networkpassword;
@@ -164,7 +164,7 @@ public class NetworkManager{
 
 	*/
 	public String getNetworkName() throws FileNotFoundException{
-		if (networkname.equals("\\s+")){
+		if (networkname!=null && networkname.equals("\\s+")){
 			retreiveCredentials();
 		}
 		return networkname;
