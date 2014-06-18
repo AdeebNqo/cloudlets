@@ -38,26 +38,26 @@ public class NetworkManager{
 
 		//writing in hostapd main config
 		FileOutputStream config = new FileOutputStream("/etc/hostapd/hostapd.conf",false);
-		config.write("interface=wlan0".getBytes());
-		config.write("driver=nl80211".getBytes());
-		config.write(("ssid="+name).getBytes());
-		config.write("hw_mode=g".getBytes());
-		config.write("channel=1".getBytes());
-		config.write("macaddr_acl=0".getBytes());
-		config.write("auth_algs=1".getBytes());
-		config.write("ignore_broadcast_ssid=0".getBytes());
-		config.write("wpa=3".getBytes());
-		config.write(("wpa_passphrase="+password).getBytes());
-		config.write("wpa_key_mgmt=WPA-PSK".getBytes());
-		config.write("wpa_pairwise=TKIP".getBytes());
-		config.write("rsn_pairwise=CCMP".getBytes());
+		config.write("interface=wlan0".getBytes()+"\n");
+		config.write("driver=nl80211".getBytes()+"\n");
+		config.write(("ssid="+name).getBytes()+"\n");
+		config.write("hw_mode=g".getBytes()+"\n");
+		config.write("channel=1".getBytes()+"\n");
+		config.write("macaddr_acl=0".getBytes()+"\n");
+		config.write("auth_algs=1".getBytes()+"\n");
+		config.write("ignore_broadcast_ssid=0".getBytes()+"\n");
+		config.write("wpa=1".getBytes()+"\n");
+		config.write(("wpa_passphrase="+password).getBytes()+"\n");
+		config.write("wpa_key_mgmt=WPA-PSK".getBytes()+"\n");
+		config.write("wpa_pairwise=TKIP".getBytes()+"\n");
+		config.write("rsn_pairwise=CCMP".getBytes()+"\n");
 		config.close();
 	
 		//reading in hostapd conf manager
 		FileOutputStream config1 = new FileOutputStream("/etc/default/hostapd",false);
 		Scanner hostapdpackagedconfig = new Scanner(new File(System.getProperty("user.dir")+"/config","hostapd_manager"));
 		while(hostapdpackagedconfig.hasNextLine()){
-			config1.write(hostapdpackagedconfig.nextLine().getBytes());
+			config1.write(hostapdpackagedconfig.nextLine().getBytes()+"\n");
 		}
 		config1.close();
 
@@ -65,7 +65,7 @@ public class NetworkManager{
 		FileOutputStream config2 = new FileOutputStream("/etc/default/isc-dhcp-server",false);
 		Scanner dhcppackagedconfig = new Scanner(new File(System.getProperty("user.dir")+"/config","dhcpserver_manager"));
 		while(dhcppackagedconfig.hasNextLine()){
-			config2.write(dhcppackagedconfig.nextLine().getBytes());
+			config2.write(dhcppackagedconfig.nextLine().getBytes()+"\n");
 		}
 		config2.close();
 
@@ -74,7 +74,7 @@ public class NetworkManager{
 		FileOutputStream config3 = new FileOutputStream("/etc/dhcp/dhcpd.conf",false);
 		Scanner dhcppackagedconfig2 = new Scanner(new File(System.getProperty("user.dir")+"/config","dhcpserver_config"));
 		while(dhcppackagedconfig2.hasNextLine()){
-			config3.write(dhcppackagedconfig2.nextLine().getBytes());
+			config3.write(dhcppackagedconfig2.nextLine().getBytes()+"\n");
 		}
 		config3.close();
 
@@ -121,10 +121,10 @@ public class NetworkManager{
 		}
 		if (add){
 			FileOutputStream config4 = new FileOutputStream("/etc/network/interfaces",true);
-			config4.write(one.getBytes());
-			config4.write(two.getBytes());
-			config4.write(three.getBytes());
-			config4.write(four.getBytes());
+			config4.write(one.getBytes()+"\n");
+			config4.write(two.getBytes()+"\n");
+			config4.write(three.getBytes()+"\n");
+			config4.write(four.getBytes()+"\n");
 			config4.close();
 		}
 		System.err.println("Done.");
