@@ -206,7 +206,7 @@ public class NetworkManager{
 	Method for checking if application is installed
 
 	*/
-	public boolean isInstalled(String appname) throws IOException{
+	private boolean isInstalled(String appname) throws IOException{
 		InputStream[] response = run("apt-cache policy "+appname);
 		Scanner input = new Scanner(response[0]);
 		input.nextLine();
@@ -221,7 +221,7 @@ public class NetworkManager{
 	Method for running unix command
 	@return Outpout and Error streams, respectively.
 	*/
-	public InputStream[] run(String cmd) throws IOException{
+	private InputStream[] run(String cmd) throws IOException{
 		ProcessBuilder procBuilder = new ProcessBuilder(cmd.split("\\s+"));
 		Process proc = procBuilder.start();
 		//Output of the cmd
