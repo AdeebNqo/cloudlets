@@ -21,6 +21,9 @@ http://www.idt.mdh.se/kurser/ct3340/ht11/MINICONFERENCE/FinalPapers/ircse11_subm
 7. Article on osgi
 http://www.vogella.com/tutorials/OSGi/article.html#osgiintro_overview
 
+8. Apache felix
+http://felix.apache.org/site/apache-felix-framework-launching-and-embedding.html#ApacheFelixFrameworkLaunchingandEmbedding-introduction
+
 Papers:
 
 1. Verbelen, T., Simoens, P., De Turck, F., & Dhoedt, B. (2012). Cloudlets: Bringing the cloud to the mobile user. Proceedings of the Third ACM Workshop on Mobile Cloud Computing and Services, 29-36. 
