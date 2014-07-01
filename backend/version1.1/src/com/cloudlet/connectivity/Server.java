@@ -45,6 +45,7 @@ public class Server implements ConnectionChangeListener{
 	public void start() throws IOException{
 			running = START;
 			run();
+			System.err.println("start() returning");
 	}
 	public void stop(){
 		running = STOP;

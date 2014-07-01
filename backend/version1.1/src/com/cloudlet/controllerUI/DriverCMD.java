@@ -45,11 +45,10 @@ public class DriverCMD {
 					break;
 				}
 			case 2:
-				System.err.println("case2 first line");
+				System.err.println("Starting Wireless network and server.");
 				ni.setStatus(NetworkInstaller.START);
-				System.err.println("case2 before server start");
 				server.start();
-				System.err.println("server started..");
+				System.err.println("Wireless network up. Server started.");
 				break;
 			case 3:
 				server.stop();

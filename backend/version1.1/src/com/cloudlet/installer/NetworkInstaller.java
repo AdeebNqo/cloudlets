@@ -27,28 +27,31 @@ public class NetworkInstaller {
 
 	*/
 	public void setCredentials(String name, String password) throws IOException{
-		System.err.println("Setting credentials");
+		System.err.println("FUNCTION: Setting credentials");
 
 		//writing in hostapd main config
+		System.err.println("editing /etc/hostapd/hostapd.conf");
 		FileOutputStream config = new FileOutputStream("/etc/hostapd/hostapd.conf",false);
-		config.write("interface=wlan0\n".getBytes());
+		config.write("interface=wlan1\n".getBytes());
 		config.write("driver=nl80211\n".getBytes());
 		config.write(("ssid="+name+"\n").getBytes());
 		config.write("hw_mode=g\n".getBytes());
 		config.write("channel=1\n".getBytes());
-		config.write("macaddr_acl=0\n".getBytes());
+		/*config.write("macaddr_acl=0\n".getBytes());
 		config.write("auth_algs=1\n".getBytes());
 		config.write("ignore_broadcast_ssid=0\n".getBytes());
 		config.write("wpa=1\n".getBytes());
 		config.write(("wpa_passphrase="+password+"\n").getBytes());
 		config.write("wpa_key_mgmt=WPA-PSK\n".getBytes());
 		config.write("wpa_pairwise=TKIP\n".getBytes());
-		config.write("rsn_pairwise=CCMP\n".getBytes());
+		config.write("rsn_pairwise=CCMP\n".getBytes());*/
 		config.close();
 	
 		//reading in hostapd conf manager
+		System.err.println("editing /etc/default/hostapd");
 		FileOutputStream config1 = new FileOutputStream("/etc/default/hostapd",false);
-		Scanner hostapdpackagedconfig = new Scanner(new File(System.getProperty("user.dir")+"/config","hostapd_manager"));
+		InputStream i = getClass().getResourceAsStream("/hostapd_manager");
+		Scanner hostapdpackagedconfig = new Scanner(i);
 		while(hostapdpackagedconfig.hasNextLine()){
 			config1.write((hostapdpackagedconfig.nextLine()+"\n").getBytes());
 		}
@@ -56,8 +59,9 @@ public class NetworkInstaller {
 		hostapdpackagedconfig.close();
 
 		//reading in dhcp-server conf manager
+		System.err.println("editing /etc/default/isc-dhcp-server");
 		FileOutputStream config2 = new FileOutputStream("/etc/default/isc-dhcp-server",false);
-		Scanner dhcppackagedconfig = new Scanner(new File(System.getProperty("user.dir")+"/config","dhcpserver_manager"));
+		Scanner dhcppackagedconfig = new Scanner(getClass().getResourceAsStream("/dhcpserver_manager"));
 		while(dhcppackagedconfig.hasNextLine()){
 			config2.write((dhcppackagedconfig.nextLine()+"\n").getBytes());
 		}
@@ -66,8 +70,9 @@ public class NetworkInstaller {
 
 
 		//writing in main dhcp-server conf
+		System.err.println("editing /etc/dhcp/dhcpd.conf");
 		FileOutputStream config3 = new FileOutputStream("/etc/dhcp/dhcpd.conf",false);
-		Scanner dhcppackagedconfig2 = new Scanner(new File(System.getProperty("user.dir")+"/config","dhcpserver_config"));
+		Scanner dhcppackagedconfig2 = new Scanner(getClass().getResourceAsStream("/dhcpserver_config"));
 		while(dhcppackagedconfig2.hasNextLine()){
 			config3.write((dhcppackagedconfig2.nextLine()+"\n").getBytes());
 		}
@@ -75,54 +80,36 @@ public class NetworkInstaller {
 		dhcppackagedconfig2.close();
 
 		Scanner interfacesconfig = new Scanner(new File("/etc/network/interfaces"));
-		boolean add = true; int count = 0; boolean stop = false;
-		String one = "auto wlan0"; 
-		String two = "iface wlan0 inet static";
-		String three = "address 10.10.0.1";
-		String four = "netmask 255.255.255.0";
-		while(interfacesconfig.hasNextLine() && !stop){
-			String line = interfacesconfig.nextLine();
-			switch(count){
-				case 0:
-					if (line.equals(one)){
-						++count;
-					}
+		boolean exist = false; //var to determine if following lines exist in config file
+		String one = "auto wlan1"; 
+		String two = "iface wlan1 inet dhcp";
+		String currline = interfacesconfig.nextLine();
+		String nextline = interfacesconfig.nextLine();
+		
+		while(true){
+			System.err.println("currline: "+currline);
+			System.err.println("nextline: "+nextline);
+			if (currline.equals(one) && nextline.equals(two)){
+				exist = true;
+				System.err.println("status: exist");
+				break;
+			}else{
+				if (interfacesconfig.hasNextLine()){
+					currline = nextline;
+					nextline = interfacesconfig.nextLine();
+					System.err.println("status: does not exist");
+				}
+				else{
 					break;
-				case 1:
-					if (line.equals(two)){
-						++count;
-					}
-					else{
-						count = 0;					
-					}
-					break;
-				case 2:
-					if (line.equals(three)){
-						++count;
-					}
-					else{
-						count = 0;					
-					}
-					break;
-				case 4:
-					if (line.equals(four)){
-						stop = true;
-						add = false;
-					}
-					else{
-						count = 0;
-					}
-					break;
+				}
 			}
+			System.err.println("\n--\t--");
 		}
 		interfacesconfig.close();
-		if (add){
+		if (!exist){
 			FileOutputStream config4 = new FileOutputStream("/etc/network/interfaces",true);
-			config4.write((one+"\n").getBytes());
-			config4.write((two+"\n").getBytes());
-			config4.write((three+"\n").getBytes());
-			config4.write((four+"\n").getBytes());
-			config4.close();
+			config4.write((one+'\n').getBytes());
+			config4.write((two+'\n').getBytes());
 		}
 		System.err.println("Done.");
 	}
@@ -193,6 +180,29 @@ public class NetworkInstaller {
 			*/
 			InputStream[] dhcpresponse = run("sudo service isc-dhcp-server "+stringstatus);
 			InputStream[] hostapdresponse = run("sudo service hostapd "+stringstatus);
+			System.err.println("--dhcp server--");
+			for (InputStream in: dhcpresponse){
+				byte[] bytes = new byte[1024];
+				while((in.read(bytes))!=-1){
+					String r = new String(bytes,"UTF-8");
+					System.err.println(r);
+					if (r.startsWith("start: Job is already running:")){
+						run("sudo service isc-dhcp-server restart");
+					}
+					
+				}
+			}
+			System.err.println("--hostapd--");
+			for (InputStream in: hostapdresponse){
+				byte[] bytes = new byte[1024];
+				while((in.read(bytes))!=-1){
+					String r = new String(bytes,"UTF-8");
+					System.err.println(r);
+					if (r.startsWith("start: Job is already running:")){
+						run("sudo service hostapd restart");
+					}
+				}
+			}
 			return true; //ToDo: check if starting was successful.
 		}
 		else{
