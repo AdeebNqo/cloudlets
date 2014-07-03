@@ -4,15 +4,14 @@
 #
 import argparse
 import zmq
-
+from connector import connector
+import time
 def main(host,port):
 	print('hello {0}:{1}'.format(host,port))
-	context = zmq.Context()
-	socket = context.socket(zmq.REP)
-	sock.bind("tcp://{0}:{1}".format(host,port))
-	#Serving forever
+	con = connector(host,port)
+	con.start()
 	while True:
-		message = sock.recv()
+		time.sleep(100)
 
 if __name__=='__main__':
 	parser = argparse.ArgumentParser(description='Server for listening to cloudlet connections.')
@@ -26,5 +25,5 @@ if __name__=='__main__':
 	if (args['host']!=None):
 		host = args['host'][0]
 	else:
-		host = 'localhost'
+		host = '127.0.0.1'
 	main(host,port)
