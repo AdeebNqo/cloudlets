@@ -4,6 +4,7 @@
 #
 import threading
 import mosquitto
+import time
 
 class connector(object):
 	def __init__(self,mqtthost,mqttport):
@@ -20,5 +21,28 @@ class connector(object):
 	def reallystart(self):
 		mqttserver = mosquitto.Mosquitto('server')
 		mqttserver.connect('127.0.0.1', port=self.mqttport, keepalive=60)
+		mqttserver.on_connect = self.on_connect
 		while self.status:
 			mqttserver.loop()
+			time.sleep(300)
+	#
+	# Connection callback
+	# Used for registering to certain
+	# topics -- avoiding massive traffic from
+	# clients
+	#
+	def on_connect(self,mosq, obj, rc):
+		if (rc==0):
+			#
+			# If connection is successful, register for topics
+			print('success')
+		elif (rc==1):
+			raise Exception('Mosquitto error: Unacceptable protocol version')
+		elif (rc==2):
+			raise Exception('Mosquitto error: Identifier rejected')
+		elif (rc==3):
+			raise Exception('Mosquitto error: Server unavailable')
+		elif (rc==4):
+			raise Exception('Mosquitto error: Bad user name or password')
+		elif (rc==5):
+			raise Exception('Mosquitto error: Not authorised')

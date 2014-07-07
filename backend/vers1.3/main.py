@@ -12,8 +12,10 @@ def main(mqttport):
 	# creates the default host. This is to make
 	# the connector non-rigid
 	#
-	con = connector('127.0.0.1',port)
+	con = connector('127.0.0.1',mqttport)
 	con.start()
+	while True:
+		pass
 
 if __name__=='__main__':
 	parser = argparse.ArgumentParser(description='Server for listening to cloudlet connections.')

@@ -28,8 +28,10 @@ class service_manager(object):
 		lst = os.listdir("./services")
 		for direc in lst:
 			try:
+				# Remove extention from filename
 				if (direc.endswith('.py') or direc.endswith('.py')):
 					direc = os.path.splitext(direc)[0]
+				#loading module
 				self.modules[direc] = __import__("services." + direc, fromlist = ["*"])
 			except ImportError as err:
 				pass
