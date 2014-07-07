@@ -22,6 +22,7 @@ class connector(object):
 		mqttserver = mosquitto.Mosquitto('server')
 		mqttserver.connect('127.0.0.1', port=self.mqttport, keepalive=60)
 		mqttserver.on_connect = self.on_connect
+		mqttserver.on_message = self.on_message
 		while self.status:
 			mqttserver.loop()
 			time.sleep(300)
@@ -46,3 +47,8 @@ class connector(object):
 			raise Exception('Mosquitto error: Bad user name or password')
 		elif (rc==5):
 			raise Exception('Mosquitto error: Not authorised')
+	#
+	# Handling incoming messages on subscribed topics
+	#
+	def on_message(self,mosq, obj, msg):
+		print("receiving {0} on topic {1}.".format(msg.payload, msg.topic))
