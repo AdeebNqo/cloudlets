@@ -18,8 +18,9 @@ class connector(object):
 		self.status = False
 	def reallystart(self):
 		context = zmq.Context()
-		socket = context.socket(zmq.DEALER)
+		socket = context.socket(zmq.PUB)
 		socket.bind("tcp://{0}:{1}".format(self.host,self.port))
 		while self.status:
     			message = socket.recv()
+			print('client says {0}'.format(message))
 			socket.send(message)
