@@ -37,6 +37,10 @@ class connector(object):
 			#
 			# If connection is successful, register for topics
 			print('success')
+			mosq.subscribe('client/connect')
+			mosq.subscribe('client/disconnect')
+			mosq.subscribe('client/list')
+			mosq.subscribe('client/servicelist')
 		elif (rc==1):
 			raise Exception('Mosquitto error: Unacceptable protocol version')
 		elif (rc==2):
@@ -52,3 +56,11 @@ class connector(object):
 	#
 	def on_message(self,mosq, obj, msg):
 		print("receiving {0} on topic {1}.".format(msg.payload, msg.topic))
+		if (msg.topic.=='client/connect'):
+			print('client connected')
+		elif (client/connect=='client/disconnect'):
+			print('client disconnected')
+		elif (client/connect=='client/list'):
+			print('client list request')
+		elif (client/connect=='client/servicelist'):
+			print('service list requested')
