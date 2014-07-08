@@ -42,11 +42,11 @@ class service_manager(object):
 	#
 	def loadservices(self):
 		self.services = []
-			for service in self.servicenames:
-				for attr in dir(self.modules[service]):
-					if attr==service:
-						serviceobj = getattr(self.modules[service], attr)()
-						self.services.append(serviceobj)
+		for service in self.servicenames:
+			for attr in dir(self.modules[service]):
+				if attr==service:
+					serviceobj = getattr(self.modules[service], attr)()
+					self.services.append(serviceobj)
 	#
 	# Retrieve objects of all advertized
 	# services
