@@ -6,6 +6,7 @@ import threading
 import mosquitto
 import time
 from service_manager import service_manager
+from user_manager import user_manager,user
 
 class connector(object):
 	def __init__(self,mqtthost,mqttport):
@@ -13,6 +14,7 @@ class connector(object):
 		self.mqttport = mqttport
 		self.status = True
 		self.serviceman = service_manager()
+		self.peopleman = user_manager()
 	def start(self):
 		self.status = True
 		serveforeverthread = threading.Thread(target=self.reallystart)
@@ -47,12 +49,10 @@ class connector(object):
 		if (rc==0):
 			#
 			# If connection is successful, register for topicse
-			mosq.subscribe('#',1)
 			mosq.subscribe("client/connect",1)
 			mosq.subscribe('client/disconnect',1)
 			mosq.subscribe('client/list', 1)
 			mosq.subscribe('client/servicelist',1)
-			mosq.unsubscribe('client/servicelist')
 			print('subscribed.')
 		elif (rc==1):
 			raise Exception('Mosquitto error: Unacceptable protocol version')
@@ -70,13 +70,22 @@ class connector(object):
 	def on_message(self,mosq, obj, msg):
 		print("receiving {0} on topic {1}.".format(msg.payload, msg.topic))
 		if (msg.topic=='client/connect'):
+			vals = msg.payload.split()
+			person = user(vals[0],vals[1])
+			self.peopleman.connect(person)
 			print('client connected')
 		elif (msg.topic=='client/disconnect'):
 			print('client disconnected')
+			vals = msg.payload.split()
+			person = user(vals[0],vals[1])
+			self.peopleman.disconnect(person)
 		elif (msg.topic=='client/list'):
-			print('client list request')
-			services = self.serviceman.getservices()
-			for service in services:
-				print('publishing \'server/service name:{3} descr:{0} portrange:{1}-{2}\''.format(service.getdescription(), service.minport, service.maxport, service.__name__))
+			print('client list requested')
+			connected = self.peopleman.getconnected()
 		elif (msg.topic=='client/servicelist'):
 			print('service list requested')
+			services = self.serviceman.getservices()
+			for service in services:
+				#print('publishing service \'{0}\''.format(str(service)))
+				mosq.publish('server/service', '{0} {1}'.format(str(service),service.start()))
+				self.serviceman.runningservices.append((service,service.port))

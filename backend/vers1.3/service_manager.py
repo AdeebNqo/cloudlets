@@ -9,6 +9,9 @@ from pprint import pprint
 class service_manager(object):
 	def __init__(self):
 		self.loadconfig()
+		self.modules = {}
+		self.services = []
+		self.runningservices = [] #services which are running, with their ports
 
 	#
 	# Loads configuration file.

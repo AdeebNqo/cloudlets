@@ -10,16 +10,10 @@ class service(object):
 	def host(self):
 		pass
 	@abstractproperty
-	def minport(self):
-		pass
-	@abstractproperty
-	def maxport(self):
+	def port(self):
 		pass
 	@abstractproperty
 	def description(self):
-		pass
-	@abstractmethod
-	def getportrange(self):
 		pass
 	@abstractmethod
 	def gethost(self):
@@ -29,4 +23,7 @@ class service(object):
 		pass
 	@abstractmethod
 	def handle(self):
+		pass
+	@abstractmethod
+	def start(self):
 		pass
