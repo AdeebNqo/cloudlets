@@ -82,6 +82,8 @@ class connector(object):
 		elif (msg.topic=='client/list'):
 			print('client list requested')
 			connected = self.peopleman.getconnected()
+			for person in connected:
+				mosq.publish('server/connecteduser',person.getusername())
 		elif (msg.topic=='client/servicelist'):
 			print('service list requested')
 			services = self.serviceman.getservices()

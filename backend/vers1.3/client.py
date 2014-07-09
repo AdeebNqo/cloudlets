@@ -18,6 +18,7 @@ def main():
 	mqttclient.subscribe("servers/service")
 	#mqttclient.publish("client/list", payload=None)
 	mqttclient.subscribe("server/service",1)
+	mqttclient.subscribe('server/connecteduser',1)
 	mqttclient.publish("client/servicelist", "hello world", 1)
 	while True:
 		mqttclient.loop()
