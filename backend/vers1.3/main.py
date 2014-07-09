@@ -27,7 +27,7 @@ if __name__=='__main__':
 			#
 			# Defualting to using default port
 			# as user attempted to use the root's
-			# ports. There is no reason is program
+			# ports. There is no reason the program
 			# should be run as root
 			#
 			mqttport = 9999

@@ -22,13 +22,20 @@ class connector(object):
 		self.status = False
 	def reallystart(self):
 		mqttserver = mosquitto.Mosquitto('server')
+		mqttserver.on_subscribe = self.on_subscribe
 		mqttserver.on_connect = self.on_connect
 		mqttserver.on_message = self.on_message
-		mqttserver.on_subscribe = self.on_subscribe
+		mqttserver.on_unsubscribe = self.on_unsubscribe
 		mqttserver.connect('127.0.0.1', port=self.mqttport, keepalive=60)
 		while self.status:
 			mqttserver.loop()
-			time.sleep(300)
+			#time.sleep(300)
+	#
+	#
+	def on_subscribe(self, mosq, obj, mid, qos_list):
+		print("Subscribe with mid "+str(mid)+" received.")
+	def on_unsubscribe(self, mosq, obj, mid):
+		print("Unsubscribe with mid "+str(mid)+" received.")	
 	#
 	# Connection callback
 	# Used for registering to certain
@@ -40,12 +47,13 @@ class connector(object):
 		if (rc==0):
 			#
 			# If connection is successful, register for topicse
-			mosq.subscribe('client/connect',1)
+			mosq.subscribe('#',1)
+			mosq.subscribe("client/connect",1)
 			mosq.subscribe('client/disconnect',1)
 			mosq.subscribe('client/list', 1)
 			mosq.subscribe('client/servicelist',1)
-			print(mosq.on_subscribe == self.on_subscribe)
-			print('started and subscribed.')
+			mosq.unsubscribe('client/servicelist')
+			print('subscribed.')
 		elif (rc==1):
 			raise Exception('Mosquitto error: Unacceptable protocol version')
 		elif (rc==2):
@@ -56,10 +64,6 @@ class connector(object):
 			raise Exception('Mosquitto error: Bad user name or password')
 		elif (rc==5):
 			raise Exception('Mosquitto error: Not authorised')
-	#
-	#
-	def on_subscribe(self, mosq, obj, mid, qos_list):
-		print("Subscribe with mid "+str(mid)+" received.")
 	#
 	# Handling incoming messages on subscribed topics
 	#
