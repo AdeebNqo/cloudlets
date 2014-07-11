@@ -2,6 +2,12 @@ from super.service import service
 import socket
 import threading
 import sqlite3 as sql
+import sys
+import tempfile
+import shutil
+import os
+import datetime
+import time
 
 class File(object):
     def __init__(self, _hash, owner, path, privacystate, filesize, accessusers):
@@ -11,7 +17,7 @@ class File(object):
         self.private = privacystate
         self.filesize = filesize
         self.allowed = accessusers
-        
+
 class database(object):
     def __init__(self):
         try:
@@ -25,7 +31,7 @@ class database(object):
                 data = self.cursor.fetchall()
                 print('db log: {}'.format(data))
         except sql.Error as err:
-            print(err)
+            print('db log: '.format(err))
     def getpublicfiles(self):
         self.cursor.execute('select * from files where private=?',0)
         result = self.cursor.fetchall()
@@ -37,11 +43,11 @@ class database(object):
         result = self.cursor.fetchone()
         print('result is {}'.format(result))
         return result
-        
+
 class file_sharer(service):
 	def __init__(self):
 		self.chosenport = -1 #port that will by the service
-		self.connectedclient = []
+		self.connectedclients = []
 		self.db = database()
 	@property
 	def description(self):
@@ -59,52 +65,99 @@ class file_sharer(service):
 		return self.host
 	def getdescription(self):
 		return self.description
-	def heartbeatclient(self,sock,addr):
-	        print('heart beating client')
 	def handleclient(self, sock, addr):
-	        while True:
-	            action = sock.recv(1024)
-	            splitaction = action.split()
-	            if (action.startswith('download')):
-	                print('download file')
-	                _hash = splitaction[1]
-	                fileinfo = self.db.downloadfile(_hash)
-	                #
-	                # 1. calculate filesize
-	                # 2. send 'download-request filesize'
-	                # 3. wait for 'ok'
-	                # 4. transfer file
-	                #
-	            elif (action.startswith('upload')):
-	                print('upload file')
-	                #request transfer from client
-	                sock.sendall('transfer')
-	                
-	                metadatasize = float(splitaction[1])
-	                filesize = float(splitaction[2])
-	                #reading configuration
-	                metadata = sock.recv(metadatasize)
-	                file = sock.recv(filesize)
-	                print('received {}'.format(metadata))
-	def handle(self):
+		#
+		# first thing to do is to retrieve
+		# all publicly available files and share
+		# them --- broadcast them
+		#
+		sock.setblocking(1)
 		while True:
-			print('handling')
-			#waiting for client requests
-			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			s.bind(('127.0.0.1', self.chosenport))
-			s.listen(1)
-			conn, addr = s.accept()
-			self.connectedclien.append((conn, addr))
+		    action = sock.recv(1024)
+		    print('requested action is {}'.format(action))
+		    splitaction = action.split()
+		    if (action.startswith('download')):
+		        print('download file')
+		        _hash = splitaction[1]
+		        fileinfo = self.db.downloadfile(_hash)
+		        #
+		        # 1. calculate filesize
+		        # 2. send 'download-request filesize'
+		        # 3. wait for 'ok'
+		        # 4. transfer file
+		        #
+		    elif (action.startswith('upload')):
+		        print('upload file')
+		        #request transfer from client
+		        sock.sendall('transfer')
+
+		        metadatasize = int(splitaction[1])
+		        filesize = int(splitaction[2])
+		        #reading configuration
+		        metadata = self.readsock(sock,metadatasize,False) #sock.recv(metadatasize)
+                        print('server log: received file metadata')
+                        print('received {}'.format(metadata))
+		        f = self.readsock(sock, filesize,True) #sock.recv(filesize)
+                        shutil.copy(f, 'filename.png')
+                        os.remove(f.name)
+                        print('server log: received file data')
+		        sock.sendall('ok')
+        #private method
+        def readsock(self,sock,size,isfile):
+                if (not isfile):
+                        read = 0
+                        data = None
+                        while (read<size):
+                                #
+                                # Controlling number of bytes read in order to only
+                                # read metadata
+                                tmp = size-read
+                                if (tmp<1024):
+                                        readsize = tmp
+                                else:
+                                        readsize = 1024
+                                #reading data segment
+                                if (data==None):
+                                        data = sock.recv(readsize)
+                                else:
+                                        data = data+sock.recv(readsize)
+                                read = sys.getsizeof(data)
+                                print('current:{0} ,filesize:{1}'.format(read,size))
+                        return data
+                else:
+                        f = tempfile.NamedTemporaryFile(suffix='.png')
+                        read = 0
+                        while True:
+                                #
+                                # Controlling number of bytes read in order to only
+                                # read metadata
+                                tmp = size-read
+                                if (tmp<1024):
+                                        readsize = tmp
+                                else:
+                                        readsize = 1024
+                                data = sock.recv(readsize)
+                                f.write(data)
+                                read = read + os.path.getsize(f.name)
+                                if ( not (read<size)):
+                                        f.close()
+                                        break
+                                else:
+                                        ts = time.time()
+                                        print('{2} -- tmpfile: {0} , expected: {1}'.format(os.path.getsize(f.name), size, datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')))
+                        return f
+	def handle(self):
+		#waiting for client requests
+		self.serversock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.serversock.bind(('127.0.0.1', self.chosenport))
+		self.serversock.listen(1)
+		while True:
+			conn, addr = self.serversock.accept()
+			self.connectedclients.append((conn, addr))
 			#Creating thread to handle client
 			clienthandler = threading.Thread(target=self.handleclient, args=(conn, addr))
-			clienthandler.daemon = true
+			clienthandler.daemon = True
 			clienthandler.start()
-			#starting heart beat thread for client
-			heartbeathandler = threading.Thread(self.heartbeatclient, args=(conn,addr))
-			heartbeathandler.daemon = true
-			heartbeathandler.start()
-			
-			print(addr+' connected')
 	def start(self):
 		print('file sharer started')
 		self.chosenport = self.get_open_port()
@@ -112,9 +165,9 @@ class file_sharer(service):
 		servethread.daemon = True
 		servethread.start()
 		return self.chosenport
-			
+
 	def __str__(self):
-		return '{0} {1} {2}'.format(self.__name__, self.description, self.host)
+		return '{0}-{1}-{2}'.format(self.__name__, self.description, self.host)
 
 	#
 	# Not to be called outside class --- sorta

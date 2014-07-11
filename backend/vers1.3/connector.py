@@ -89,5 +89,5 @@ class connector(object):
 			services = self.serviceman.getservices()
 			for service in services:
 				#print('publishing service \'{0}\''.format(str(service)))
-				mosq.publish('server/service', '{0} {1}'.format(str(service),service.start()))
+				mosq.publish('server/service', '{0}-{1}'.format(str(service),service.start()))
 				self.serviceman.runningservices.append((service,service.port))
