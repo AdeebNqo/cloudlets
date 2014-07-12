@@ -47,7 +47,6 @@ def on_message(mosq, obj, msg):
 			#sock.sendall(_file.read(fsize))
 			for i in range(fsize):
 				sock.sendall(_file.read(1))
-				print('sent {0} bytes of {1} bytes'.format(i,fsize))
 			data = getdata(sock)
 			print('server says {}'.format(data))
 

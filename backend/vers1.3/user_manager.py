@@ -17,7 +17,7 @@ class user_manager(object):
 		self.connected = []
 		self.recentlyconnected = []
 	#
-	# Called when user connects	
+	# Called when user connects
 	def connect(self,user):
 		print('user connected')
 	#

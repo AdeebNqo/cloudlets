@@ -9,47 +9,50 @@ import os
 import json
 from array import array
 import binascii
+from file_manager import file_manager
 
 class File(object):
-    def __init__(self, _hash, owner, path, privacystate, filesize, accessusers):
-        self._hash = _hash
-        self.owner = owner
-        self.path = path
-        self.private = privacystate
-        self.filesize = filesize
-        self.allowed = accessusers
+        def __init__(self, _hash, owner, path, privacystate, filesize, accessusers):
+                self._hash = _hash
+                self.owner = owner
+                self.path = path
+                self.private = privacystate
+                self.filesize = filesize
+                self.allowed = accessusers
 
 class database(object):
-    def __init__(self):
-        try:
-            self.conn = sql.connect('filestore.db')
-            self.cursor  = self.conn.cursor()
-            self.cursor.execute('SELECT name FROM sqlite_temp_master WHERE type=\'table\';')
-            data = self.cursor.fetchall()
-            if (len(data)==0):
-                #if there are no tables
-                self.cursor.execute('create tables files(hash TEXT PRIMARY KEY NOT NULL, owner TEXT NOT NULL, path TEXT NOT NULL, private INT NOT NULL, filesize REAL NOT NULL , allowed TEXT)')
-                data = self.cursor.fetchall()
-                print('db log: {}'.format(data))
-        except sql.Error as err:
-            print('db log: '.format(err))
-    def getpublicfiles(self):
-        self.cursor.execute('select * from files where private=?',0)
-        result = self.cursor.fetchall()
-        return result
-    def uploadfile(self,_file):
-        return True
-    def downloadfile(self,_hash):
-        self.cursor.execute('select * from files where hash=?',_hash)
-        result = self.cursor.fetchone()
-        print('result is {}'.format(result))
-        return result
+	def __init__(self):
+		try:
+			self.conn = sql.connect('filestore.db')
+			self.cursor  = self.conn.cursor()
+			self.cursor.execute('SELECT name FROM sqlite_temp_master WHERE type=\'table\';')
+			data = self.cursor.fetchall()
+			if (len(data)==0):
+				#if there are no tables
+				self.cursor.execute('create tables files(hash TEXT PRIMARY KEY NOT NULL, owner TEXT NOT NULL, path TEXT NOT NULL, private INT NOT NULL, filesize REAL NOT NULL , allowed TEXT)')
+				data = self.cursor.fetchall()
+				print('db log: {}'.format(data))
+		except sql.Error as err:
+			print('db log: '.format(err))
+	def getpublicfiles(self):
+	    self.cursor.execute('select * from files where private=?',0)
+	    result = self.cursor.fetchall()
+	    return result
+	def uploadfile(self,_hash, owner, path, private, filesize, allowed):
+                print(private==True)
+		return True
+	def downloadfile(self,_hash):
+		self.cursor.execute('select * from files where hash=?',_hash)
+		result = self.cursor.fetchone()
+		print('result is {}'.format(result))
+		return result
 
 class file_sharer(service):
 	def __init__(self):
 		self.chosenport = -1 #port that will by the service
 		self.connectedclients = []
 		self.db = database()
+                self.fileman = file_manager('data_fileshare')
 	@property
 	def description(self):
 		return 'File sharing between devices'
@@ -100,15 +103,17 @@ class file_sharer(service):
                         #print('expected {0} bytes, received {1} bytes'.format(metadatasize, sys.getsizeof(metadata)))
                         meta = json.loads(metadata)
                         name, ext = os.path.splitext(meta['filename'])
-                        (f,remainder) = self.readfile(sock, filesize, ext)
+                        f = self.readfile(sock, filesize, ext)
                         f.flush()
-                        while True:
-                                pass
-                        #shutil.copy(f.name , 'filename{}'.format(ext))
-                        #f.close()
-                        #print('server log: received file data')
-                        #print('filename size {0}'.format(os.path.getsize('filename.png')))
-		        #sock.sendall('ok')
+                        _hash, path = self.fileman.place(f)
+                        shutil.copy(f.name , '{2}{0}{1}'.format(name, ext, path))
+                        f.close()
+                        self.db.uploadfile(_hash, 'user1', '{2}{0}{1}'.format(name, ext, path), meta['private'], filesize, '') #(self,_hash, owner, path, private, filesize, allowed)
+                        print('server log: received file data')
+                        print('filename size {0}'.format(os.path.getsize('filename{}'.format(ext))))
+		        sock.sendall('ok')
+                        sock.settimeout(0) #make socket a blocking one again
+
         #private method
         def readmetadata(self,sock,size):
                 #
@@ -137,7 +142,7 @@ class file_sharer(service):
                 return data
         #private method
         def readfile(self, sock, size, _suffix):
-                sock.settimeout(10)
+                sock.settimeout(5)
                 f = tempfile.NamedTemporaryFile(suffix=_suffix)
                 while True:
                         try:
@@ -146,10 +151,9 @@ class file_sharer(service):
                                 pass
                         if not data:
                                 break
-                        print('x{0}x'.format(data))
                         f.write(data)
                         data = None
-                return (f, size - os.path.getsize(f.name))
+                return f
 	def handle(self):
 		#waiting for client requests
 		self.serversock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
