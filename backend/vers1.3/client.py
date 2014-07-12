@@ -6,6 +6,7 @@ import threading
 import socket
 import os
 import sys
+import binascii
 
 sock = None
 
@@ -19,29 +20,37 @@ def getdata(sock):
 def on_publish(mosq, obj, mid):
 	print("Message "+str(mid)+" published.")
 def on_message(mosq, obj, msg):
+	filename = 'Zed.svg'
 	print(msg.payload)
 	vals = msg.payload.split('-')
 	name, description, host, port = vals[0], vals[1], vals[2], vals[3]
 	f = threading.Thread(target=file_service, args=(host,int(port)))
 	f.daemon = True
 	f.start()
-	_file = open(os.getcwd()+os.sep+'Zed.png','rb')
+	f.join()
+	_file = open(os.getcwd()+os.sep+filename,'rb')
 	metadata = '''
 	  {
-	        "filename":"Zed.png",
+	        "filename":\"'''+filename+'''\",
 	        "keepAlive":"2h",
 	        "private":true
 	  }
 	'''
 	msize = sys.getsizeof(metadata) #metadata size
-	fsize = os.path.getsize(os.getcwd()+os.sep+'Zed.png') #file size
+	fsize = os.path.getsize(os.getcwd()+os.sep+filename) #file size
 	sock.sendall('upload {0} {1}'.format(msize, fsize))
 	response = getdata(sock)
 	if (response=='transfer'):
 		sock.sendall(metadata)
-		sock.sendall(_file.read(fsize))
 		data = getdata(sock)
-		print('server says {}'.format(data))
+		if (data=='ok'):
+			#sock.sendall(_file.read(fsize))
+			for i in range(fsize):
+				sock.sendall(_file.read(1))
+				print('sent {0} bytes of {1} bytes'.format(i,fsize))
+			data = getdata(sock)
+			print('server says {}'.format(data))
+
 	else:
 		print('upload error: response from server was {}'.format(reponse))
 	_file.close()
@@ -53,7 +62,7 @@ def file_service(host, port):
 	global sock
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock.connect((host, port))
-	sock.settimeout(45)
+	#sock.settimeout(45)
 
 def main():
 	mqttclient = mosquitto.Mosquitto('client')

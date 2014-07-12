@@ -6,8 +6,9 @@ import sys
 import tempfile
 import shutil
 import os
-import datetime
-import time
+import json
+from array import array
+import binascii
 
 class File(object):
     def __init__(self, _hash, owner, path, privacystate, filesize, accessusers):
@@ -71,10 +72,8 @@ class file_sharer(service):
 		# all publicly available files and share
 		# them --- broadcast them
 		#
-		sock.setblocking(1)
 		while True:
 		    action = sock.recv(1024)
-		    print('requested action is {}'.format(action))
 		    splitaction = action.split()
 		    if (action.startswith('download')):
 		        print('download file')
@@ -87,65 +86,70 @@ class file_sharer(service):
 		        # 4. transfer file
 		        #
 		    elif (action.startswith('upload')):
-		        print('upload file')
 		        #request transfer from client
+		        print('upload file')
 		        sock.sendall('transfer')
 
 		        metadatasize = int(splitaction[1])
 		        filesize = int(splitaction[2])
 		        #reading configuration
-		        metadata = self.readsock(sock,metadatasize,False) #sock.recv(metadatasize)
-                        print('server log: received file metadata')
+		        metadata = (self.readmetadata(sock,metadatasize)) #sock.recv(metadatasize)
+                        sock.sendall('ok')
+                        #print('server log: received file metadata')
                         print('received {}'.format(metadata))
-		        f = self.readsock(sock, filesize,True) #sock.recv(filesize)
-                        shutil.copy(f, 'filename.png')
-                        os.remove(f.name)
-                        print('server log: received file data')
-		        sock.sendall('ok')
-        #private method
-        def readsock(self,sock,size,isfile):
-                if (not isfile):
-                        read = 0
-                        data = None
-                        while (read<size):
-                                #
-                                # Controlling number of bytes read in order to only
-                                # read metadata
-                                tmp = size-read
-                                if (tmp<1024):
-                                        readsize = tmp
-                                else:
-                                        readsize = 1024
-                                #reading data segment
-                                if (data==None):
-                                        data = sock.recv(readsize)
-                                else:
-                                        data = data+sock.recv(readsize)
-                                read = sys.getsizeof(data)
-                                print('current:{0} ,filesize:{1}'.format(read,size))
-                        return data
-                else:
-                        f = tempfile.NamedTemporaryFile(suffix='.png')
-                        read = 0
+                        #print('expected {0} bytes, received {1} bytes'.format(metadatasize, sys.getsizeof(metadata)))
+                        meta = json.loads(metadata)
+                        name, ext = os.path.splitext(meta['filename'])
+                        (f,remainder) = self.readfile(sock, filesize, ext)
+                        f.flush()
                         while True:
-                                #
-                                # Controlling number of bytes read in order to only
-                                # read metadata
-                                tmp = size-read
-                                if (tmp<1024):
-                                        readsize = tmp
-                                else:
-                                        readsize = 1024
+                                pass
+                        #shutil.copy(f.name , 'filename{}'.format(ext))
+                        #f.close()
+                        #print('server log: received file data')
+                        #print('filename size {0}'.format(os.path.getsize('filename.png')))
+		        #sock.sendall('ok')
+        #private method
+        def readmetadata(self,sock,size):
+                #
+                # Returns `data`, the metadata.
+                # Returns `rem`, sometimes it reads the first
+                # part of the file data
+                #
+                read = 0
+                data = None
+                while (read<size):
+                        #
+                        # Controlling number of bytes read in order to only
+                        # read metadata
+                        tmp = size-read
+                        if (tmp<1024):
+                                readsize = tmp
+                        else:
+                                readsize = 1024
+                        #reading data segment
+                        if (data==None):
+                                print('reading {}'.format(readsize))
                                 data = sock.recv(readsize)
-                                f.write(data)
-                                read = read + os.path.getsize(f.name)
-                                if ( not (read<size)):
-                                        f.close()
-                                        break
-                                else:
-                                        ts = time.time()
-                                        print('{2} -- tmpfile: {0} , expected: {1}'.format(os.path.getsize(f.name), size, datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')))
-                        return f
+                        else:
+                                data = data+sock.recv(readsize)
+                        read = read+readsize
+                return data
+        #private method
+        def readfile(self, sock, size, _suffix):
+                sock.settimeout(10)
+                f = tempfile.NamedTemporaryFile(suffix=_suffix)
+                while True:
+                        try:
+                                data = sock.recv(size)
+                        except :
+                                pass
+                        if not data:
+                                break
+                        print('x{0}x'.format(data))
+                        f.write(data)
+                        data = None
+                return (f, size - os.path.getsize(f.name))
 	def handle(self):
 		#waiting for client requests
 		self.serversock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
