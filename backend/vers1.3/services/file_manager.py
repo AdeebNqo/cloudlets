@@ -6,7 +6,7 @@ import hashlib
 
 class file_manager(object):
         def __init__(self, direc):
-                self.dir = direc
+                self.dir = os.getcwd()+os.sep+direc
                 if not os.path.exists(os.path.dirname(self.dir)):
                         os.makedirs(os.path.dirname(self.dir))
         def place(self, _file):

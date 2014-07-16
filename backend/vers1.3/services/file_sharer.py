@@ -10,6 +10,7 @@ import json
 from array import array
 import binascii
 from file_manager import file_manager
+import traceback
 
 class File(object):
         def __init__(self, _hash, owner, path, privacystate, filesize, accessusers):
@@ -21,38 +22,68 @@ class File(object):
                 self.allowed = accessusers
 
 class database(object):
-	def __init__(self):
-		try:
-			self.conn = sql.connect('filestore.db')
-			self.cursor  = self.conn.cursor()
-			self.cursor.execute('SELECT name FROM sqlite_temp_master WHERE type=\'table\';')
-			data = self.cursor.fetchall()
-			if (len(data)==0):
-				#if there are no tables
-				self.cursor.execute('create tables files(hash TEXT PRIMARY KEY NOT NULL, owner TEXT NOT NULL, path TEXT NOT NULL, private INT NOT NULL, filesize REAL NOT NULL , allowed TEXT)')
-				data = self.cursor.fetchall()
-				print('db log: {}'.format(data))
-		except sql.Error as err:
-			print('db log: '.format(err))
+        def __init__(self):
+                try:
+                        self.conn = sql.connect('filestore.db',check_same_thread=False)
+                        self.cursor  = self.conn.cursor()
+                        tables = []
+                        filesexist = False
+                        cursor = self.cursor.execute('SELECT name FROM sqlite_temp_master WHERE type=\'table\';')
+                        if (cursor.rowcount <= 0 ):
+                                self.conn.execute('CREATE TABLE files(hash TEXT PRIMARY KEY NOT NULL, owner TEXT NOT NULL, path TEXT NOT NULL, private INT NOT NULL, filesize REAL NOT NULL , allowed TEXT);')
+                                self.conn.commit()
+                except sql.Error as err:
+                        print('db log: '.format(err))
 	def getpublicfiles(self):
-	    self.cursor.execute('select * from files where private=?',0)
+	    self.cursor.execute('select path from files where private=?',(0,))
 	    result = self.cursor.fetchall()
-	    return result
+            paths = []
+            for row in result:
+                    paths.append(row[0])
+	    return paths
 	def uploadfile(self,_hash, owner, path, private, filesize, allowed):
-                print(private==True)
-		return True
+                priv = 1 if private else 0
+                try:
+                        allowed = '\'{}\''.format(allowed)
+                        owner = '\'{}\''.format(owner)
+                        path = '\'{}\''.format(path)
+                        _hash = '\'{}\''.format(_hash)
+                        print("INSERT INTO files (hash, owner, path, private, filesize, allowed)  values({0}, {1}, {2}, {3}, {4}, {5});".format(_hash, owner, path, priv, filesize, allowed))
+                        self.conn.execute("INSERT INTO files (hash, owner, path, private, filesize, allowed)  values({0}, {1}, {2}, {3}, {4}, {5});".format(_hash, owner, path, priv, filesize, allowed))
+                except Exception, err:
+                        print traceback.format_exc()
+                        return False
+                return True
 	def downloadfile(self,_hash):
-		self.cursor.execute('select * from files where hash=?',_hash)
-		result = self.cursor.fetchone()
-		print('result is {}'.format(result))
-		return result
+		self.cursor.execute('select hash, owner, path, private, filesize, allowed from files where hash=?',(_hash,))
+		result = self.cursor.fetchall()
+		vals = {}
+                for row in result:
+                        vals['hash'] = row[0]
+                        vals['owner'] = row[1]
+                        vals['path'] = row[2]
+                        vals['private'] = row[3]
+                        vals['filesize'] = row[4]
+                        vals['allowed'] = row[5]
+                        return vals
+		return None
+        def getaccessiblefiles(self, macaddress):
+                files = []
+                block = self.cursor.execute('select path, allowed from files where private=?',(0,))
+                for row in block:
+                        path = row[0]
+                        allowed = row[0]
+                        if allowed.contains(macaddress):
+                                files.append(path)
+                paths = self.getpublicfiles()
+                return list(set(files+paths))
 
 class file_sharer(service):
 	def __init__(self):
 		self.chosenport = -1 #port that will by the service
 		self.connectedclients = []
 		self.db = database()
-                self.fileman = file_manager('data_fileshare')
+                self.fileman = file_manager('data/')
 	@property
 	def description(self):
 		return 'File sharing between devices'
@@ -70,49 +101,59 @@ class file_sharer(service):
 	def getdescription(self):
 		return self.description
 	def handleclient(self, sock, addr):
-		#
+		connectstring = sock.recv(44)
+                macaddress = connectstring.split()[1]
+                print(connectstring)
+                sock.sendall('OK')
+
+                #
 		# first thing to do is to retrieve
 		# all publicly available files and share
 		# them --- broadcast them
 		#
-		while True:
-		    action = sock.recv(1024)
-		    splitaction = action.split()
-		    if (action.startswith('download')):
-		        print('download file')
-		        _hash = splitaction[1]
-		        fileinfo = self.db.downloadfile(_hash)
-		        #
-		        # 1. calculate filesize
-		        # 2. send 'download-request filesize'
-		        # 3. wait for 'ok'
-		        # 4. transfer file
-		        #
-		    elif (action.startswith('upload')):
-		        #request transfer from client
-		        print('upload file')
-		        sock.sendall('transfer')
+                accessiblefiles = self.db.getaccessiblefiles(macaddress))
+                #need to send files here
 
-		        metadatasize = int(splitaction[1])
-		        filesize = int(splitaction[2])
-		        #reading configuration
-		        metadata = (self.readmetadata(sock,metadatasize)) #sock.recv(metadatasize)
-                        sock.sendall('ok')
-                        #print('server log: received file metadata')
-                        print('received {}'.format(metadata))
-                        #print('expected {0} bytes, received {1} bytes'.format(metadatasize, sys.getsizeof(metadata)))
-                        meta = json.loads(metadata)
-                        name, ext = os.path.splitext(meta['filename'])
-                        f = self.readfile(sock, filesize, ext)
-                        f.flush()
-                        _hash, path = self.fileman.place(f)
-                        shutil.copy(f.name , '{2}{0}{1}'.format(name, ext, path))
-                        f.close()
-                        self.db.uploadfile(_hash, 'user1', '{2}{0}{1}'.format(name, ext, path), meta['private'], filesize, '') #(self,_hash, owner, path, private, filesize, allowed)
-                        print('server log: received file data')
-                        print('filename size {0}'.format(os.path.getsize('filename{}'.format(ext))))
-		        sock.sendall('ok')
-                        sock.settimeout(0) #make socket a blocking one again
+                #Continous handling of client
+		while True:
+                        try:
+                                action = sock.recv(1024)
+                                splitaction = action.split()
+                                if (action.startswith('download')):
+                                        print('download file')
+                                        _hash = splitaction[1]
+                                        fileinfo = self.db.downloadfile(_hash)
+
+                                        #
+                                        # 1. calculate filesize
+                                        # 2. send 'download-request filesize'
+                                        # 3. wait for 'ok'
+                                        # 4. transfer file
+                                        #
+                                elif (action.startswith('upload')):
+                                        #request transfer from client
+                                        print('upload file')
+                                        sock.sendall('transfer')
+                                        metadatasize = int(splitaction[1])
+                                        filesize = int(splitaction[2])
+                                        #reading configuration
+                                        metadata = (self.readmetadata(sock,metadatasize)) #sock.recv(metadatasize)
+                                        sock.sendall('ok')
+                                        meta = json.loads(metadata)
+                                        name, ext = os.path.splitext(meta['filename'])
+                                        f = self.readfile(sock, filesize, ext)
+                                        f.flush()
+                                        _hash, path = self.fileman.place(f)
+                                        shutil.copy(f.name , '{2}{0}{1}'.format(name, ext, path))
+                                        f.close()
+                                        result = self.db.uploadfile(_hash, 'user1', '{2}{0}{1}'.format(name, ext, path[:len(path)-1]), meta['private'], filesize, '') #(self,_hash, owner, path, private, filesize, allowed)
+                                        print('db says: {}'.format(result))
+                                        print('server log: received file data')
+                                        sock.sendall('ok')
+                                        sock.settimeout(60)
+                        except Exception as err:
+                                print traceback.format_exc()
+                                pass
 
         #private method
         def readmetadata(self,sock,size):

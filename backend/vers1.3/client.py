@@ -7,6 +7,7 @@ import socket
 import os
 import sys
 import binascii
+from uuid import getnode as get_mac
 
 sock = None
 
@@ -28,31 +29,41 @@ def on_message(mosq, obj, msg):
 	f.daemon = True
 	f.start()
 	f.join()
-	_file = open(os.getcwd()+os.sep+filename,'rb')
-	metadata = '''
-	  {
-	        "filename":\"'''+filename+'''\",
-	        "keepAlive":"2h",
-	        "private":true
-	  }
-	'''
-	msize = sys.getsizeof(metadata) #metadata size
-	fsize = os.path.getsize(os.getcwd()+os.sep+filename) #file size
-	sock.sendall('upload {0} {1}'.format(msize, fsize))
-	response = getdata(sock)
-	if (response=='transfer'):
-		sock.sendall(metadata)
-		data = getdata(sock)
-		if (data=='ok'):
-			#sock.sendall(_file.read(fsize))
-			for i in range(fsize):
-				sock.sendall(_file.read(1))
-			data = getdata(sock)
-			print('server says {}'.format(data))
 
-	else:
-		print('upload error: response from server was {}'.format(reponse))
-	_file.close()
+	#identifying oneself
+	mac = get_mac()
+	sock.sendall('connect {}'.format(mac))
+	result = sock.recv(1024)
+	#uploading file
+
+#	_file = open(os.getcwd()+os.sep+filename,'rb')
+#	metadata = '''
+#	  {
+#	        "filename":\"'''+filename+'''\",
+#	        "keepAlive":"2h",
+#	        "private":false
+#	  }
+#	'''
+#	msize = sys.getsizeof(metadata) #metadata size
+#	fsize = os.path.getsize(os.getcwd()+os.sep+filename) #file size
+#	sock.sendall('upload {0} {1}'.format(msize, fsize))
+#	response = getdata(sock)
+#	if (response=='transfer'):
+#		sock.sendall(metadata)
+#		data = getdata(sock)
+#		if (data=='ok'):
+#			#sock.sendall(_file.read(fsize))
+#			for i in range(fsize):
+#				sock.sendall(_file.read(1))
+#			data = getdata(sock)
+#			print('server says {}'.format(data))
+#
+#	else:
+#		print('upload error: response from server was {}'.format(reponse))
+#	_file.close()
+
+	#requesting file
+	#sock.sendall('download hash') #the hash is the identifier
 
 
 def on_subscribe(mosq, obj, mid, qos_list):
