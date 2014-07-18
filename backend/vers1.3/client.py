@@ -34,34 +34,41 @@ def on_message(mosq, obj, msg):
 	mac = get_mac()
 	sock.sendall('connect {}'.format(mac))
 	result = sock.recv(1024)
+	#request number of accessible files
+	sock.sendall('numfiles')
+	numfiles = sock.recv(1024)
+	print('there are {} available files'.format(numfiles))
+
+
 	#uploading file
+	print('now transferring file')
+	_file = open(os.getcwd()+os.sep+filename,'rb')
+	metadata = '''
+	  {
+	        "filename":\"'''+filename+'''\",
+	        "keepAlive":"2h",
+	        "private":false
+	  }
+	'''
+	msize = sys.getsizeof(metadata) #metadata size
+	fsize = os.path.getsize(os.getcwd()+os.sep+filename) #file size
+	sock.sendall('upload {0} {1}'.format(msize, fsize))
+	response = getdata(sock)
+	print('before transfer if statement')
+	if (response=='transfer'):
+		sock.sendall(metadata)
+		data = getdata(sock)
+		if (data=='ok'):
+			#sock.sendall(_file.read(fsize))
+			for i in range(fsize):
+				sock.sendall(_file.read(1))
+			data = getdata(sock)
+			print('server says {}'.format(data))
 
-#	_file = open(os.getcwd()+os.sep+filename,'rb')
-#	metadata = '''
-#	  {
-#	        "filename":\"'''+filename+'''\",
-#	        "keepAlive":"2h",
-#	        "private":false
-#	  }
-#	'''
-#	msize = sys.getsizeof(metadata) #metadata size
-#	fsize = os.path.getsize(os.getcwd()+os.sep+filename) #file size
-#	sock.sendall('upload {0} {1}'.format(msize, fsize))
-#	response = getdata(sock)
-#	if (response=='transfer'):
-#		sock.sendall(metadata)
-#		data = getdata(sock)
-#		if (data=='ok'):
-#			#sock.sendall(_file.read(fsize))
-#			for i in range(fsize):
-#				sock.sendall(_file.read(1))
-#			data = getdata(sock)
-#			print('server says {}'.format(data))
-#
-#	else:
-#		print('upload error: response from server was {}'.format(reponse))
-#	_file.close()
-
+	else:
+		print('upload error: response from server was {}'.format(response))
+	_file.close()
+	print('done sending file')
 	#requesting file
 	#sock.sendall('download hash') #the hash is the identifier
 

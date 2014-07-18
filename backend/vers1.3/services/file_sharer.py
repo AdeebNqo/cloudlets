@@ -1,7 +1,6 @@
 from super.service import service
 import socket
 import threading
-import sqlite3 as sql
 import sys
 import tempfile
 import shutil
@@ -11,6 +10,8 @@ from array import array
 import binascii
 from file_manager import file_manager
 import traceback
+
+from bsddb3 import db
 
 class File(object):
         def __init__(self, _hash, owner, path, privacystate, filesize, accessusers):
@@ -24,59 +25,71 @@ class File(object):
 class database(object):
         def __init__(self):
                 try:
-                        self.conn = sql.connect('filestore.db',check_same_thread=False)
-                        self.cursor  = self.conn.cursor()
-                        tables = []
-                        filesexist = False
-                        cursor = self.cursor.execute('SELECT name FROM sqlite_temp_master WHERE type=\'table\';')
-                        if (cursor.rowcount <= 0 ):
-                                self.conn.execute('CREATE TABLE files(hash TEXT PRIMARY KEY NOT NULL, owner TEXT NOT NULL, path TEXT NOT NULL, private INT NOT NULL, filesize REAL NOT NULL , allowed TEXT);')
-                                self.conn.commit()
-                except sql.Error as err:
+                        print('creating db')
+                        filename = 'filestore'
+                        self.dbtable = db.DB()
+                        self.dbtable.open(filename, None, db.DB_HASH, db.DB_THREAD | db.DB_DIRTY_READ | db.DB_CREATE)
+                        print('db created!')
+                        #self.cursor  = self.conn.cursor()
+                        #tables = []
+                        #filesexist = False
+                        #cursor = self.cursor.execute('SELECT name FROM sqlite_temp_master WHERE type=\'table\';')
+                        #if (cursor.rowcount <= 0 ):
+                        #        self.conn.execute('CREATE TABLE files(hash TEXT PRIMARY KEY NOT NULL, owner TEXT NOT NULL, path TEXT NOT NULL, private INT NOT NULL, filesize REAL NOT NULL , allowed TEXT);')
+                        #        self.conn.commit()
+                except db.DBNoSuchFileError as err:
+                        mydb = db.DB()
+                        mydb.open(filename, None, db.DB_HASH, db.DB_CREATE)
+                        mydb.close()
+                        self.__init__(self)
+                        print traceback.format_exc()
                         print('db log: '.format(err))
 	def getpublicfiles(self):
-	    self.cursor.execute('select path from files where private=?',(0,))
-	    result = self.cursor.fetchall()
-            paths = []
-            for row in result:
-                    paths.append(row[0])
-	    return paths
+	    #self.cursor.execute('select path from files where private=?',(0,))
+	    #result = self.cursor.fetchall()
+            #paths = []
+            #for row in result:
+                    #paths.append(row[0])
+	    #return paths
+            return True
 	def uploadfile(self,_hash, owner, path, private, filesize, allowed):
-                priv = 1 if private else 0
-                try:
-                        allowed = '\'{}\''.format(allowed)
-                        owner = '\'{}\''.format(owner)
-                        path = '\'{}\''.format(path)
-                        _hash = '\'{}\''.format(_hash)
-                        print("INSERT INTO files (hash, owner, path, private, filesize, allowed)  values({0}, {1}, {2}, {3}, {4}, {5});".format(_hash, owner, path, priv, filesize, allowed))
-                        self.conn.execute("INSERT INTO files (hash, owner, path, private, filesize, allowed)  values({0}, {1}, {2}, {3}, {4}, {5});".format(_hash, owner, path, priv, filesize, allowed))
-                except Exception, err:
-                        print traceback.format_exc()
-                        return False
+                print('uploading files to database')
+                #priv = 1 if private else 0
+                #try:
+        #                allowed = '\'{}\''.format(allowed)
+        #                owner = '\'{}\''.format(owner)
+        #                path = '\'{}\''.format(path)
+        #                _hash = '\'{}\''.format(_hash)
+        #                print("INSERT INTO files (hash, owner, path, private, filesize, allowed)  values({0}, {1}, {2}, {3}, {4}, {5});".format(_hash, owner, path, priv, filesize, allowed))
+        #                self.conn.execute("INSERT INTO files (hash, owner, path, private, filesize, allowed)  values({0}, {1}, {2}, {3}, {4}, {5});".format(_hash, owner, path, priv, filesize, allowed))
+        #        except Exception, err:
+        #                print traceback.format_exc()
+        #                return False
                 return True
 	def downloadfile(self,_hash):
-		self.cursor.execute('select hash, owner, path, private, filesize, allowed from files where hash=?',(_hash,))
-		result = self.cursor.fetchall()
-		vals = {}
-                for row in result:
-                        vals['hash'] = row[0]
-                        vals['owner'] = row[1]
-                        vals['path'] = row[2]
-                        vals['private'] = row[3]
-                        vals['filesize'] = row[4]
-                        vals['allowed'] = row[5]
-                        return vals
+		#self.cursor.execute('select hash, owner, path, private, filesize, allowed from files where hash=?',(_hash,))
+		#result = self.cursor.fetchall()
+		#vals = {}
+                #for row in result:
+                #        vals['hash'] = row[0]
+                #        vals['owner'] = row[1]
+                #        vals['path'] = row[2]
+                #        vals['private'] = row[3]
+                #        vals['filesize'] = row[4]
+                #        vals['allowed'] = row[5]
+                #        return vals
 		return None
         def getaccessiblefiles(self, macaddress):
-                files = []
-                block = self.cursor.execute('select path, allowed from files where private=?',(0,))
-                for row in block:
-                        path = row[0]
-                        allowed = row[0]
-                        if allowed.contains(macaddress):
-                                files.append(path)
-                paths = self.getpublicfiles()
-                return list(set(files+paths))
+                #files = []
+                #block = self.cursor.execute('select path, allowed from files where private=?',(0,))
+                #for row in block:
+                #        path = row[0]
+                #        allowed = row[0]
+                #        if allowed.contains(macaddress):
+                #                files.append(path)
+                #paths = self.getpublicfiles()
+                #return list(set(files+paths))
+                return 'True'
 
 class file_sharer(service):
 	def __init__(self):
@@ -111,8 +124,11 @@ class file_sharer(service):
 		# all publicly available files and share
 		# them --- broadcast them
 		#
-                accessiblefiles = self.db.getaccessiblefiles(macaddress))
-                #need to send files here
+                accessiblefiles = self.db.getaccessiblefiles(macaddress)
+                numfiles = sock.recv(1024)
+                sock.sendall('{}'.format(len(accessiblefiles)))
+                for _file in accessiblefiles:
+                        print(_file)
 
                 #Continous handling of client
 		while True:
@@ -134,6 +150,7 @@ class file_sharer(service):
                                         #request transfer from client
                                         print('upload file')
                                         sock.sendall('transfer')
+                                        print('sent transfer string')
                                         metadatasize = int(splitaction[1])
                                         filesize = int(splitaction[2])
                                         #reading configuration
@@ -148,9 +165,9 @@ class file_sharer(service):
                                         f.close()
                                         result = self.db.uploadfile(_hash, 'user1', '{2}{0}{1}'.format(name, ext, path[:len(path)-1]), meta['private'], filesize, '') #(self,_hash, owner, path, private, filesize, allowed)
                                         print('db says: {}'.format(result))
-                                        print('server log: received file data')
                                         sock.sendall('ok')
                                         sock.settimeout(60)
+                                        print('server log: received file data')
                         except Exception as err:
                                 print traceback.format_exc()
                                 pass
