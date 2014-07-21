@@ -38,39 +38,46 @@ def on_message(mosq, obj, msg):
 	sock.sendall('numfiles')
 	numfiles = sock.recv(1024)
 	print('there are {} available files'.format(numfiles))
+	sock.sendall('OK')
 
+	_files = []
+	for i in range(int(numfiles)):
+		filedetails = sock.recv(1024)
+		sock.sendall('OK')
+		print('received file {0}'.format(filedetails))
+		_files.append(filedetails.split()[1])
 
 	#uploading file
-	print('now transferring file')
-	_file = open(os.getcwd()+os.sep+filename,'rb')
-	metadata = '''
-	  {
-	        "filename":\"'''+filename+'''\",
-	        "keepAlive":"2h",
-	        "private":false
-	  }
-	'''
-	msize = sys.getsizeof(metadata) #metadata size
-	fsize = os.path.getsize(os.getcwd()+os.sep+filename) #file size
-	sock.sendall('upload {0} {1}'.format(msize, fsize))
-	response = getdata(sock)
-	print('before transfer if statement')
-	if (response=='transfer'):
-		sock.sendall(metadata)
-		data = getdata(sock)
-		if (data=='ok'):
-			#sock.sendall(_file.read(fsize))
-			for i in range(fsize):
-				sock.sendall(_file.read(1))
-			data = getdata(sock)
-			print('server says {}'.format(data))
-
-	else:
-		print('upload error: response from server was {}'.format(response))
-	_file.close()
-	print('done sending file')
+#	print('now transferring file')
+#	_file = open(os.getcwd()+os.sep+filename,'rb')
+#	metadata = '''
+#	  {
+#	        "filename":\"'''+filename+'''\",
+#	        "keepAlive":"2h",
+#	        "private":false
+#	  }
+#	'''
+#	msize = sys.getsizeof(metadata) #metadata size
+#	fsize = os.path.getsize(os.getcwd()+os.sep+filename) #file size
+#	sock.sendall('upload {0} {1}'.format(msize, fsize))
+#	response = getdata(sock)
+#	print('before transfer if statement')
+#	if (response=='transfer'):
+#		sock.sendall(metadata)
+#		data = getdata(sock)
+#		if (data=='ok'):
+#			#sock.sendall(_file.read(fsize))
+#			for i in range(fsize):
+#				sock.sendall(_file.read(1))
+#			data = getdata(sock)
+#			print('server says {}'.format(data))
+#
+#	else:
+#		print('upload error: response from server was {}'.format(response))
+#	_file.close()
+#	print('done sending file')
 	#requesting file
-	#sock.sendall('download hash') #the hash is the identifier
+	#sock.sendall('download {}'.format(_files[0])) #the hash is the identifier
 
 
 def on_subscribe(mosq, obj, mid, qos_list):
