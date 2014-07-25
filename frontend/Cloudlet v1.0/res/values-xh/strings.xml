@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Cloudlet</string>
+    <string name="hello_world">Mholo lizwe!</string>
+    <string name="action_settings">Izilungiselelo</string>
+    <string name="connect_text">iyakhonekta kwi-cloudlet</string>
+
+</resources>
