@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<org.zeroxlab.widget.AnimationLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/animation_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+    <LinearLayout
+        android:id="@id/animation_layout_sidebar"
+        android:layout_width="200dip"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            >
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:src="@drawable/icon"
+                />
+            <Button
+                android:id="@+id/sidebar_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sidebar Button"
+                />
+        </LinearLayout>
+        <ListView
+            android:id="@+id/sidebar_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            />
+    </LinearLayout>
+
+    <!-- To make LinearLayout clickable to trigger onContentTouchedWhenOpening()  -->
+    <LinearLayout
+        android:id="@id/animation_layout_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#999999"
+        android:clickable="true"
+        android:orientation="vertical"
+        >
+        <Button android:id="@+id/content_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Content Button"
+            android:onClick="onClickContentButton"
+            />
+        <TextView android:id="@+id/text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="The Answer to Life, the Universe, and Everything -- is 42"
+            android:textColor="#000000"
+            />
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/icon"
+            />
+    </LinearLayout>
+</org.zeroxlab.widget.AnimationLayout>
