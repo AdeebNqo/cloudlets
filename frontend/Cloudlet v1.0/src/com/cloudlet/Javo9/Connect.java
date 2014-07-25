@@ -1,6 +1,8 @@
 package com.cloudlet.Javo9;
 
-//import com.example.cloudlet.R;
+
+
+import com.example.cloudlet.R;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -12,6 +14,6 @@ public class Connect extends Activity
 	{
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
-		setContentView(com.example.cloudlet.R.layout.connect_screen);
+		setContentView(R.layout.connect_screen);
 	}
 }
