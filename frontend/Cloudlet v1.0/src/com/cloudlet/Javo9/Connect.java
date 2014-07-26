@@ -12,6 +12,7 @@ import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import com.example.cloudlet.R;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -48,6 +49,7 @@ public class Connect extends Activity
 	}
 	
 	//Class to connect to mqtt broker on the background
+	@SuppressLint("NewApi")
 	class Connector extends AsyncTask<Void, Void, Integer>{
 
 		@Override

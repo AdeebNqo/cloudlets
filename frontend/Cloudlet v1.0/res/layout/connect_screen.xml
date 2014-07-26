@@ -13,7 +13,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="0.65"
-            android:src="@drawable/male" />
+            android:src="@drawable/connect_icon" />
 
         <TextView
             android:id="@+id/statustext"
