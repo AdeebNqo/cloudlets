@@ -1,6 +1,5 @@
 package com.cloudlet.Javo9;
 
-
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -17,8 +16,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
-
 public class Connect extends Activity 
 {
 	
@@ -55,21 +54,28 @@ public class Connect extends Activity
 		@Override
 		protected Integer doInBackground(Void... params) {
 			try {
+				Log.v("Cloudlet", "Atempyinh to vonnect");
 				sampleClient = new MqttClient(brokerAddress, deviceType, persistence);
 				MqttConnectOptions connOpts = new MqttConnectOptions();
 	            connOpts.setCleanSession(true);
+	            sampleClient.connect();
+	            Log.v("Cloudlet", "Connected!");
 	            sampleClient.subscribe("client/connect"); //client connection here
 	            sampleClient.subscribe("client/disconnect"); //client disconnects here
 	            sampleClient.subscribe("server/connecteduser"); //connected users will be broadcasted here
 	            sampleClient.subscribe("servers/service"); //requested service list will be broadcasted here
 	            
+	            Log.v("Cloudlet", "subscribed to channnels!");
 	            //sending "connect MAC-address" string
 	            String macaddress = info.getMacAddress();
 	            String connectString = "connect "+macaddress;
 	            MqttMessage message = new MqttMessage(connectString.getBytes());
 	            sampleClient.publish("client/connect", message);
+	            Log.v("Cloudlet", "published cont string!");
 	            return 0;
 			} catch (MqttException e) {
+				Log.v("Cloudlet", e.getMessage());
+				Log.v("Cloudlet", "caused by "+e.getCause());
 				e.printStackTrace();
 				return 1;
 			}
