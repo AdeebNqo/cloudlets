@@ -37,7 +37,7 @@ class connector(object):
 	def on_subscribe(self, mosq, obj, mid, qos_list):
 		print("Subscribe with mid "+str(mid)+" received.")
 	def on_unsubscribe(self, mosq, obj, mid):
-		print("Unsubscribe with mid "+str(mid)+" received.")	
+		print("Unsubscribe with mid "+str(mid)+" received.")
 	#
 	# Connection callback
 	# Used for registering to certain

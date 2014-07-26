@@ -10,7 +10,7 @@ from array import array
 import binascii
 from file_manager import file_manager
 import traceback
-
+import struct
 import MySQLdb
 
 class File(object):
@@ -102,11 +102,21 @@ class file_sharer(service):
 		return self.host
 	def getdescription(self):
 		return self.description
+        def getUTF(self, val):
+                return ''.join(self.writeUTF([], val))
+        def writeUTF(self, data, val):
+                utf8 = val.encode('utf-8')
+                length = len(utf8)
+                data.append(struct.pack('!H', length))
+                format = '!{}s'.format(str(length))
+                data.append(struct.pack(format, utf8))
+                return data
 	def handleclient(self, sock, addr):
 		connectstring = sock.recv(44)
                 macaddress = connectstring.split()[1]
                 print(connectstring)
-                sock.sendall('OK')
+                sock.sendall(self.getUTF('OK'))
+                print('sent OK')
 
                 #
 		# first thing to do is to retrieve
@@ -115,12 +125,15 @@ class file_sharer(service):
 		#
                 accessiblefiles = self.db.getaccessiblefiles(macaddress)
                 numfiles = sock.recv(1024)
-                sock.sendall('{}'.format(len(accessiblefiles)))
+                print('client wants to know num of accessible files.')
+                sock.sendall(self.getUTF('{}'.format(len(accessiblefiles))))
                 reply = sock.recv(1024)
+                print('client says {}'.format(reply))
                 if (reply=='OK'):
+                        print('providing accessible files')
                         for _file in accessiblefiles:
                                 (_hash, path) = _file
-                                sock.sendall('file {0} {1}'.format(_hash, path))
+                                sock.sendall(self.getUTF('file {0} {1}'.format(_hash, path)))
                                 reply = sock.recv(1024) #if not 'OK', consider resending
 
                 #Continous handling of client
@@ -212,7 +225,7 @@ class file_sharer(service):
 	def handle(self):
 		#waiting for client requests
 		self.serversock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.serversock.bind(('127.0.0.1', self.chosenport))
+		self.serversock.bind(('10.10.0.5', self.chosenport))
 		self.serversock.listen(1)
 		while True:
 			conn, addr = self.serversock.accept()
