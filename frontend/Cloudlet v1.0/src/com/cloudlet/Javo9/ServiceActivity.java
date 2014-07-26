@@ -81,10 +81,10 @@ public class ServiceActivity extends Activity{
 					Log.d("Cloudlet", "abt 2requested num files");
 					os.writeUTF("numfiles");
 					Log.d("Cloudlet", "requested num files");
-					int numFiles = is.readInt();
+					int numFiles = Integer.parseInt(is.readUTF());
 					os.writeUTF("OK");
 					
-					
+					Log.d("Cloudlet", "before loop");
 					for (int i = 0; i < numFiles; ++i)
 					{
 						String fileDetails = is.readUTF();
