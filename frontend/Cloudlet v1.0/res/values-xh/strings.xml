@@ -7,4 +7,5 @@
     <string name="connect_text">iyakhonekta kwi-cloudlet</string>
     <string name="connectionfailed_text">ayikwazi ukukhonekta kwi-cloudlet</string>
 	<string name="title_activity_service">IIntsebenziso</string>
+	<string name="service_text">IIntsebenziso</string>
 </resources>

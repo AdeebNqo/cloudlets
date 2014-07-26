@@ -6,18 +6,18 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
-import com.example.cloudlet.R;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
+
+import com.example.cloudlet.R;
 
 public class Connect extends Activity 
 {
@@ -36,6 +36,8 @@ public class Connect extends Activity
 	
 	//ui vars
 	TextView statustext;
+	
+	Client myclient = Client.getInstance();
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
@@ -81,12 +83,12 @@ public class Connect extends Activity
 				return 1;
 			}
 		}
-		
+
 	    @Override
 	    protected void onPostExecute(Integer connectStatus) {
 	    	if (connectStatus==0){
-	    		ServiceActivity.mqttClient = mqttClient;
 	    		Intent intent = new Intent(Connect.this, ServiceActivity.class);
+	    		myclient.setMqttClient(mqttClient);
 	        	startActivity(intent);
 	    	}
 	    	else{
