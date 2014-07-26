@@ -27,7 +27,7 @@ public class Connect extends Activity
 	WifiInfo info = null;
 	
 	//mqtt broker related vars
-	private String brokerIP = "10.10.0.2";
+	private String brokerIP = "10.10.0.5";
 	private int brokerPort = 9999;
 	private String brokerAddress = "tcp://"+brokerIP+":"+brokerPort;
 	private String deviceType = "client";
@@ -46,7 +46,6 @@ public class Connect extends Activity
 		statustext = (TextView) findViewById(R.id.statustext);
 		manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		info = manager.getConnectionInfo();
-		
 		new Connector().execute();
 	}
 	
@@ -66,7 +65,7 @@ public class Connect extends Activity
 	            mqttClient.subscribe("client/connect"); //client connection here
 	            mqttClient.subscribe("client/disconnect"); //client disconnects here
 	            mqttClient.subscribe("server/connecteduser"); //connected users will be broadcasted here
-	            mqttClient.subscribe("servers/service"); //requested service list will be broadcasted here
+	            mqttClient.subscribe("server/service"); //requested service list will be broadcasted here
 	            
 	            //Log.v("Cloudlet", "subscribed to channnels!");
 	            //sending "connect MAC-address" string
@@ -89,6 +88,7 @@ public class Connect extends Activity
 	    	if (connectStatus==0){
 	    		Intent intent = new Intent(Connect.this, ServiceActivity.class);
 	    		myclient.setMqttClient(mqttClient);
+	    		myclient.setInfo(info);
 	        	startActivity(intent);
 	    	}
 	    	else{
