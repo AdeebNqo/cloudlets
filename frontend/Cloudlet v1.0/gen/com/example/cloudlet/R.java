@@ -216,39 +216,43 @@ public final class R {
         public static final int connect_icon=0x7f020005;
         public static final int default_icon=0x7f020006;
         public static final int ic_launcher=0x7f020007;
-        public static final int top_shadow=0x7f020008;
+        public static final int selectable_background_cardbank=0x7f020008;
+        public static final int top_shadow=0x7f020009;
     }
     public static final class id {
-        public static final int ScrollView1=0x7f070005;
-        public static final int action_settings=0x7f07000f;
+        public static final int ScrollView1=0x7f070007;
+        public static final int action_settings=0x7f070011;
         public static final int animation_layout_content=0x7f070001;
         public static final int animation_layout_sidebar=0x7f070000;
-        public static final int cardContent=0x7f07000b;
+        public static final int cardContent=0x7f07000d;
         public static final int cardsview=0x7f070002;
-        public static final int footer=0x7f070009;
-        public static final int imageView1=0x7f070007;
-        public static final int listView=0x7f070003;
-        public static final int placeholder=0x7f07000a;
-        public static final int stackContainer=0x7f07000e;
-        public static final int stackRoot=0x7f07000c;
-        public static final int stackTitle=0x7f07000d;
-        public static final int statustext=0x7f070008;
-        public static final int sticky=0x7f070004;
-        public static final int tableLayout=0x7f070006;
+        public static final int description=0x7f070004;
+        public static final int footer=0x7f07000b;
+        public static final int imageView1=0x7f070009;
+        public static final int listView=0x7f070005;
+        public static final int placeholder=0x7f07000c;
+        public static final int stackContainer=0x7f070010;
+        public static final int stackRoot=0x7f07000e;
+        public static final int stackTitle=0x7f07000f;
+        public static final int statustext=0x7f07000a;
+        public static final int sticky=0x7f070006;
+        public static final int tableLayout=0x7f070008;
+        public static final int title=0x7f070003;
     }
     public static final class layout {
         public static final int activity_main=0x7f030000;
         public static final int activity_service=0x7f030001;
-        public static final int cards_view=0x7f030002;
-        public static final int cards_view_multicolumn=0x7f030003;
-        public static final int connect_screen=0x7f030004;
-        public static final int footer_fragment=0x7f030005;
-        public static final int header=0x7f030006;
-        public static final int item_card=0x7f030007;
-        public static final int item_card_empty_first=0x7f030008;
-        public static final int item_card_empty_last=0x7f030009;
-        public static final int item_play_card_empty_first=0x7f03000a;
-        public static final int item_stack=0x7f03000b;
+        public static final int card_ex=0x7f030002;
+        public static final int cards_view=0x7f030003;
+        public static final int cards_view_multicolumn=0x7f030004;
+        public static final int connect_screen=0x7f030005;
+        public static final int footer_fragment=0x7f030006;
+        public static final int header=0x7f030007;
+        public static final int item_card=0x7f030008;
+        public static final int item_card_empty_first=0x7f030009;
+        public static final int item_card_empty_last=0x7f03000a;
+        public static final int item_play_card_empty_first=0x7f03000b;
+        public static final int item_stack=0x7f03000c;
     }
     public static final class menu {
         public static final int main=0x7f090000;
