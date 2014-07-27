@@ -91,6 +91,7 @@ public class ServiceActivity extends Activity{
 						Log.d("Cloudlet", fileDetails);
 						os.writeUTF("OK");
 					}
+					Log.d("Cloudlet", "after loop");
 					
 					return 0;
 				}

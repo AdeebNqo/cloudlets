@@ -214,10 +214,8 @@ public final class R {
         public static final int card_background_shadow=0x7f020003;
         public static final int card_shadow=0x7f020004;
         public static final int connect_icon=0x7f020005;
-        public static final int default_icon=0x7f020006;
-        public static final int ic_launcher=0x7f020007;
-        public static final int selectable_background_cardbank=0x7f020008;
-        public static final int top_shadow=0x7f020009;
+        public static final int selectable_background_cardbank=0x7f020006;
+        public static final int top_shadow=0x7f020007;
     }
     public static final class id {
         public static final int ScrollView1=0x7f070007;
@@ -305,13 +303,30 @@ public final class R {
         <item name="android:fontFamily">sans-serif-thin</item>
     </style>
     
+
+          <style name="CardTitle">
+        <item name="android:id">@android:id/title</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:textColor">@color/text_light</item>
+        <item name="android:fontFamily">sans-serif-thin</item>
+    </style>
+    
          */
         public static final int CardText=0x7f060000;
+        /**  <item name="android:fontFamily">sans-serif-light</item>
+         */
         public static final int CardTitle=0x7f060002;
+        /** <item name="android:fontFamily">sans-serif</item>
+         */
         public static final int CardTitleBold=0x7f060003;
         public static final int Item=0x7f060005;
         public static final int Item_Sticky=0x7f060007;
         public static final int Item_Top=0x7f060006;
+        /** <item name="android:fontFamily">sans-serif</item>
+         */
         public static final int StackTitle=0x7f060004;
     }
 }
