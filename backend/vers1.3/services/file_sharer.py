@@ -36,8 +36,7 @@ class database(object):
             paths = []
             for row in result:
                     paths.append((row[0], row[1]))
-                    return paths
-            return None
+            return paths
 	def uploadfile(self,_hash, owner, path, private, filesize, allowed):
                 print('uploading files to database')
                 priv = 1 if private else 0
@@ -126,6 +125,7 @@ class file_sharer(service):
 		# them --- broadcast them
 		#
                 accessiblefiles = self.db.getaccessiblefiles(macaddress)
+                print('accessiblefiles: {}'.format(accessiblefiles))
                 numfiles = sock.recv(1024)
                 print('client wants to know num of accessible files.')
                 sock.sendall(self.getUTF('{}'.format(len(accessiblefiles))))
@@ -170,18 +170,19 @@ class file_sharer(service):
                                 elif (action.startswith('upload')):
                                         #request transfer from client
                                         print('upload file')
-                                        sock.sendall('transfer')
+                                        sock.sendall(self.getUTF('transfer'))
                                         print('sent transfer string')
                                         metadatasize = int(splitaction[1])
                                         filesize = int(splitaction[2])
                                         #reading configuration
                                         metadata = (self.readmetadata(sock,metadatasize)) #sock.recv(metadatasize)
-                                        sock.sendall('ok')
+                                        sock.sendall(self.getUTF('OK'))
+                                        print('client sent metadata {}'.format(metadata))
                                         meta = json.loads(metadata)
                                         name, ext = os.path.splitext(meta['filename'])
                                         f = self.readfile(sock, filesize, ext)
                                         f.flush()
-                                        _hash, path = self.fileman.place(f)
+                                        _hash, path = self.fileman.place(f,meta['filename'])
                                         shutil.copy(f.name , '{2}{0}{1}'.format(name, ext, path))
                                         f.close()
                                         result = self.db.uploadfile(_hash, 'user1', '{2}{0}{1}'.format(name, ext, path[:len(path)-1]), meta['private'], filesize, '') #(self,_hash, owner, path, private, filesize, allowed)
@@ -222,12 +223,13 @@ class file_sharer(service):
         #private method
         def readfile(self, sock, size, _suffix):
                 sock.settimeout(5)
-                f = tempfile.NamedTemporaryFile(suffix=_suffix)
+                f = tempfile.NamedTemporaryFile(suffix=_suffix, bufsize=1024)
                 while True:
+
                         try:
                                 data = sock.recv(size)
                         except :
-                                pass
+                                data = None
                         if not data:
                                 break
                         f.write(data)

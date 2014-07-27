@@ -4,8 +4,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Socket;
 import java.util.LinkedList;
 
@@ -18,10 +18,12 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -33,11 +35,26 @@ public class FileListActivity extends Activity {
 	private DataOutputStream output = null;
 	private DataInputStream input = null;
 	
+	private Button uploadButton;
+	private Button showLocalFiles;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_file_list);
 
+		uploadButton = (Button)findViewById(R.id.upload);
+		showLocalFiles = (Button)findViewById(R.id.viewlocalfiles);
+		
+		uploadButton.setOnClickListener(new OnClickListener(){
+
+			@Override
+			public void onClick(View v) {
+				new FileUploader().execute();
+			}
+			
+		});
+		
+		
 		socket = FileSharingDB.getInstance().getSocket();
 		input = FileSharingDB.getInstance().getDataInputStream();
 		output = FileSharingDB.getInstance().getDataOutputStream();
@@ -110,6 +127,54 @@ public class FileListActivity extends Activity {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				return null;
+			}
+			return null;
+		}
+	}
+	
+	class FileUploader extends AsyncTask<Void, Void, String>{
+
+		String finalresponse;
+		@Override
+		protected void onPostExecute(String result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+			Toast.makeText(getApplicationContext(), "uploaded file", Toast.LENGTH_LONG).show();
+		}
+		
+		@Override
+		protected String doInBackground(Void... params) {
+			InputStream fileis = getResources().openRawResource(R.drawable.app_icon);
+			String metadata = "{"
+						 +       "\"filename\": \"app_icon.jpg\","
+						 +       "\"keepAlive\":\"2h\","
+						 +       "\"private\":false"
+						 + "}";
+			int streamsize = 12771;
+			try {
+				Log.d("Cloudlet", "Uploading file");
+				output.writeUTF("upload "+metadata.getBytes().length+" "+streamsize);
+				String transferresponse = input.readUTF();
+				output.write(metadata.getBytes());
+				Log.d("Cloudlet", "Waiting to for response after metadata is sent");
+				String response = input.readUTF();
+				Log.d("Cloudlet", "got server response");
+				int sentbytes = 0;
+				if (response.equals("OK")){
+					Log.d("Cloudlet", "Server okayed upload");
+					byte[] buffer = new byte[1024];
+					int count =0;
+					while ((count = fileis.read(buffer)) >= 0){
+						 sentbytes+=count;
+					     output.write(buffer, 0, count);
+					}
+				}
+				Log.d("Cloudlet", "Sent "+sentbytes+"bytes");
+				finalresponse = input.readUTF();
+				Log.d("Cloudlet", "Server says "+finalresponse);
+				
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 			return null;
 		}

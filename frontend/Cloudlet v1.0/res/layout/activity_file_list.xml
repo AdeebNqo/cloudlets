@@ -1,4 +1,4 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container"
     android:layout_width="match_parent"
@@ -6,10 +6,32 @@
     tools:context="com.cloudlet.Javo9.FileListActivity"
     tools:ignore="MergeRootFrame" >
 
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="3"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/viewlocalfiles"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ViewLocalFiles" />
+
+        <Button
+            android:id="@+id/upload"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Upload" />
+    </LinearLayout>
+
     <ListView
         android:id="@+id/filelist"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent" >
+        android:layout_height="352dp"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_weight="1" >
     </ListView>
 
-</FrameLayout>
+</RelativeLayout>
