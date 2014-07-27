@@ -12,6 +12,8 @@ from file_manager import file_manager
 import traceback
 import struct
 import MySQLdb
+import StringIO
+import math
 
 class File(object):
         def __init__(self, _hash, owner, path, privacystate, filesize, accessusers):
@@ -129,17 +131,22 @@ class file_sharer(service):
                 sock.sendall(self.getUTF('{}'.format(len(accessiblefiles))))
                 reply = sock.recv(1024)
                 print('client says {}'.format(reply))
-                if (reply=='OK'):
+                if (reply.endswith('OK')):
                         print('providing accessible files')
                         for _file in accessiblefiles:
                                 (_hash, path) = _file
+                                print('sending {} to client.'.format((self.getUTF('file {0} {1}'.format(_hash, path)))))
                                 sock.sendall(self.getUTF('file {0} {1}'.format(_hash, path)))
                                 reply = sock.recv(1024) #if not 'OK', consider resending
-
+                print("waiting for request from client...")
                 #Continous handling of client
 		while True:
                         try:
                                 action = sock.recv(1024)
+                                mybuffer = StringIO.StringIO(action)
+                                mybuffer.read(2)
+                                action = mybuffer.read()
+                                print('client says {}'.format(action))
                                 splitaction = action.split()
                                 if (action.startswith('download')):
                                         print('download file')
@@ -148,10 +155,14 @@ class file_sharer(service):
                                         print('client requesting {}'.format(fileinfo))
                                 	print('now transferring file')
                                 	_file = open(fileinfo['path'],'rb')
-                                	sock.sendall('downloadload {0}'.format(fileinfo['filesize']))
+                                        fsize = fileinfo['filesize']
+                                	sock.sendall(self.getUTF('download {0}'.format(fsize)))
                                 	reply= sock.recv(1024)
-                                        if ('reply'):
-                        			for i in range(fsize):
+                                        mybuffer = StringIO.StringIO(reply)
+                                        mybuffer.read(2)
+                                        reply = mybuffer.read()
+                                        if (reply=='OK'):
+                        			for i in range(int(math.floor(fsize))):
                         				sock.sendall(_file.read(1))
                         			data = sock.recv(100)
                         			print('client says {}'.format(data))

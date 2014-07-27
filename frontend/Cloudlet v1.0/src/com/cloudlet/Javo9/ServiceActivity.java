@@ -3,6 +3,7 @@ package com.cloudlet.Javo9;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
+import java.util.LinkedList;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
@@ -12,6 +13,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -60,6 +62,26 @@ public class ServiceActivity extends Activity{
     class ConnectToService extends AsyncTask<String, Void, Integer>
     {
 
+		LinkedList<String> files = new LinkedList<String>();
+		Socket socket = null;
+		DataInputStream is;
+		DataOutputStream os;
+		
+    	@Override
+		protected void onPostExecute(Integer result) {
+			super.onPostExecute(result);
+			Intent intent = new Intent(ServiceActivity.this, FileListActivity.class);
+			int size = files.size();
+			intent.putExtra("numfiles", size);
+			for (int i=0; i<size; ++i){
+				intent.putExtra("file"+i,files.get(i));
+				Log.d("Cloudlet", "srvc actvty, added "+files.get(i));
+			}
+			FileSharingDB.getInstance().setSocket(socket);
+			FileSharingDB.getInstance().setDataInputStream(is);
+			FileSharingDB.getInstance().setDataOutputStream(os);
+			startActivity(intent);
+    	}
 		@Override
 		protected Integer doInBackground(String... params) {
 			try
@@ -69,26 +91,27 @@ public class ServiceActivity extends Activity{
 					ip = "10.10.0.5";
 				
 				String port = params[1];
-				Socket socket = new Socket(ip, Integer.parseInt(port));
-				DataInputStream is = new DataInputStream(socket.getInputStream());
-				DataOutputStream os = new DataOutputStream(socket.getOutputStream());
+				socket = new Socket(ip, Integer.parseInt(port));
+				is = new DataInputStream(socket.getInputStream());
+				os = new DataOutputStream(socket.getOutputStream());
 				String macAddr = Client.getInstance().info.getMacAddress();
 				os.writeUTF("connect " + macAddr);
 				
 				Log.d("Cloudlet", "abt 2rid connect response");
 				if(is.readUTF().equals("OK"))
 				{
-					Log.d("Cloudlet", "abt 2requested num files");
 					os.writeUTF("numfiles");
 					Log.d("Cloudlet", "requested num files");
 					int numFiles = Integer.parseInt(is.readUTF());
 					os.writeUTF("OK");
 					
-					Log.d("Cloudlet", "before loop");
+					
+					Log.d("Cloudlet", "available files: "+numFiles);
 					for (int i = 0; i < numFiles; ++i)
 					{
+						Log.d("Cloudlet", "attempting to read file details");
 						String fileDetails = is.readUTF();
-						Log.d("Cloudlet", fileDetails);
+						files.add(fileDetails);
 						os.writeUTF("OK");
 					}
 					Log.d("Cloudlet", "after loop");
