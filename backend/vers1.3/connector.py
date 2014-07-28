@@ -73,7 +73,7 @@ class connector(object):
 			vals = msg.payload.split()
 			person = user(vals[0],vals[1])
 			self.peopleman.connect(person)
-			print('client connected')
+			print('client connected {}'.format(vals[1]))
 		elif (msg.topic=='client/disconnect'):
 			print('client disconnected')
 			vals = msg.payload.split()
