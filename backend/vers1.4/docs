@@ -1,0 +1,25 @@
+Plugin development
+==================
+
+The services all should be under the folder
+'/services/'. When you create a new service
+called 'myservice' for instance. Create a folder
+under the services folder that looks like this:
+	myservice
+		->description.txt
+		->__init__.py
+
+The description file is a description of your
+service. It also contains your contact information.
+Here's a sample a description file:
+
+	Name=myservice
+	CloudletV=1.4
+	Description=A test service that prints hello.
+	Authors=Andile Uyeva <uyeva@linuxanyone.com>
+	Copyright=Copyright © 2007 Andile Uyeva
+	Website=http://andileuyeva.com/
+
+These fields are the only ones allowed, all others will be
+ignored. Also, it is good practice to name your service folder
+with the same name of the service for the users' convience.
