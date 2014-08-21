@@ -1,3 +1,9 @@
+ToDo:
+
+[ ] Add File Sharing service
+[ ] Create event listener to catch client (dis)connects
+[ ] Create data storage and compression handlers
+
 Plugin development
 ==================
 
@@ -25,11 +31,22 @@ ignored. Also, it is good practice to name your service folder
 with the same name of the service for the users' convience.
 Each service should have two methods:
 
-	1. start()
+	1. start(mqttbroker)
 	2. stop()
 
 
 Cloudlet Connect Protocol
 ==========================
+
+There are four channels to consider when trying to communicate
+between a client and the broker.
+
+	1. server/connectedusers - Used by clients to request list
+	of connected users
+	2. server/connecteduser - Used by broker to send connected
+	users one by one.
+	3. client/servicelist - Used by clients to request list
+	of available services
+	4. server/service - Used by broker to send available services
 
 

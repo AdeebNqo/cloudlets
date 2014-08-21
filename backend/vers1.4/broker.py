@@ -15,13 +15,19 @@ import handler
 mqttserver = None
 conhandler = None
 
-def on_subscribe(mosq, obj, mid, qos_list):
+def on_subscribe(mosq, obj, qos_list):
 	print('hello')
-def on_unsubscribe(mosq, obj, mid):
+def on_unsubscribe(mosq, obj):
 	print('hi')
 def on_message(mosq, obj, msg):
-	if (msg.topic=='client/connect'):
-			print(msg.payload)
+	if (msg.topic=='server/connectedusers'):
+		#broadcast available users
+		for user in conhandler.get_connectedusers:
+			mqttserver.publish('server/connecteduser',user,1)
+	elif (msg.topic=='client/servicelist'):
+		#broadcast available services
+		for servicedetail in conhandler.get_servicedetails():
+			mqttserver.publish('server/service',servicedetail,1)
 def on_connect(mosq, rc):
 	if (rc==0):
 		#
@@ -30,6 +36,8 @@ def on_connect(mosq, rc):
 		print('everything is amazing')
 		global conhandler
 		conhandler = handler.handler(mqttserver)
+		mqttserver.subscribe('server/connectedusers',1)
+		mqttserver.subscribe('server/connectedusers',1)
 	elif (rc==1):
 		raise Exception('Mosquitto error: Unacceptable protocol version')
 	elif (rc==2):

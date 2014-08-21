@@ -23,6 +23,8 @@ class service(object):
 		self.website = website
 	def add_module(self,module):
 		self.module = module
+	def __str__(self):
+		return '{0};{1};{2};{3};{4};{5}'.format(name,cloudletv,description,authors,copyright,website)
 class servicemanager(object):
 	def __init__(self):
 		#regular expressions for the tokens

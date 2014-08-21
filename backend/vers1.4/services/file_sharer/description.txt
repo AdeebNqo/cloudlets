@@ -1,0 +1,6 @@
+Name=file_sharer
+Description=A service for sharing files with co-located friends.
+Authors=Zola Mahlaza <adeebnqo@gmail.com>
+Website=http://adeebnqo.github.io/cloudlets
+CloudletV=1.4
+Copyright=Copyright 2014 Zola Mahlaza
