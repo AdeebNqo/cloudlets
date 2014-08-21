@@ -23,3 +23,13 @@ Here's a sample a description file:
 These fields are the only ones allowed, all others will be
 ignored. Also, it is good practice to name your service folder
 with the same name of the service for the users' convience.
+Each service should have two methods:
+
+	1. start()
+	2. stop()
+
+
+Cloudlet Connect Protocol
+==========================
+
+

@@ -9,25 +9,27 @@
 #
 
 import mosquitto
-def main(mqttport):
-	mqttserver = mosquitto.Mosquitto('cloudlet|maincontrol')
-	mqttserver.on_subscribe = self.on_subscribe
-	mqttserver.on_connect = self.on_connect
-	mqttserver.on_message = self.on_message
-	mqttserver.on_unsubscribe = self.on_unsubscribe
-	mqttserver.connect('127.0.0.1', mqttport, keepalive=60)
-	while self.status:
-		mqttserver.loop()
-def on_subscribe(self, mosq, obj, mid, qos_list):
+import argparse
+import handler
+
+mqttserver = None
+conhandler = None
+
+def on_subscribe(mosq, obj, mid, qos_list):
 	print('hello')
-def on_unsubscribe(self, mosq, obj, mid):
+def on_unsubscribe(mosq, obj, mid):
 	print('hi')
-def on_connect(self,mosq, obj, rc):
+def on_message(mosq, obj, msg):
+	if (msg.topic=='client/connect'):
+			print(msg.payload)
+def on_connect(mosq, rc):
 	if (rc==0):
 		#
 		# If connection is successful, registering for topics
 		#
 		print('everything is amazing')
+		global conhandler
+		conhandler = handler.handler(mqttserver)
 	elif (rc==1):
 		raise Exception('Mosquitto error: Unacceptable protocol version')
 	elif (rc==2):
@@ -38,10 +40,18 @@ def on_connect(self,mosq, obj, rc):
 		raise Exception('Mosquitto error: Bad user name or password')
 	elif (rc==5):
 		raise Exception('Mosquitto error: Not authorised')
-def on_message(self,mosq, obj, msg):
-	print('wazini?')
+def main(mqttport):
+	global mqttserver
+	mqttserver = mosquitto.Mosquitto('cloudlet|maincontrol')
+	mqttserver.on_subscribe = on_subscribe
+	mqttserver.on_connect = on_connect
+	mqttserver.on_message = on_message
+	mqttserver.on_unsubscribe = on_unsubscribe
+	mqttserver.connect('127.0.0.1', mqttport, keepalive=60)
+	while 1:
+		mqttserver.loop()
 if __name__=='__main__':
-	parser = argparse.ArgumentParser(description='Server for listening to cloudlet connections.')
+	parser = argparse.ArgumentParser(description='Broker for listening to cloudlet connections.')
 	parser.add_argument('-p','--port', type=int, nargs=1, help='Port to listen on.', required=False)
 	args = vars(parser.parse_args())
 	if (args['port']!=None):
