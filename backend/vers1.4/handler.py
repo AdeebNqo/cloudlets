@@ -16,7 +16,11 @@ class handler(object):
 		self.connectedusers = {} #users connected to cloudlet
 		#starting all registered services
 		for service in self.serviceman.get_services():
-			service.start(mqttserver)
+		    servicename = service.name
+		    for attr in dir(service.module):
+		        if (attr==servicename):
+		            serviceobj = getattr(service.module, attr)()
+		            serviceobj.start(mqttserver)
 	def connect_user(self,details):
 		self.connectedusers[details] = set()
 	def disconnect_user(self,details):

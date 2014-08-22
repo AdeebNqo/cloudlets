@@ -1,19 +1,22 @@
 ToDo:
 
 [ ] Add File Sharing service
+
 [ ] Create event listener to catch client (dis)connects
+
 [ ] Create data storage and compression handlers
 
 Plugin development
 ==================
 
 The services all should be under the folder
-'/services/'. When you create a new service
+`/services/`. When you create a new service
 called 'myservice' for instance. Create a folder
 under the services folder that looks like this:
-	myservice
-		->description.txt
-		->__init__.py
+
+	- myservice
+		- `description.txt`
+		- `__init__.py`
 
 The description file is a description of your
 service. It also contains your contact information.
@@ -34,6 +37,8 @@ Each service should have two methods:
 	1. start(mqttbroker)
 	2. stop()
 
+The main/driver class for your service which is to be created
+in the `__init__.py` file, must have the same name as the service.
 
 Cloudlet Connect Protocol
 ==========================

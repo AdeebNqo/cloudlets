@@ -13,6 +13,9 @@
 
 import os
 import lex
+import imp
+import sys
+
 class service(object):
 	def __init__(self, name, cloudletv, description, authors, copyright, website):
 		self.name = name
@@ -24,7 +27,7 @@ class service(object):
 	def add_module(self,module):
 		self.module = module
 	def __str__(self):
-		return '{0};{1};{2};{3};{4};{5}'.format(name,cloudletv,description,authors,copyright,website)
+		return '{0};{1};{2};{3};{4};{5}'.format(self.name,self.cloudletv,self.description,self.authors,self.copyright,self.website)
 class servicemanager(object):
 	def __init__(self):
 		#regular expressions for the tokens
@@ -36,12 +39,12 @@ class servicemanager(object):
 			'Copyright',
 			'Website'
 			]
-		self.t_Name = r'\AName=(.)*\Z'
-		self.t_CloudletV = r'\ACloudletV=(.)*\Z'
-		self.t_Description = r'\ADescription=(.)*\Z'
-		self.t_Authors = r'\AAuthors=(.)*\Z'
-		self.t_Copyright = r'\ACopyright=(.)*\Z'
-		self.t_Website = r'\AWebsite=(.)*\Z'
+		self.t_Name = r'Name=.*'
+		self.t_CloudletV = r'CloudletV=.*'
+		self.t_Description = r'Description=.*'
+		self.t_Authors = r'Authors=.*'
+		self.t_Copyright = r'Copyright=.*'
+		self.t_Website = r'Website=.*'
 		self.analyzer = lex.lex(module=self)
 		#loading services
 		self.update()
@@ -53,20 +56,20 @@ class servicemanager(object):
 		self.servicesfolder = '{0}{1}services'.format(self.curdir, os.sep)
 		self.servicefolders = [x[0] for x in os.walk(self.servicesfolder)]
 		self.services = []
-		if (len(self.services)>0):
-			for folder in self.servicefolders:
+		if (len(self.servicefolders)>1):
+			for folder in self.servicefolders[1:]:
 				input_data = ''
 				desc = open('{0}{1}description.txt'.format(folder,os.sep))
 				for line in desc.readlines():
 					input_data+=line
-				analyzer.input(input_data)
+				self.analyzer.input(input_data)
 				name = None
 				cloudletv = None
 				description = None
 				authors = None
 				copyright = None
 				website = None
-				for token in analyzer:
+				for token in self.analyzer:
 					if (token.type=='Name'):
 						name = token.value
 					elif (token.type=='CloudletV'):
@@ -80,7 +83,7 @@ class servicemanager(object):
 					elif (token.type=='Website'):
 						website = token.value
 				someservice = service(name, cloudletv, description, authors, copyright, website)
-				someservice.add_module(__import__(folder, fromlist = ["*"]))
+				someservice.add_module(imp.load_source(name, folder))
 				self.services.append(someservice)
 	def get_services(self):
 		return self.services
@@ -93,5 +96,5 @@ class servicemanager(object):
 	# Echo error when parsing description file
 	#
 	def t_error(self,token):
-		print("Illegal character '%s'" % token.value[0])
+		print("Illegal character {}".format(token.value[0]))
 		token.lexer.skip(1)
