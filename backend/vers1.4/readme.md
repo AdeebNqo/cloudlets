@@ -53,5 +53,6 @@ between a client and the broker.
 	3. client/servicelist - Used by clients to request list
 	of available services
 	4. server/service - Used by broker to send available services
+	5. server/useservice - Used by client when they request to use a specific service. It is expected that they send their identifier and service name they want to use.
 
 

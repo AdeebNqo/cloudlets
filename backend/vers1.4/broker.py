@@ -31,6 +31,11 @@ def on_message(obj, msg):
         for servicedetail in conhandler.get_servicedetails():
             print('service details :{}'.format(servicedetail))
             mqttserver.publish('client/service',servicedetail,1)
+    elif (msg.topic=='server/useservice'):
+        items = msg.payload.split(';')
+        conhandler.use_service(items[0], items[1])
+    else:
+        print(msg.topic)
 def on_connect(mosq, rc):
 	if (rc==0):
 		#
@@ -41,6 +46,8 @@ def on_connect(mosq, rc):
 		conhandler = handler.handler(mqttserver)
 		mqttserver.subscribe('server/connectedusers',1)
 		mqttserver.subscribe('server/servicelist',1)
+		mqttserver.subscribe('server/useservice',1)
+		mqttserver.subscribe('clients/#')
 	elif (rc==1):
 		raise Exception('Mosquitto error: Unacceptable protocol version')
 	elif (rc==2):
