@@ -12,10 +12,9 @@ import subprocess
 def main():
     proc = subprocess.Popen(['mosquitto -p 9999'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     while proc.returncode is None:
-        print(proc.stderr)
         # handle output by direct access to stdout and stderr
-        for line in proc.stderr:
-            print line
+        line = proc.stderr.read()
+        print('line: '+line)
         # set returncode if the process has exited
         proc.poll()
 if __name__=='__main__':
