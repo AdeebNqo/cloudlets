@@ -81,7 +81,7 @@ if __name__=='__main__':
 			# ports. There is no reason the program
 			# should be run as root
 			#
-			mqttport = 9999
+			mqttport = 1883
 	else:
-		mqttport = 9999 #default port
+		mqttport = 1883 #default port
 	main(mqttport)

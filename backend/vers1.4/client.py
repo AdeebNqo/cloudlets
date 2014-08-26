@@ -30,7 +30,7 @@ def main():
     mqttclient.on_publish = on_publish
     mqttclient.on_message = on_message
     mqttclient.on_subscribe = on_subscribe
-    mqttclient.connect('127.0.0.1', port=9999, keepalive=60)
+    mqttclient.connect('127.0.0.1', port=1883, keepalive=60)
     mqttclient.subscribe('client/connecteduser',1)
     mqttclient.subscribe('client/service',1)
     if(i):

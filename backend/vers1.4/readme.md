@@ -55,4 +55,8 @@ between a client and the broker.
 	4. server/service - Used by broker to send available services
 	5. server/useservice - Used by client when they request to use a specific service. It is expected that they send their identifier and service name they want to use.
 
+Libraries
+=========
 
+Thomas Bellman's `asyncproc` library is used. A slight alteration was made to it.
+The section that handles stdout has been commented out.

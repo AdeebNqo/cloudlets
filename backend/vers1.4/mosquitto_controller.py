@@ -8,14 +8,42 @@
 #  I approved of it."
 #  -Mark Twain
 #
-import subprocess
-def main():
-    proc = subprocess.Popen(['mosquitto -p 9999'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    while proc.returncode is None:
-        # handle output by direct access to stdout and stderr
-        line = proc.stderr.read()
-        print('line: '+line)
-        # set returncode if the process has exited
-        proc.poll()
+import os
+from asyncproc import Process
+import threading
+import re
+class ConnectionBroadcaster(object):
+	def __init__(self):
+		self.connect = re.compile('\d+: New client connected from .+ as .+.')
+		self.disconnect = re.compile('\d+: Socket read error on client .+, disconnecting.')
+		self.t = threading.Thread(target=self.process)
+		self.t.daemon = True
+		self.t.start()
+		self.subscribers = []
+	def process(self):
+		proc = Process('mosquitto')
+		while True:
+			# check to see if process has ended
+			poll = proc.wait(os.WNOHANG)
+			if poll != None:
+				break
+			# print any new output
+			out = proc.readerr()
+			if out != "":
+				if self.connect.match(out):
+					print('connect')
+					for subscriber in self.subscribers:
+						subscriber.userconnecting()
+				elif self.disconnect.match(out):
+					print('disconnect')
+					items = out.split()
+					print(items)
+					for subscriber in self.subscribers:
+						subscriber.userdisconnect()
+				else:
+					print(out)
+	def wait(self):
+		self.t.join()
 if __name__=='__main__':
-    main()
+	broad = ConnectionBroadcaster()
+	broad.wait()
