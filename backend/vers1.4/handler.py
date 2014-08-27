@@ -11,12 +11,13 @@ import servicemanager
 class handler(object):
 	def __init__(self,mqttserver):
 		print('handler being created!')
+		self.mosqbroadcaster = None
 		self.serviceman = servicemanager.servicemanager()
 		self.mqttserver = mqttserver
 		self.load_services()
 		self.connectedusers = {} #users connected to cloudlet
+		self.runningservices = []
 		#starting all registered services
-		print('abt to call getservices()')
 		for service in self.serviceman.get_services():
 			servicename = service.name.split('=')[1]
 			print(dir(service.module))
@@ -24,7 +25,7 @@ class handler(object):
 				if (attr==servicename):
 					serviceobj = getattr(service.module, attr)()
 					serviceobj.start(mqttserver)
-					print('called start on service '+attr)
+					self.runningservices.append(serviceobj)
 	def connect_user(self,details):
 		self.connectedusers[details] = set()
 	def disconnect_user(self,details):
@@ -41,3 +42,7 @@ class handler(object):
 		return rlist
 	def get_connectedusers(self):
 		return self.connectedusers.keys()
+	def userdisconnecting(self,userdetails):
+		print('helo')
+	def userconnecting(self,userdetails):
+		print('world')

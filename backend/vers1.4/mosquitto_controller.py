@@ -14,7 +14,7 @@ import threading
 import re
 class ConnectionBroadcaster(object):
 	def __init__(self):
-		self.connect = re.compile('\d+: New client connected from .+ as .+.')
+		self.connect = re.compile('(\d+): New client connected from (.+) as (.+).')
 		self.disconnect = re.compile('\d+: Socket read error on client .+, disconnecting.')
 		self.t = threading.Thread(target=self.process)
 		self.t.daemon = True
@@ -30,20 +30,31 @@ class ConnectionBroadcaster(object):
 			# print any new output
 			out = proc.readerr()
 			if out != "":
-				if self.connect.match(out):
-					print('connect')
-					for subscriber in self.subscribers:
-						subscriber.userconnecting()
-				elif self.disconnect.match(out):
-					print('disconnect')
-					items = out.split()
-					print(items)
-					for subscriber in self.subscribers:
-						subscriber.userdisconnect()
+				lines = out.split('\n')
+				if (len(lines)>1):
+					for line in lines:
+						self.notify(line)
 				else:
-					print(out)
+					self.notify(out)
+	def notify(self, out):
+		if self.connect.match(out):
+			print('connect')
+			items = out.split()
+			print(items)
+			for subscriber in self.subscribers:
+				subscriber.userconnecting(items[len(items)-1])
+		elif self.disconnect.match(out):
+			print('disconnect')
+			items = out.split()
+			print(items)
+			for subscriber in self.subscribers:
+				subscriber.userdisconnecting(items[len(items)-2])
+		else:
+			print(out)
 	def wait(self):
 		self.t.join()
+	def subscribe(self,subscriber):
+		self.self.subscribers.append(subscriber)
 if __name__=='__main__':
 	broad = ConnectionBroadcaster()
 	broad.wait()

@@ -13,3 +13,7 @@ class file_sharer():
 		print('starting')
 	def stop(self):
 		print('stopping')
+	def registeruser(self,details):
+		print('user registered')
+	def deregisteruser(self,details):
+		print('user registered')
