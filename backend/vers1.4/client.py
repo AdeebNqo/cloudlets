@@ -5,7 +5,7 @@ import uuid;
 
 i = 0
 mqttclient = None
-identifier = 'client{0} {1}'.format(str(uuid.uuid4().get_hex().upper()[0:6]),str(uuid.uuid4().get_hex().upper()[0:10]))
+identifier = 'client{0}|{1}'.format(str(uuid.uuid4().get_hex().upper()[0:6]),str(uuid.uuid4().get_hex().upper()[0:10]))
 
 def interface():
 	while True:

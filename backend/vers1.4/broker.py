@@ -47,7 +47,6 @@ def on_connect(mosq, rc):
 		mqttserver.subscribe('server/connectedusers',1)
 		mqttserver.subscribe('server/servicelist',1)
 		mqttserver.subscribe('server/useservice',1)
-		mqttserver.subscribe('clients/#')
 	elif (rc==1):
 		raise Exception('Mosquitto error: Unacceptable protocol version')
 	elif (rc==2):

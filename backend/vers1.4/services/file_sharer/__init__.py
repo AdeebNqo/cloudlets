@@ -8,7 +8,7 @@
 #
 class file_sharer():
 	def __init__(self):
-		hf
+		print('service created')
 	def start(self, mqttserver):
 		print('starting')
 	def stop(self):

@@ -10,17 +10,21 @@
 import servicemanager
 class handler(object):
 	def __init__(self,mqttserver):
+		print('handler being created!')
 		self.serviceman = servicemanager.servicemanager()
 		self.mqttserver = mqttserver
 		self.load_services()
 		self.connectedusers = {} #users connected to cloudlet
 		#starting all registered services
+		print('abt to call getservices()')
 		for service in self.serviceman.get_services():
-		    servicename = service.name
-		    for attr in dir(service.module):
-		        if (attr==servicename):
-		            serviceobj = getattr(service.module, attr)()
-		            serviceobj.start(mqttserver)
+			servicename = service.name.split('=')[1]
+			print(dir(service.module))
+			for attr in dir(service.module):
+				if (attr==servicename):
+					serviceobj = getattr(service.module, attr)()
+					serviceobj.start(mqttserver)
+					print('called start on service '+attr)
 	def connect_user(self,details):
 		self.connectedusers[details] = set()
 	def disconnect_user(self,details):

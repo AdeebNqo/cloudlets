@@ -13,8 +13,8 @@
 
 import os
 import lex
-import imp
 import sys
+import imp
 
 class service(object):
 	def __init__(self, name, cloudletv, description, authors, copyright, website):
@@ -62,28 +62,28 @@ class servicemanager(object):
 				desc = open('{0}{1}description.txt'.format(folder,os.sep))
 				for line in desc.readlines():
 					input_data+=line
-				self.analyzer.input(input_data)
-				name = None
-				cloudletv = None
-				description = None
-				authors = None
-				copyright = None
-				website = None
-				for token in self.analyzer:
-					if (token.type=='Name'):
-						name = token.value
-					elif (token.type=='CloudletV'):
-						cloudletv = token.value
-					elif (token.type=='Description'):
-						description = token.value
-					elif (token.type=='Authors'):
-						authors = token.value
-					elif (token.type=='Copyright'):
-						copyright = token.value
-					elif (token.type=='Website'):
-						website = token.value
+					self.analyzer.input(input_data)
+					name = None
+					cloudletv = None
+					description = None
+					authors = None
+					copyright = None
+					website = None
+					for token in self.analyzer:
+						if (token.type=='Name'):
+							name = token.value
+						elif (token.type=='CloudletV'):
+							cloudletv = token.value
+						elif (token.type=='Description'):
+							description = token.value
+						elif (token.type=='Authors'):
+							authors = token.value
+						elif (token.type=='Copyright'):
+							copyright = token.value
+						elif (token.type=='Website'):
+							website = token.value
 				someservice = service(name, cloudletv, description, authors, copyright, website)
-				someservice.add_module(imp.load_source(name, folder))
+				someservice.add_module(imp.load_source(name.split('=')[1], '{0}/__init__.py'.format(folder)))
 				self.services.append(someservice)
 	def get_services(self):
 		return self.services
