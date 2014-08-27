@@ -12,6 +12,7 @@ import mosquitto
 import argparse
 import handler
 import threading
+import sys
 
 class broker(object):
 	def __init__(self,mqttport):
@@ -26,6 +27,7 @@ class broker(object):
 		self.t = threading.Thread(target=self.loop)
 		self.t.daemon = True
 		self.t.start()
+		print('broker started!')
 	def loop(self):
 		while 1:
 			self.mqttserver.loop()
@@ -35,7 +37,7 @@ class broker(object):
 		    if not self.t.isAlive():
 			break
 	def on_subscribe(self,mosq, obj, qos_list):
-		print('hello')
+		print('broker subscribed to channel.')
 	def on_unsubscribe(self,mosq, obj):
 		print('hi')
 	def on_message(self,obj, msg):
@@ -57,10 +59,11 @@ class broker(object):
 		print(msg.topic)
 	def on_connect(self,mosq, rc):
 		if (rc==0):
+			print('broker successfuly connected!')
 			#
 			# If connection is successful, registering for topics
 			#
-			self.conhandler = handler.handler(self.mqttserver)
+			self.conhandler = handler.handler(self.mqttserver, sys.modules['__main__'])
 			self.mqttserver.subscribe('server/connectedusers',1)
 			self.mqttserver.subscribe('server/servicelist',1)
 			self.mqttserver.subscribe('server/useservice',1)

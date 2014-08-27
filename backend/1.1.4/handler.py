@@ -8,24 +8,29 @@
 #  the first woodpecker that came along wound destroy civilization."
 # -Gerald Weinberg
 import servicemanager
+import sys
 class handler(object):
-	def __init__(self,mqttserver):
-		print('handler being created!')
-		self.mosqbroadcaster = None
+	def __init__(self,mqttserver, runtimemodule):
+		print('creating handler...')
+		mosquitto_controller = runtimemodule
+		print(dir(mosquitto_controller))
 		self.serviceman = servicemanager.servicemanager()
-		self.mqttserver = mqttserver
+		self.mqttserver = mqttserver #Mqtt Broker connection
 		self.load_services()
 		self.connectedusers = {} #users connected to cloudlet
 		self.runningservices = []
 		#starting all registered services
 		for service in self.serviceman.get_services():
 			servicename = service.name.split('=')[1]
-			print(dir(service.module))
 			for attr in dir(service.module):
 				if (attr==servicename):
 					serviceobj = getattr(service.module, attr)()
 					serviceobj.start(mqttserver)
 					self.runningservices.append(serviceobj)
+		print(dir(mosquitto_controller))
+		mosquitto_controller.connectsubcribe(self.userdisconnecting)
+		print('handler created!')
+		print(mosquitto_controller.connectsubcribers)
 	def connect_user(self,details):
 		self.connectedusers[details] = set()
 	def disconnect_user(self,details):
@@ -43,6 +48,6 @@ class handler(object):
 	def get_connectedusers(self):
 		return self.connectedusers.keys()
 	def userdisconnecting(self,userdetails):
-		print('helo')
+		print('helo connect user')
 	def userconnecting(self,userdetails):
 		print('world')
