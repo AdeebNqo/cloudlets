@@ -120,6 +120,7 @@ class Process(object):
     """
 
     def __init__(self, *params, **kwparams):
+	print(params)
 	if len(params) <= 3:
 	    kwparams.setdefault('stdin', subprocess.PIPE)
 	#if len(params) <= 4:
@@ -135,7 +136,7 @@ class Process(object):
 	# Flag telling feeder threads to quit
 	self.__quit = False
 
-	self.__process = subprocess.Popen(*params, **kwparams)
+	self.__process = subprocess.Popen(params)#, **kwparams)
 
 	if self.__process.stdin:
 	    self.__stdin_thread = threading.Thread(
