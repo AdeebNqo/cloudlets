@@ -8,10 +8,13 @@ import mosquitto
 import argparse
 import threading
 import broadcaster
+import userMan
+import time
 
 class commHandler(object):
 	def __init__(self,mqttport):
 		self.mqttserver = None
+		self.usermanager = None
 		#
 		#Setting up all the neccessary callback methods
 		#for mosquitto communication. mqqtconnection.loop()
@@ -72,10 +75,15 @@ class commHandler(object):
 			self.mqttserver.subscribe('server/servicelist',1)
 			self.mqttserver.subscribe('server/useservice',1)
 
-			#subscribing
+			# Creating the user manager if the communication is functioning
+			self.usermanager = userMan.userMan()
+
+			#
+			# Subscribing to mosquitto event broadcaster to receive
+			# connect and disconnect signals.
+			#			
 			broadcaster.connectsubscribers.append(self.on_userconnect)
 			broadcaster.disconnectsubscribers.append(self.on_userdisconnect)
-			print(broadcaster.connectsubscribers)
 		elif (rc==1):
 			raise Exception('Mosquitto error: Unacceptable protocol version')
 		elif (rc==2):
@@ -91,9 +99,13 @@ class commHandler(object):
 	connect and disconnect events sent by the broadcaster.
 	'''
 	def on_userconnect(self,username,macaddress):
-		print('{} just connected!'.format(username))
+		#print('{} just connected!'.format(username))
+		response = self.usermanager.connect(username, macaddress)
+		time.sleep(2)
+		self.mqttserver.publish('server/connecting',response)
 	def on_userdisconnect(self,username,macaddress):
-		print('{} just disconnected!'.format(username))
+		#print('{} just disconnected!'.format(username))
+		self.usermanager.connect(username, macaddress)
 	
 if __name__=='__main__':
 	parser = argparse.ArgumentParser(description='Broker for listening to cloudlet connections.')

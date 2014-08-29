@@ -11,4 +11,7 @@ class userMan(object):
 	def __init__(self):
 		self.connectedusers = {} #users connected to cloudlet
 	def connect(self,username,macaddress):
-		print('trying connect {}'.format(username))
+		print('trying to connect {}'.format(username))
+		return 'OK'
+	def disconnect(self,username,macaddress):
+		print('trying to disconnect {}'.format(username))
