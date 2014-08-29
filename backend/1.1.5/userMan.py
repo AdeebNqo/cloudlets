@@ -10,3 +10,5 @@
 class userMan(object):
 	def __init__(self):
 		self.connectedusers = {} #users connected to cloudlet
+	def connect(self,username,macaddress):
+		print('trying connect {}'.format(username))

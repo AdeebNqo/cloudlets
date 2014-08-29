@@ -7,10 +7,12 @@
 from mqttEventEmitter import mqttEventEmitter
 from commHandler import commHandler
 import argparse
+import time
 
 def main(port):
 	print('Cloudlet started.')
 	eventEmitter = mqttEventEmitter(port)
+	time.sleep(2)
 	commhandler = commHandler(port)
 	eventEmitter.wait()
 	commhandler.wait()

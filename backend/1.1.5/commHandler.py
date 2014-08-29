@@ -7,7 +7,7 @@
 import mosquitto
 import argparse
 import threading
-import sys
+import broadcaster
 
 class commHandler(object):
 	def __init__(self,mqttport):
@@ -36,6 +36,11 @@ class commHandler(object):
 		    self.t.join(600)
 		    if not self.t.isAlive():
 			break
+	'''
+	The following methods are callback methods
+	for mqtt. The method names should be enough
+	to explain what each one does.
+	'''
 	def on_subscribe(self,mosq, obj, qos_list):
 		print('broker subscribed to channel.')
 	def on_unsubscribe(self,mosq, obj):
@@ -63,10 +68,14 @@ class commHandler(object):
 			#
 			# If connection is successful, registering for topics
 			#
-			#self.conhandler = handler.handler(self.mqttserver, sys.modules['__main__'])
 			self.mqttserver.subscribe('server/connectedusers',1)
 			self.mqttserver.subscribe('server/servicelist',1)
 			self.mqttserver.subscribe('server/useservice',1)
+
+			#subscribing
+			broadcaster.connectsubscribers.append(self.on_userconnect)
+			broadcaster.disconnectsubscribers.append(self.on_userdisconnect)
+			print(broadcaster.connectsubscribers)
 		elif (rc==1):
 			raise Exception('Mosquitto error: Unacceptable protocol version')
 		elif (rc==2):
@@ -77,6 +86,15 @@ class commHandler(object):
 			raise Exception('Mosquitto error: Bad user name or password')
 		elif (rc==5):
 			raise Exception('Mosquitto error: Not authorised')
+	'''
+	The following methods are for maintaing the
+	connect and disconnect events sent by the broadcaster.
+	'''
+	def on_userconnect(self,username,macaddress):
+		print('{} just connected!'.format(username))
+	def on_userdisconnect(self,username,macaddress):
+		print('{} just disconnected!'.format(username))
+	
 if __name__=='__main__':
 	parser = argparse.ArgumentParser(description='Broker for listening to cloudlet connections.')
 	parser.add_argument('-p','--port', type=int, nargs=1, help='Port to listen on.', required=False)
