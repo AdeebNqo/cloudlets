@@ -11,7 +11,16 @@ class userMan(object):
 	def __init__(self):
 		self.connectedusers = {} #users connected to cloudlet
 	def connect(self,username,macaddress):
-		print('trying to connect {}'.format(username))
-		return 'OK'
+		if len(self.connectedusers)==0:
+			self.connectedusers[(username,macaddress)] = set()
+			return 'OK'
+		else:
+			for (usr,mac) in self.connectedusers.iterkeys():
+				if username=='usr':
+					return 'UDUP'
+				elif macaddress==mac:
+					return 'MDUP'
+			self.connectedusers[(username,macaddress)] = set()
+			return 'OK'
 	def disconnect(self,username,macaddress):
-		print('trying to disconnect {}'.format(username))
+		del self.connectedusers[(username,macaddress)]
