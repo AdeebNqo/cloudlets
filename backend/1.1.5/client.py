@@ -26,6 +26,8 @@ def interface():
 				schoice = input('1. Upload\n2. Fetch\n3. Remove\n4. Update\n5. Main Menu\n:>')
 				if schoice==5:
 					break
+				elif (schoice==1):
+					upload('hello','world')
 def on_publish(mosq, obj):
 	print("log: Message "+str(obj)+" published.")
 def on_message(obj, msg):
@@ -64,7 +66,7 @@ def requestservice(servicename):
 	mqttclient.subscribe('client/useservice/{}'.format(identifier),1)
 	mqttclient.publish('server/useservice','{0};{1}'.format(identifier,servicename))
 def upload(somefile,metadata):
-	mqttclient.publish(,)
+	mqttclient.publish('server/{0}/{1}/upload'.format('file_sharer',identifier),somefile)
 if __name__=='__main__':
 	try:
 	    i = sys.argv[1]

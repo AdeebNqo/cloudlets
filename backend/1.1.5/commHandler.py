@@ -51,38 +51,41 @@ class commHandler(object):
 	def on_unsubscribe(self,mosq, obj):
 		print('broker: unsubscribe')
 	def on_message(self,obj, msg):
-	    if (msg.topic=='server/connectedusers'):
-		#broadcast available users
-		for user in self.usermanager.get_connected():
-			self.mqttserver.publish('client/connecteduser','|'.join(user),1)
-		print('received msg. topic is server/connectedusers')
-	    elif (msg.topic=='server/servicelist'):
-		#broadcast available services
-		for servicedetail in self.servicemanager.get_services():
-			self.mqttserver.publish('client/service',servicedetail.__str__(),1)
-		print('received msg. topic is server/servicelist')
-	    elif (msg.topic=='server/useservice'):
-		items = msg.payload.split(';')
-		(username,macaddress) = items[0].split('|')
-		servicename = items[1]
-		#
-		# Begin by seeing if client is not already using service
-		# and if that service exists
-		#
-		if (self.usermanager.service_request((username,macaddress), servicename)=='OK'):
-			if (self.servicemanager.service_request((username,macaddress), servicename)=='OK'):
-				self.mqttserver.publish('client/useservice/{}'.format(items[0]),'OK')
-				self.mqttserver.subscribe('server/{0}/{1}|{2}/fetch'.format(servicename,username,macaddress),1)
-				self.mqttserver.subscribe('server/{0}/{1}|{2}/update'.format(servicename,username,macaddress),1)
-				self.mqttserver.subscribe('server/{0}/{1}|{2}/upload'.format(servicename,username,macaddress),1)
-				self.mqttserver.subscribe('server/{0}/{1}|{2}/remove'.format(servicename,username,macaddress),1)
+		print('receieve1 {1} on channel {0}'.format(msg.topic, msg.payload))
+		if (msg.topic=='server/connectedusers'):
+			#broadcast available users
+			for user in self.usermanager.get_connected():
+				self.mqttserver.publish('client/connecteduser','|'.join(user),1)
+			print('received msg. topic is server/connectedusers')
+		elif (msg.topic=='server/servicelist'):
+			#broadcast available services
+			for servicedetail in self.servicemanager.get_services():
+				self.mqttserver.publish('client/service',servicedetail.__str__(),1)
+			print('received msg. topic is server/servicelist')
+		elif (msg.topic=='server/useservice'):
+			items = msg.payload.split(';')
+			(username,macaddress) = items[0].split('|')
+			servicename = items[1]
+			#
+			# Begin by seeing if client is not already using service
+			# and if that service exists
+			#
+			if (self.usermanager.service_request((username,macaddress), servicename)=='OK'):
+				if (self.servicemanager.service_request((username,macaddress), servicename)=='OK'):
+					self.mqttserver.publish('client/useservice/{}'.format(items[0]),'OK')
+					self.mqttserver.subscribe('server/{0}/{1}|{2}/fetch'.format(servicename,username,macaddress),1)
+					self.mqttserver.subscribe('server/{0}/{1}|{2}/update'.format(servicename,username,macaddress),1)
+					self.mqttserver.subscribe('server/{0}/{1}|{2}/upload'.format(servicename,username,macaddress),1)
+					self.mqttserver.subscribe('server/{0}/{1}|{2}/remove'.format(servicename,username,macaddress),1)
+					print('subscribed for client.')
+				else:
+					self.mqttserver.publish('client/useservice/{}'.format(items[0]),'NE')
 			else:
 				self.mqttserver.publish('client/useservice/{}'.format(items[0]),'NE')
 		else:
-			self.mqttserver.publish('client/useservice/{}'.format(items[0]),'NE')
-		print('received msg. topic is server/useservice')
-	    else:
-		print(msg.topic)
+			vals = msg.topic.split('/')
+			if (len(vals)==4 and ('|' in vals[2])):
+				print('direct it to the serviceman')
 	def on_connect(self,mosq, rc):
 		if (rc==0):
 			print('broker successfuly connected!')
