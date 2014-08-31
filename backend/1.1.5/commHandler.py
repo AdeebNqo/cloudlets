@@ -9,17 +9,19 @@ import argparse
 import threading
 import broadcaster
 import userMan
+import serviceMan
 import time
 
 class commHandler(object):
 	def __init__(self,mqttport):
 		self.mqttserver = None
 		self.usermanager = None
+		self.servicemanager = None
 		#
-		#Setting up all the neccessary callback methods
-		#for mosquitto communication. mqqtconnection.loop()
-		#is called using a thread.
-		
+		# Setting up all the neccessary callback methods
+		# for mosquitto communication. mqqtconnection.loop()
+		# is called using a thread.
+		#
 		self.mqttserver = mosquitto.Mosquitto('cloudlet|maincontrol')
 		self.mqttserver.on_subscribe = self.on_subscribe
 		self.mqttserver.on_connect = self.on_connect
@@ -51,17 +53,28 @@ class commHandler(object):
 	def on_message(self,obj, msg):
 	    if (msg.topic=='server/connectedusers'):
 		#broadcast available users
-		#for user in conhandler.get_connectedusers():
-		#    self.mqttserver.publish('client/connecteduser',user,1)
+		for user in self.usermanager.get_connected():
+			self.mqttserver.publish('client/connecteduser','|'.join(user),1)
 		print('received msg. topic is server/connectedusers')
 	    elif (msg.topic=='server/servicelist'):
 		#broadcast available services
-		#for servicedetail in conhandler.get_servicedetails():
-		#    self.mqttserver.publish('client/service',servicedetail,1)
+		for servicedetail in self.servicemanager.get_services():
+			self.mqttserver.publish('client/service',servicedetail.__str__(),1)
 		print('received msg. topic is server/servicelist')
 	    elif (msg.topic=='server/useservice'):
 		items = msg.payload.split(';')
-		#self.conhandler.use_service(items[0], items[1])
+		(username,macaddress) = items[0].split('|')
+		servicename = items[1]
+		#
+		# Begin by seeing if client is not already using service
+		# and if that service exists
+		#
+		if (self.usermanager.service_request((username,macaddress), servicename)=='OK'):
+			if (self.servicemanager.service_request((username,macaddress), servicename)=='OK'):
+				self.mqttserver.subscribe('server/{0}/{1}|{2}/fetch'.format(servicename,username,macaddress),1)
+				self.mqttserver.subscribe('server/{0}/{1}|{2}/update'.format(servicename,username,macaddress),1)
+				self.mqttserver.subscribe('server/{0}/{1}|{2}/upload'.format(servicename,username,macaddress),1)
+				self.mqttserver.subscribe('server/{0}/{1}|{2}/remove'.format(servicename,username,macaddress),1)
 		print('received msg. topic is server/useservice')
 	    else:
 		print(msg.topic)
@@ -77,6 +90,9 @@ class commHandler(object):
 
 			# Creating the user manager if the communication is functioning
 			self.usermanager = userMan.userMan()
+			# Creating the service manager and loading services
+			self.servicemanager = serviceMan.serviceMan()
+			self.servicemanager.load()
 
 			#
 			# Subscribing to mosquitto event broadcaster to receive
@@ -99,13 +115,14 @@ class commHandler(object):
 	connect and disconnect events sent by the broadcaster.
 	'''
 	def on_userconnect(self,username,macaddress):
-		#print('{} just connected!'.format(username))
 		response = self.usermanager.connect(username, macaddress)
 		time.sleep(2)
 		self.mqttserver.publish('server/connecting',response)
 	def on_userdisconnect(self,username,macaddress):
-		#print('{} just disconnected!'.format(username))
 		self.usermanager.connect(username, macaddress)
+		#unsubscribing for the users requested channels
+		for servicename in self.usermanager.connectedusers[(username,macaddress)]:
+			self.mqttserver.unsubscribe('server/{0}/{1}|{2}/#'.format(servicename,username,macaddress))
 	
 if __name__=='__main__':
 	parser = argparse.ArgumentParser(description='Broker for listening to cloudlet connections.')

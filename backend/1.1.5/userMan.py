@@ -24,3 +24,18 @@ class userMan(object):
 			return 'OK'
 	def disconnect(self,username,macaddress):
 		del self.connectedusers[(username,macaddress)]
+	#
+	# This method should be called by the communication
+	# handler when a client requests a service
+	#
+	def service_request(self,userdetails,servicename):
+		if servicename in self.connectedusers[userdetails]:
+			return 'NOTOK'
+		else:
+			self.connectedusers[userdetails].add(servicename)
+			return 'OK'
+	#
+	# Method for getting all connected users
+	#
+	def get_connected(self):
+		return self.connectedusers.keys()
