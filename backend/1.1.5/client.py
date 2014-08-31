@@ -11,6 +11,7 @@ import uuid;
 i = 0
 mqttclient = None
 identifier = 'client{0}|{1}'.format(str(uuid.uuid4().get_hex().upper()[0:6]),str(uuid.uuid4().get_hex().upper()[0:10]))
+requestedservice = None
 
 def interface():
 	while True:
@@ -20,14 +21,24 @@ def interface():
 		elif (choice==2):
 			mqttclient.publish('server/servicelist',"true")
 		elif (choice==3):
-			requestservice()
+			requestservice('file_sharer')
+			while True:
+				schoice = input('1. Upload\n2. Fetch\n3. Remove\n4. Update\n5. Main Menu\n:>')
+				if schoice==5:
+					break
 def on_publish(mosq, obj):
 	print("log: Message "+str(obj)+" published.")
 def on_message(obj, msg):
 	if (msg.topic=='client/service'):
 		print(msg.payload)
 	elif (msg.topic=='client/useservice/{}'.format(identifier)):
-		print('service request response: {}'.format(msg.payload))
+		global requestedservice
+		if (msg.payload=='OK'):
+			mqttclient.subscribe('client/{0}/{1}/fetch'.format(requestedservice,identifier))
+			mqttclient.subscribe('client/{0}/{1}/update'.format(requestedservice,identifier))
+			mqttclient.subscribe('client/{0}/{1}/remove'.format(requestedservice,identifier))
+			mqttclient.subscribe('client/{0}/{1}/upload'.format(requestedservice,identifier))
+		requestedservice=None
 	elif (msg.topic=='client/connecteduser'):
 		print(msg.payload)
 def on_subscribe(mosq, obj, qos_list):
@@ -47,9 +58,13 @@ def main():
 		t.start()
 	while True:
 		mqttclient.loop()
-def requestservice():
+def requestservice(servicename):
+	global requestedservice
+	requestedservice = servicename
 	mqttclient.subscribe('client/useservice/{}'.format(identifier),1)
-	mqttclient.publish('server/useservice','{0};{1}'.format(identifier,'file_sharer'))
+	mqttclient.publish('server/useservice','{0};{1}'.format(identifier,servicename))
+def upload(somefile,metadata):
+	mqttclient.publish(,)
 if __name__=='__main__':
 	try:
 	    i = sys.argv[1]

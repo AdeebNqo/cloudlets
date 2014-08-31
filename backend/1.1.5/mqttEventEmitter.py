@@ -42,14 +42,14 @@ class mqttEventEmitter(object):
 	#
 	def notify(self,value):
 		if self.connect.match(value):
-			print('connect')
 			(username,macaddress) = re.search(self.connect,value).group(3).split('|')
 			broadcaster.connect(username,macaddress)
+			print('connect: {}'.format(username))
 		elif self.disconnect.match(value):
-			print('disconnect')
 			items = value.split()
 			vals = items[len(items)-2].split('|')
 			broadcaster.disconnect(vals[0],vals[1][:len(vals[1])-1])
+			print('disconnect: {}'.format(vals[0]))
 		else:
 			print(value)
 	#

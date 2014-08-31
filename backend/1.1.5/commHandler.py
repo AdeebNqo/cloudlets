@@ -49,7 +49,7 @@ class commHandler(object):
 	def on_subscribe(self,mosq, obj, qos_list):
 		print('broker subscribed to channel.')
 	def on_unsubscribe(self,mosq, obj):
-		print('hi')
+		print('broker: unsubscribe')
 	def on_message(self,obj, msg):
 	    if (msg.topic=='server/connectedusers'):
 		#broadcast available users
@@ -71,10 +71,15 @@ class commHandler(object):
 		#
 		if (self.usermanager.service_request((username,macaddress), servicename)=='OK'):
 			if (self.servicemanager.service_request((username,macaddress), servicename)=='OK'):
+				self.mqttserver.publish('client/useservice/{}'.format(items[0]),'OK')
 				self.mqttserver.subscribe('server/{0}/{1}|{2}/fetch'.format(servicename,username,macaddress),1)
 				self.mqttserver.subscribe('server/{0}/{1}|{2}/update'.format(servicename,username,macaddress),1)
 				self.mqttserver.subscribe('server/{0}/{1}|{2}/upload'.format(servicename,username,macaddress),1)
 				self.mqttserver.subscribe('server/{0}/{1}|{2}/remove'.format(servicename,username,macaddress),1)
+			else:
+				self.mqttserver.publish('client/useservice/{}'.format(items[0]),'NE')
+		else:
+			self.mqttserver.publish('client/useservice/{}'.format(items[0]),'NE')
 		print('received msg. topic is server/useservice')
 	    else:
 		print(msg.topic)
