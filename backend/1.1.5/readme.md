@@ -17,6 +17,7 @@ responses are `OK`, `UDUP` and `MDUP`.
 
 (Note, the cloudlet will wait for 2 seconds before sending response to `server/login`.
 This should be enough time to subscribe to the channnel after connecting on the client side.)
+4. Client: Connect to channels `client/connecteduser` and `client/service`
 
 
 ####Requesting service
@@ -31,7 +32,7 @@ neccessary channels for communication.
 	- `OK` : Request approved, you can start using the service.
 	- `NE` : Request not approved, the service does not exist.
 
-3. Client: If client recieves `OK`, it is important to register to a couple for channels.
+3. Client: If client recieves `OK`, it is important to register to a couple of channels.
 	-`client/<servicename>/<username>|<macaddress>/fetch`
 	-`client/<servicename>/<username>|<macaddress>/update`
 	-`client/<servicename>/<username>|<macaddress>/upload`
@@ -42,3 +43,21 @@ the actions one should use the following channels:
 	-`server/<servicename>/<username>|<macaddress>/update`
 	-`server/<servicename>/<username>|<macaddress>/upload`
 	-`server/<servicename>/<username>|<macaddress>/remove`
+
+### General Notes
+
+The identifier for the file is the name. This is enough because each person will have their own "bubble" of storage.
+
+1. upload : Send metadata to the channel, the response the client will get should determine what to do. The possible
+responses are `FDUP`, that is filename duplicate, or `OK <ip>:<port>`. In the case where one receives the ok signal,
+open a socket to the provided ip and port and transfer the file.
+
+2. fetch: Send the metadata containing the filename of the file you want to fetch, and the address (ip:port) to use
+if you can access the requested file. The file will be sent only if the reponse `OK` is sent back on the channel
+`client/<servicename>/<username>|<macaddress>/fetch`
+
+3. update: Send the metadata containing the filename of the file and the updated metadata for the file. Only two 
+responses are to be expected: `OK`, `FAIL`.
+
+4. remove: Send the metadata containing the filename of the file. Only two 
+responses are to be expected: `OK`, `FAIL`.

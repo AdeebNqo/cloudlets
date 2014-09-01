@@ -43,6 +43,8 @@ def on_message(obj, msg):
 		requestedservice=None
 	elif (msg.topic=='client/connecteduser'):
 		print(msg.payload)
+	else:
+		print(msg.payload)
 def on_subscribe(mosq, obj, qos_list):
 	print("log: Subscribed.")
 def main():

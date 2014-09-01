@@ -44,14 +44,13 @@ class commHandler(object):
 	'''
 	The following methods are callback methods
 	for mqtt. The method names should be enough
-	to explain what each one does.
+	to explain what each method does.
 	'''
 	def on_subscribe(self,mosq, obj, qos_list):
 		print('broker subscribed to channel.')
 	def on_unsubscribe(self,mosq, obj):
 		print('broker: unsubscribe')
 	def on_message(self,obj, msg):
-		print('receieve1 {1} on channel {0}'.format(msg.topic, msg.payload))
 		if (msg.topic=='server/connectedusers'):
 			#broadcast available users
 			for user in self.usermanager.get_connected():
@@ -84,11 +83,24 @@ class commHandler(object):
 				self.mqttserver.publish('client/useservice/{}'.format(items[0]),'NE')
 		else:
 			vals = msg.topic.split('/')
+			(username,macaddress) = vals[2].split('|')
 			if (len(vals)==4 and ('|' in vals[2])):
-				print('direct it to the serviceman')
+				#Client is requesting service action
+				valslength = len(vals)
+				if (vals[valslength-1]=='fetch' and vals[1]=='file_sharer'):
+					self.mqttserver.publish('client/file_sharer/{0}|{1}/fetch'.format(username,macaddress), self.servicemanager.transfer_request(msg.topic, msg.payload))
+				elif (vals[valslength-1]=='remove' and vals[1]=='file_sharer'):
+					self.mqttserver.publish('client/file_sharer/{0}|{1}/remove'.format(username,macaddress), self.servicemanager.transfer_request(msg.topic, msg.payload))
+				elif (vals[valslength-1]=='upload' and vals[1]=='file_sharer'):
+					self.mqttserver.publish('client/file_sharer/{0}|{1}/upload'.format(username,macaddress), self.servicemanager.transfer_request(msg.topic, msg.payload))
+				elif (vals[valslength-1]=='update' and vals[1]=='file_sharer'):
+					self.mqttserver.publish('client/file_sharer/{0}|{1}/update'.format(username,macaddress), self.servicemanager.transfer_request(msg.topic, msg.payload))
+	'''
+	Called once, only when the communication
+	handler is connecting to mosquitto.
+	'''	
 	def on_connect(self,mosq, rc):
 		if (rc==0):
-			print('broker successfuly connected!')
 			#
 			# If connection is successful, registering for topics
 			#
@@ -101,6 +113,7 @@ class commHandler(object):
 			# Creating the service manager and loading services
 			self.servicemanager = serviceMan.serviceMan()
 			self.servicemanager.load()
+			self.servicemanager.load_serviceobj()
 
 			#
 			# Subscribing to mosquitto event broadcaster to receive
@@ -119,8 +132,12 @@ class commHandler(object):
 		elif (rc==5):
 			raise Exception('Mosquitto error: Not authorised')
 	'''
-	The following methods are for maintaing the
+	The following methods are for maintaining the
 	connect and disconnect events sent by the broadcaster.
+
+	Arguments:
+	username: Username of the connecting/disconnecting party.
+	macaddress: Macaddress of the connecting/disconnecting party.
 	'''
 	def on_userconnect(self,username,macaddress):
 		response = self.usermanager.connect(username, macaddress)
