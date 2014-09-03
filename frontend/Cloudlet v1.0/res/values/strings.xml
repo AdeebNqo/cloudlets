@@ -5,8 +5,9 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="connect_text">connecting to cloudlet</string>
-     <string name="connectionfailed_text">cannot connect to cloudlet.</string>
+    <string name="connectionfailed_text">cannot connect to cloudlet.</string>
     <string name="title_activity_service">Services</string>
     <string name="service_text">Services</string>
+    <string name="title_activity_file_list">FileListActivity</string>
 
 </resources>
