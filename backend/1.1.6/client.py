@@ -11,7 +11,6 @@ import uuid;
 i = 0
 mqttclient = None
 identifier = 'client{0}|{1}'.format(str(uuid.uuid4().get_hex().upper()[0:6]),str(uuid.uuid4().get_hex().upper()[0:10]))
-requestedservice = None
 
 def interface():
 	while True:
@@ -57,12 +56,8 @@ def main():
 	while True:
 		mqttclient.loop()
 def requestservice(servicename):
-	global requestedservice
-	requestedservice = servicename
 	mqttclient.subscribe('client/useservice/{}'.format(identifier),1)
 	mqttclient.publish('server/useservice','{0};{1}'.format(identifier,servicename))
-def upload(somefile,metadata):
-	mqttclient.publish('server/{0}/{1}/upload'.format('file_sharer',identifier),somefile)
 if __name__=='__main__':
 	try:
 	    i = sys.argv[1]

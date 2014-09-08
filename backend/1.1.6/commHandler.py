@@ -69,7 +69,7 @@ class commHandler(object):
 			# Begin by seeing if client is not already using service
 			# and if that service exists
 			#
-			if (self.usermanager.service_request((username,macaddress), servicename)=='OK'):
+			if (self.usermanager.request_service((username,macaddress), servicename)=='OK'):
 				if (self.servicemanager.service_request((username,macaddress), servicename)=='OK'):
 					print('client has successfully requested service and should get it.')
 				else:
