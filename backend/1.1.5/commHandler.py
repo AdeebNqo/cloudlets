@@ -71,30 +71,11 @@ class commHandler(object):
 			#
 			if (self.usermanager.service_request((username,macaddress), servicename)=='OK'):
 				if (self.servicemanager.service_request((username,macaddress), servicename)=='OK'):
-					self.mqttserver.publish('client/useservice/{}'.format(items[0]),'OK')
-					self.mqttserver.subscribe('server/{0}/{1}|{2}/fetch'.format(servicename,username,macaddress),1)
-					self.mqttserver.subscribe('server/{0}/{1}|{2}/update'.format(servicename,username,macaddress),1)
-					self.mqttserver.subscribe('server/{0}/{1}|{2}/upload'.format(servicename,username,macaddress),1)
-					self.mqttserver.subscribe('server/{0}/{1}|{2}/remove'.format(servicename,username,macaddress),1)
-					print('subscribed for client.')
+					print('client has successfully requested service and should get it.')
 				else:
 					self.mqttserver.publish('client/useservice/{}'.format(items[0]),'NE')
 			else:
 				self.mqttserver.publish('client/useservice/{}'.format(items[0]),'NE')
-		else:
-			vals = msg.topic.split('/')
-			(username,macaddress) = vals[2].split('|')
-			if (len(vals)==4 and ('|' in vals[2])):
-				#Client is requesting service action
-				valslength = len(vals)
-				if (vals[valslength-1]=='fetch' and vals[1]=='file_sharer'):
-					self.mqttserver.publish('client/file_sharer/{0}|{1}/fetch'.format(username,macaddress), self.servicemanager.transfer_request(msg.topic, msg.payload))
-				elif (vals[valslength-1]=='remove' and vals[1]=='file_sharer'):
-					self.mqttserver.publish('client/file_sharer/{0}|{1}/remove'.format(username,macaddress), self.servicemanager.transfer_request(msg.topic, msg.payload))
-				elif (vals[valslength-1]=='upload' and vals[1]=='file_sharer'):
-					self.mqttserver.publish('client/file_sharer/{0}|{1}/upload'.format(username,macaddress), self.servicemanager.transfer_request(msg.topic, msg.payload))
-				elif (vals[valslength-1]=='update' and vals[1]=='file_sharer'):
-					self.mqttserver.publish('client/file_sharer/{0}|{1}/update'.format(username,macaddress), self.servicemanager.transfer_request(msg.topic, msg.payload))
 	'''
 	Called once, only when the communication
 	handler is connecting to mosquitto.

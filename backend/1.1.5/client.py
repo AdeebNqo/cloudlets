@@ -34,13 +34,7 @@ def on_message(obj, msg):
 	if (msg.topic=='client/service'):
 		print(msg.payload)
 	elif (msg.topic=='client/useservice/{}'.format(identifier)):
-		global requestedservice
-		if (msg.payload=='OK'):
-			mqttclient.subscribe('client/{0}/{1}/fetch'.format(requestedservice,identifier))
-			mqttclient.subscribe('client/{0}/{1}/update'.format(requestedservice,identifier))
-			mqttclient.subscribe('client/{0}/{1}/remove'.format(requestedservice,identifier))
-			mqttclient.subscribe('client/{0}/{1}/upload'.format(requestedservice,identifier))
-		requestedservice=None
+		print('trying to use service')
 	elif (msg.topic=='client/connecteduser'):
 		print(msg.payload)
 	else:
@@ -53,7 +47,7 @@ def main():
 	mqttclient.on_publish = on_publish
 	mqttclient.on_message = on_message
 	mqttclient.on_subscribe = on_subscribe
-	mqttclient.connect('127.0.0.1', port=1883, keepalive=60)
+	mqttclient.connect('127.0.0.1', port=8989, keepalive=60)
 	mqttclient.subscribe('client/connecteduser',1)
 	mqttclient.subscribe('client/service',1)
 	if(i):
