@@ -32,6 +32,7 @@ class commHandler(object):
 		self.t.daemon = True
 		self.t.start()
 
+		self.requestlist = set()
 		print('broker started!')
 	def loop(self):
 		while 1:
@@ -69,13 +70,28 @@ class commHandler(object):
 			# Begin by seeing if client is not already using service
 			# and if that service exists
 			#
-			if (self.usermanager.request_service((username,macaddress), servicename)=='OK'):
-				if (self.servicemanager.service_request((username,macaddress), servicename)=='OK'):
+			if (self.usermanager.service_request((username,macaddress), servicename)=='OK'):
+				response = self.servicemanager.request_service((username,macaddress), servicename).split()
+				if (response[0]=='OK'):
+					ipport = response[1]
 					print('client has successfully requested service and should get it.')
+					if ('|' in ipport):
+						self.mqttserver.subscribe('server/service_request/{0}|{1}'.format(username,macaddress),1)
+						self.requestlist.add('server/service_request/{0}|{1}'.format(username,macaddress))
+						self.mqttserver.publish('client/service_request/{}'.format(ipport),'{0}|{1}'.format(username,macaddress))
+					elif (ipport != 'Service not available'):
+						print('requested service is not available')
+						#print(ipport)
+						#print('client/service_request/{0}|{1}/recvIP'.format(username,macaddress))
+						self.mqttserver.publish('client/service_request/{0}|{1}/recvIP'.format(username,macaddress), ipport)
 				else:
 					self.mqttserver.publish('client/useservice/{}'.format(items[0]),'NE')
 			else:
 				self.mqttserver.publish('client/useservice/{}'.format(items[0]),'NE')
+		else:
+			if (msg.topic in self.requestlist):
+				self.mqttserver.publish('client/service_request/{0}/recvIP'.format(msg.topic.split('/')[2]), msg.payload)
+				self.requestlist.remove(msg.topic)
 	'''
 	Called once, only when the communication
 	handler is connecting to mosquitto.

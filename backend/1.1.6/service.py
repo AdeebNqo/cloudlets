@@ -21,7 +21,7 @@ class service(object):
 	def block(self,username,macaddress):
 		self.blocklist.remove((username,macaddress))
 	def isallowed(self,username,macaddress):
-		return ((username,macaddress) in self.blocklist)
+		return (not ((username,macaddress) in self.blocklist))
 	def add_module(self,module):
 		self.__obj = getattr(module, self.simplename)()
 		self.__obj.start()

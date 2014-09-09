@@ -91,7 +91,12 @@ class serviceMan(object):
 				someservice.username = 'local'
 				self.services.add(someservice)
 	def request_service(self, userdetails, servicename):
-		print(userdetails)
+		for service in self.services:
+			print('servicename: {0}, thesame(bool): {1}'.format(service.simplename, service.simplename==servicename))
+			print('{0},{1}'.format(userdetails[0], userdetails[1]))
+			if (service.simplename==servicename and service.isallowed(userdetails[0], userdetails[1])):
+				return 'OK '+service.ipport()
+		return 'NE'
 	def get_servicelist(self):
 		return self.services
 	'''

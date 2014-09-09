@@ -16,3 +16,4 @@ class file_sharer():
 		print('stopping')
 	def request_service(self):
 		print('requesting open ip:port')
+		return '127.0.0.1:80'

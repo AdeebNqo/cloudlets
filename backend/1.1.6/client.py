@@ -6,7 +6,8 @@
 import mosquitto
 import sys
 import threading
-import uuid;
+import uuid
+import socket
 
 i = 0
 mqttclient = None
@@ -36,6 +37,15 @@ def on_message(obj, msg):
 		print('trying to use service')
 	elif (msg.topic=='client/connecteduser'):
 		print(msg.payload)
+	elif (msg.topic=='server/useservice/{0}'.format(identifier)):
+		serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		serversocket.bind((socket.gethostname(), 0))
+		serversocket.listen(5)
+		(ip,port) = serversocket.getnameinfo()
+		mqttclient.publish(msg.payload,"{0}:{1}".format(ip, port))
+		print('just sent address {0}:{1}'.format(ip, port))
+	elif (msg.topic=='client/service_request/{0}/recvIP'.format(identifier)):
+		print(msg.payload)
 	else:
 		print(msg.payload)
 def on_subscribe(mosq, obj, qos_list):
@@ -49,6 +59,8 @@ def main():
 	mqttclient.connect('127.0.0.1', port=9999, keepalive=60)
 	mqttclient.subscribe('client/connecteduser',1)
 	mqttclient.subscribe('client/service',1)
+	mqttclient.subscribe('client/service_request/{}'.format(identifier),1)
+	mqttclient.subscribe('client/service_request/{0}/recvIP'.format(identifier),1)
 	if(i):
 		t = threading.Thread(target=interface)
 		t.daemon = True
