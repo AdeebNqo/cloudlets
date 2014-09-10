@@ -6,24 +6,41 @@ config = ConfigParser.ConfigParser()
 config.read("config.ini")
 
 #retrieving configuration
-numtimes = config['DEFAULT']['numtimes']
-action = config['DEFAULT']['action']
-testdb = config['DEFAULT']['db']
+numtimes = int(config.get('DEFAULT','numtimes'))
+action = config.get('DEFAULT','action')
+testdb = config.get('DEFAULT','db')
 
-host = config['dbconfig']['host']
-username = config['dbconfig']['username']
-password = config['dbconfig']['password']
-tablename = config['dbconfig']['tablename']
-dbname = config['dbconfig']['dbname']
+key = config.get('DEFAULT','key')
+data = config.get('DEFAULT','data')
+useblob = config.get('DEFAULT','useblob')
 
-mysqluseorm = config['mysql']['orm']
+host = config.get('dbconfig','host')
+username = config.get('dbconfig','username')
+password = config.get('dbconfig','password')
+tablename = config.get('dbconfig','tablename')
+dbname = config.get('dbconfig','dbname')
+dbnameBerkely = config.get('berkelydb','dbname')
+
+mysqluseorm = config.get('mysql','orm')
 
 #getting which dbs are to be tested
 if testdb=='all':
-	testdb = 'hamsterdb,mysql,berkelydb'
-testdbs = testdb.split()
+	testdb = 'mysql,berkelydb'
+testdbs = testdb.split(',')
+#getting which actions are to be executed
+actions = action.split(',')
 
 #testing each selected db
 for currdb in testdbs:
 	somedb = db(currdb)
-	somedb.set_credentials(host,username,password,dbname,tablename)
+	if currdb == 'berkelydb':
+		somedb.set_credentials(host,username,password,dbnameBerkely,tablename)
+	else:
+		somedb.set_credentials(host,username,password,dbname,tablename)
+	somedb.connect()
+	for i in range(numtimes):
+		for someaction in actions:
+			if someaction=='insert':
+				somedb.insert(key,data)
+			elif someaction=='get':
+				somedb.get(key)
