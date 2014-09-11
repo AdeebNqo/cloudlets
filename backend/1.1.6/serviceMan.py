@@ -101,7 +101,7 @@ class serviceMan(object):
 		return self.services
 	'''
 	Skiping errors when parsing service description file
-	
+
 	'''
 	def t_error(self,token):
 		token.lexer.skip(1)

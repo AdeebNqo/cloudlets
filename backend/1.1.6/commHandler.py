@@ -88,6 +88,8 @@ class commHandler(object):
 					self.mqttserver.publish('client/useservice/{}'.format(items[0]),'NE')
 			else:
 				self.mqttserver.publish('client/useservice/{}'.format(items[0]),'NE')
+		elif (msg.topic=='server/service'):
+			self.servicemanager.add_service(msg.payload)
 		else:
 			if (msg.topic in self.requestlist):
 				self.mqttserver.publish('client/service_request/{0}/recvIP'.format(msg.topic.split('/')[2]), msg.payload)
@@ -95,7 +97,7 @@ class commHandler(object):
 	'''
 	Called once, only when the communication
 	handler is connecting to mosquitto.
-	'''	
+	'''
 	def on_connect(self,mosq, rc):
 		if (rc==0):
 			#
@@ -104,6 +106,7 @@ class commHandler(object):
 			self.mqttserver.subscribe('server/connectedusers',1)
 			self.mqttserver.subscribe('server/servicelist',1)
 			self.mqttserver.subscribe('server/useservice',1)
+			self.mqttserver.subscribe('server/service',1)
 
 			# Creating the user manager if the communication is functioning
 			self.usermanager = userMan.userMan()
@@ -114,7 +117,7 @@ class commHandler(object):
 			#
 			# Subscribing to mosquitto event broadcaster to receive
 			# connect and disconnect signals.
-			#			
+			#
 			broadcaster.connectsubscribers.append(self.on_userconnect)
 			broadcaster.disconnectsubscribers.append(self.on_userdisconnect)
 		elif (rc==1):
@@ -141,10 +144,8 @@ class commHandler(object):
 		self.mqttserver.publish('server/connecting',response)
 	def on_userdisconnect(self,username,macaddress):
 		self.usermanager.connect(username, macaddress)
-		#unsubscribing for the users requested channels
-		for servicename in self.usermanager.connectedusers[(username,macaddress)]:
-			self.mqttserver.unsubscribe('server/{0}/{1}|{2}/#'.format(servicename,username,macaddress))
-	
+		self.servicemanager.remove_allservices('{0}|{1}'.format(username, macaddress))
+
 if __name__=='__main__':
 	parser = argparse.ArgumentParser(description='Broker for listening to cloudlet connections.')
 	parser.add_argument('-p','--port', type=int, nargs=1, help='Port to listen on.', required=False)

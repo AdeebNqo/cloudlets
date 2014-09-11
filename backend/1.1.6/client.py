@@ -8,14 +8,36 @@ import sys
 import threading
 import uuid
 import socket
+import zlib
 
 i = 0
 mqttclient = None
-identifier = 'client{0}|{1}'.format(str(uuid.uuid4().get_hex().upper()[0:6]),str(uuid.uuid4().get_hex().upper()[0:10]))
+username = 'client{0}'.format(str(uuid.uuid4().get_hex().upper()[0:6]))
+macaddress = str(uuid.uuid4().get_hex().upper()[0:10])
+identifier = '{0}|{1}'.format(username,macaddress)
+myservices = '''{
+		"username":"{0}",
+		"macaddress":"{1}"
+		"services":["Name=compression
+		Description=A service for compression files for co-located friends.
+		Authors=Zola Mahlaza <adeebnqo@gmail.com>
+		Website=http://adeebnqo.github.io/cloudlets
+		CloudletV=1.4
+		Copyright=Copyright 2014 Zola Mahlaza"]
+		}'''.format(username, macaddress)
 
+serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+serversocket.bind((socket.gethostname(), 0))
+serversocket.listen(5)
+
+def compression():
+	global serversocket
+	while True:
+		data = serversocket.recv(1024)
+		print('compression service says {}'.format(data))
 def interface():
 	while True:
-		choice = input('1. Get Connected User List\n2. Get list of services\n3. Request Service\n')
+		choice = input('1. Get Connected User List\n2. Get list of services\n3. Request Service\n4. Advertize services\n')
 		if (choice==1):
 			mqttclient.publish('server/connectedusers',"true")
 		elif (choice==2):
@@ -28,6 +50,9 @@ def interface():
 					break
 				elif (schoice==1):
 					upload('hello','world')
+		elif(choice==4):
+			global myservices
+			mqttclient.publish('server/service',myservices)
 def on_publish(mosq, obj):
 	print("log: Message "+str(obj)+" published.")
 def on_message(obj, msg):
@@ -38,9 +63,7 @@ def on_message(obj, msg):
 	elif (msg.topic=='client/connecteduser'):
 		print(msg.payload)
 	elif (msg.topic=='server/useservice/{0}'.format(identifier)):
-		serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		serversocket.bind((socket.gethostname(), 0))
-		serversocket.listen(5)
+		global servicesocket
 		(ip,port) = serversocket.getnameinfo()
 		mqttclient.publish(msg.payload,"{0}:{1}".format(ip, port))
 		print('just sent address {0}:{1}'.format(ip, port))
