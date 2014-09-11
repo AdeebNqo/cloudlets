@@ -1,4 +1,4 @@
-from service import service
+import service as serv
 import json
 import lex
 import os
@@ -31,7 +31,7 @@ class serviceMan(object):
 		self.servicefolders = [x[0] for x in os.walk(self.servicesfolder)]
 
 	def add_service(self, source):
-		data = json.load(source)
+		data = json.loads(source)
 		username = data['username']
 		macaddress = data['macaddress']
 		for service in data['services']:
@@ -50,7 +50,7 @@ class serviceMan(object):
 					copyright = token.value
 				elif (token.type=='Website'):
 					website = token.value
-			someservice = service(name, cloudletv, description, authors, copyright, website)
+			someservice = serv.service(name, cloudletv, description, authors, copyright, website)
 			someservice.set_owner(username, macaddress)
 			self.services.add(someservice)
 	def remove_service(self, identifier, servicename):
@@ -85,17 +85,17 @@ class serviceMan(object):
 							copyright = token.value
 						elif (token.type=='Website'):
 							website = token.value
-				someservice = service(name, cloudletv, description, authors, copyright, website)
+				someservice = serv.service(name, cloudletv, description, authors, copyright, website)
 				someservice.add_module(imp.load_source(name.split('=')[1], '{0}/__init__.py'.format(folder)))
 				someservice.macaddress = 'local'
 				someservice.username = 'local'
 				self.services.add(someservice)
 	def request_service(self, userdetails, servicename):
 		for service in self.services:
-			print('servicename: {0}, thesame(bool): {1}'.format(service.simplename, service.simplename==servicename))
-			print('{0},{1}'.format(userdetails[0], userdetails[1]))
 			if (service.simplename==servicename and service.isallowed(userdetails[0], userdetails[1])):
-				return 'OK '+service.ipport()
+				response = 'OK '+service.ipport()
+				print('response is {}'.format(response))
+				return response
 		return 'NE'
 	def get_servicelist(self):
 		return self.services

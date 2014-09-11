@@ -15,16 +15,7 @@ mqttclient = None
 username = 'client{0}'.format(str(uuid.uuid4().get_hex().upper()[0:6]))
 macaddress = str(uuid.uuid4().get_hex().upper()[0:10])
 identifier = '{0}|{1}'.format(username,macaddress)
-myservices = '''{
-		"username":"{0}",
-		"macaddress":"{1}"
-		"services":["Name=compression
-		Description=A service for compression files for co-located friends.
-		Authors=Zola Mahlaza <adeebnqo@gmail.com>
-		Website=http://adeebnqo.github.io/cloudlets
-		CloudletV=1.4
-		Copyright=Copyright 2014 Zola Mahlaza"]
-		}'''.format(username, macaddress)
+myservices = "{\"username\":\""+username+"\",\"macaddress\":\""+macaddress+"\",\"services\":[\"Name=compression\\nDescription=A service for compression files for co-located friends.\\nAuthors=Zola Mahlaza <adeebnqo@gmail.com>\\nWebsite=http://adeebnqo.github.io/cloudlets\\nCloudletV=1.4\\nCopyright=Copyright 2014 Zola Mahlaza\"]}"
 
 serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serversocket.bind((socket.gethostname(), 0))
@@ -43,13 +34,7 @@ def interface():
 		elif (choice==2):
 			mqttclient.publish('server/servicelist',"true")
 		elif (choice==3):
-			requestservice('file_sharer')
-			while True:
-				schoice = input('1. Upload\n2. Fetch\n3. Remove\n4. Update\n5. Main Menu\n:>')
-				if schoice==5:
-					break
-				elif (schoice==1):
-					upload('hello','world')
+			requestservice(raw_input('service name:'))
 		elif(choice==4):
 			global myservices
 			mqttclient.publish('server/service',myservices)
@@ -68,7 +53,7 @@ def on_message(obj, msg):
 		mqttclient.publish(msg.payload,"{0}:{1}".format(ip, port))
 		print('just sent address {0}:{1}'.format(ip, port))
 	elif (msg.topic=='client/service_request/{0}/recvIP'.format(identifier)):
-		print(msg.payload)
+		print('here is the ip {}'.format(msg.payload))
 	else:
 		print(msg.payload)
 def on_subscribe(mosq, obj, qos_list):

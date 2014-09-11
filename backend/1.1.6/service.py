@@ -26,11 +26,15 @@ class service(object):
 		self.__obj = getattr(module, self.simplename)()
 		self.__obj.start()
 	def ipport(self):
-		if (self.__obj!=None):
-			return self.__obj.request_service()
-		elif (self.username!='local' and self.macaddress!='local'):
+		#check if service on mobile
+		if (not '_service__obj' in locals()):
 			return '{0}|{1}'.format(self.username, self.macaddress)
 		else:
-			return 'Service not available'
+			if (self.__obj!=None):
+				return self.__obj.request_service()
+			elif (self.username!='local' and self.macaddress!='local'):
+				return '{0}|{1}'.format(self.username, self.macaddress)
+			else:
+				return 'Service not available'
 	def __str__(self):
 		return '{0};{1};{2};{3};{4};{5}'.format(self.name,self.cloudletv,self.description,self.authors,self.copyright,self.website)
