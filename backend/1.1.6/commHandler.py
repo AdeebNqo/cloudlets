@@ -72,6 +72,7 @@ class commHandler(object):
 			#
 			if (self.usermanager.service_request((username,macaddress), servicename)=='OK'):
 				response = self.servicemanager.request_service((username,macaddress), servicename).split()
+				print('service request: service manager says {}'.format(response))
 				if (response[0]=='OK'):
 					ipport = response[1]
 					print('client has successfully requested service and should get it.')
