@@ -77,14 +77,17 @@ class commHandler(object):
 					ipport = response[1]
 					print('client has successfully requested service and should get it.')
 					if ('|' in ipport):
-						self.mqttserver.subscribe('server/service_request/{0}|{1}'.format(username,macaddress),1)
-						self.requestlist.add('server/service_request/{0}|{1}'.format(username,macaddress))
-						self.mqttserver.publish('client/service_request/{}'.format(ipport),'{0}|{1}'.format(username,macaddress))
+						#creating channel with the identifier of the mobile that is requesting service.
+						self.mqttserver.subscribe('server/service_request/{2}/{0}|{1}'.format(username,macaddress, servicename),1)
+						#adding that channel to watchlist to that it can be removed once device responds
+						self.requestlist.add('server/service_request/{2}/{0}|{1}'.format(username,macaddress,servicename))
+						#sending the username and macaddress of guy requesting service to the mobile device with service.
+						#this is crucial as this means that the mobile has the chance to look at the identifier and determine whether
+						#or not to reject the connection
+						self.mqttserver.publish('client/service_request/{}'.format(ipport),'{0}|{1}|{2}'.format(username,macaddress,servicename))
 					elif (ipport != 'Service not available'):
 						print('requested service is not available')
-						#print(ipport)
-						#print('client/service_request/{0}|{1}/recvIP'.format(username,macaddress))
-						self.mqttserver.publish('client/service_request/{0}|{1}/recvIP'.format(username,macaddress), ipport)
+						self.mqttserver.publish('client/service_request/{2}/{0}|{1}/recvIP'.format(username,macaddress, servicename), '{0}|{1}'.format(servicename, ipport))
 				else:
 					self.mqttserver.publish('client/useservice/{}'.format(items[0]),'NE')
 			else:
@@ -92,8 +95,12 @@ class commHandler(object):
 		elif (msg.topic=='server/service'):
 			self.servicemanager.add_service(msg.payload)
 		else:
+			print('last else, the msg topic is {}'.format(msg.topic))
 			if (msg.topic in self.requestlist):
-				self.mqttserver.publish('client/service_request/{0}/recvIP'.format(msg.topic.split('/')[2]), msg.payload)
+				(serverstring, serverequeststring, servicename, usernameandmacaddress) = msg.topic.split('/')
+				(username, macaddress) = usernameandmacaddress.split('|')
+				print('sent ip to {0}|{1}'.format(username, macaddress))
+				self.mqttserver.publish('client/service_request/{2}/{0}|{1}/recvIP'.format(username, macaddress, servicename), "{0}|{1}".format(servicename, msg.payload))
 				self.requestlist.remove(msg.topic)
 	'''
 	Called once, only when the communication

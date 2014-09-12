@@ -9,6 +9,7 @@ import threading
 import uuid
 import socket
 import zlib
+import re
 
 i = 0
 mqttclient = None
@@ -21,10 +22,15 @@ serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serversocket.bind((socket.gethostname(), 0))
 serversocket.listen(5)
 
+#this is the pattern that matches every channel that will be used to receive ip addresses for services
+iprequestpattern = re.compile('client/service_request/.*/'+identifier+'/recvIP')
+compression = None
+
 def compression():
 	global serversocket
 	while True:
-		data = serversocket.recv(1024)
+		client, address = serversocket.accept() 
+		data = client.recv(1024)
 		print('compression service says {}'.format(data))
 def interface():
 	while True:
@@ -41,34 +47,59 @@ def interface():
 def on_publish(mosq, obj):
 	print("log: Message "+str(obj)+" published.")
 def on_message(obj, msg):
+	print(msg.topic)
+	global iprequestpattern
 	if (msg.topic=='client/service'):
 		print(msg.payload)
 	elif (msg.topic=='client/useservice/{}'.format(identifier)):
 		print('trying to use service')
 	elif (msg.topic=='client/connecteduser'):
 		print(msg.payload)
-	elif (msg.topic=='server/useservice/{0}'.format(identifier)):
+	elif (msg.topic=='client/service_request/{0}'.format(identifier)):
+		#the first thing the client should do is use the payload
+		# to determine whether to allow the request
+		(usrname, macaddr, servicename)  = msg.payload.split('|')
+		#sending response to the requesting channel
 		global servicesocket
-		(ip,port) = serversocket.getnameinfo()
-		mqttclient.publish(msg.payload,"{0}:{1}".format(ip, port))
+		(ip,port) = serversocket.getsockname()
+		mqttclient.publish('server/service_request/{0}/{1}|{2}'.format(servicename, usrname, macaddr), "{0}:{1}".format(ip, port))
 		print('just sent address {0}:{1}'.format(ip, port))
-	elif (msg.topic=='client/service_request/{0}/recvIP'.format(identifier)):
-		print('here is the ip {}'.format(msg.payload))
+	elif (iprequestpattern.match(msg.topic)):
+		(servicename, address) = msg.payload.split('|')
+		(host, port) = address.split(':')
+		print('receieved address {0}:{1}'.format(host,port))
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.connect((host,int(port)))
+		s.sendall('500')
 	else:
-		print(msg.payload)
+		print('received {0}, on channel {1}'.format(msg.payload, msg.topic))
 def on_subscribe(mosq, obj, qos_list):
-	print("log: Subscribed.")
+	print("log: Subscribed!!")
+def on_connect(mosq, rc):
+	global mqttclient
+	if rc==0:
+		print('connected!')
+		mqttclient.subscribe('client/connecteduser',1)#receive connected user
+		mqttclient.subscribe('client/service',1)#receive available service
+		mqttclient.subscribe('client/service_request/{}'.format(identifier),1)#receive service requests
+		mqttclient.subscribe('client/service_request/+/{0}/recvIP'.format(identifier),1)#receive ip:port for service requests made
+		global compression
+		compression = threading.Thread(target=compression)
+		compression.daemon = True
+		compression.start()
 def main():
+	print(identifier)
 	global mqttclient
 	mqttclient = mosquitto.Mosquitto(identifier)
 	mqttclient.on_publish = on_publish
 	mqttclient.on_message = on_message
 	mqttclient.on_subscribe = on_subscribe
+	mqttclient.on_connect = on_connect
 	mqttclient.connect('127.0.0.1', port=9999, keepalive=60)
-	mqttclient.subscribe('client/connecteduser',1)
-	mqttclient.subscribe('client/service',1)
-	mqttclient.subscribe('client/service_request/{}'.format(identifier),1)
-	mqttclient.subscribe('client/service_request/{0}/recvIP'.format(identifier),1)
+	#mqttclient.subscribe('client/connecteduser',1)
+	#mqttclient.subscribe('client/service',1)
+	#mqttclient.subscribe('client/service_request/{}'.format(identifier),1)
+	#mqttclient.subscribe('client/service_request/+/{0}/recvIP'.format(identifier),1)
 	if(i):
 		t = threading.Thread(target=interface)
 		t.daemon = True
@@ -76,7 +107,6 @@ def main():
 	while True:
 		mqttclient.loop()
 def requestservice(servicename):
-	mqttclient.subscribe('client/useservice/{}'.format(identifier),1)
 	mqttclient.publish('server/useservice','{0};{1}'.format(identifier,servicename))
 if __name__=='__main__':
 	try:
