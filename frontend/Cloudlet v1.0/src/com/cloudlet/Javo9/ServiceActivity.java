@@ -22,41 +22,16 @@ import android.view.View.OnClickListener;
 import android.widget.TextView;
 
 import com.example.cloudlet.R;
-import com.fima.cardsui.objects.CardStack;
-import com.fima.cardsui.objects.RecyclableCard;
-import com.fima.cardsui.views.CardUI;
 
 public class ServiceActivity extends Activity{
 	public static MqttClient mqttClient = null;
-	private CardUI cardui;
 	
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_service);
-        
-        mqttClient = Client.getInstance().getMqttClient();
-        mqttClient.setCallback(new ServerCallback());
-        cardui = (CardUI) findViewById(R.id.cardsview);
-        cardui.setSwipeable(true);
-        
-        CardStack stack= new CardStack(); 
-        stack.setTitle(getResources().getString(R.string.service_text));
-        cardui.addStack(stack);
-        
-        MqttMessage msg = new MqttMessage("ufck that btch".getBytes());
-        try {
-			mqttClient.publish("client/servicelist",msg);
-		} catch (MqttPersistenceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (MqttException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-        cardui.refresh();
+      
     }
     
     class ConnectToService extends AsyncTask<String, Void, Integer>
@@ -67,21 +42,6 @@ public class ServiceActivity extends Activity{
 		DataInputStream is;
 		DataOutputStream os;
 		
-    	@Override
-		protected void onPostExecute(Integer result) {
-			super.onPostExecute(result);
-			Intent intent = new Intent(ServiceActivity.this, FileListActivity.class);
-			int size = files.size();
-			intent.putExtra("numfiles", size);
-			for (int i=0; i<size; ++i){
-				intent.putExtra("file"+i,files.get(i));
-				Log.d("Cloudlet", "srvc actvty, added "+files.get(i));
-			}
-			FileSharingDB.getInstance().setSocket(socket);
-			FileSharingDB.getInstance().setDataInputStream(is);
-			FileSharingDB.getInstance().setDataOutputStream(os);
-			startActivity(intent);
-    	}
 		@Override
 		protected Integer doInBackground(String... params) {
 			try
@@ -130,69 +90,4 @@ public class ServiceActivity extends Activity{
 		}
     	
     }
-    
-	class ServerCallback implements MqttCallback{
-
-		@Override
-		public void connectionLost(Throwable arg0) {
-			// TODO Auto-generated method stub
-			Log.d("Cloudlet","connection lost");
-		}
-
-		@Override
-		public void deliveryComplete(IMqttDeliveryToken arg0) {
-			// TODO Auto-generated method stub
-			Log.d("Cloudlet","delivery complete");
-		}
-
-		@Override
-		public void messageArrived(String arg0, MqttMessage arg1)
-				throws Exception {
-			// TODO Auto-generated method stub
-			if (arg0.equals("server/service")){
-				String service = new String(arg1.getPayload());
-				final String[] items = service.split("-");
-				ServiceCard serviceCard = new ServiceCard(items[0], items[1], R.drawable.card);
-				cardui.addCard(serviceCard);
-				serviceCard.setOnClickListener(new OnClickListener(){
-
-					@Override
-					public void onClick(View arg0) {
-						/*
-						 * How to connect to a service
-						 * 
-						 * 1. Create socket to ip=items[2], port=items[3]
-						 * 2. send "connect <mac address>" via socket
-						 * 3. send string "numfiles" via socket
-						 * 4. read socket for num of files accessible
-						 * 5. send "OK" via socket
-						 * 6. for numfiles times	
-						 *		6.1 read file details
-						 *		6.2 send "OK" via socket
-						 */
-						Log.d("Cloudlet", "test1");
-						new ConnectToService().execute(items[2] ,  items[3]);
-						Log.d("Cloudlet", "test2");
-					}
-					
-				});
-			}
-		}
-		
-	}
-	class ServiceCard extends RecyclableCard{
-		public ServiceCard(String title, String descr, int image){
-			super(title, descr, image);
-		}
-		@Override
-		protected void applyTo(View convertView) {
-			((TextView)(convertView.findViewById(R.id.title))).setText(this.title);
-			((TextView)(convertView.findViewById(R.id.description))).setText(this.desc);
-		}
-
-		@Override
-		protected int getCardLayoutId() {
-			return R.layout.card_ex;
-		}
-	}
 }
