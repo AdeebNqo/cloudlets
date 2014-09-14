@@ -149,7 +149,7 @@ class commHandler(object):
 	def on_userconnect(self,username,macaddress):
 		response = self.usermanager.connect(username, macaddress)
 		time.sleep(2)
-		self.mqttserver.publish('server/connecting',response)
+		self.mqttserver.publish('server/login',response)
 	def on_userdisconnect(self,username,macaddress):
 		self.usermanager.connect(username, macaddress)
 		self.servicemanager.remove_allservices('{0}|{1}'.format(username, macaddress))
