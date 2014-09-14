@@ -10,7 +10,7 @@ numtimes = int(config.get('DEFAULT','numtimes'))
 action = config.get('DEFAULT','action')
 testdb = config.get('DEFAULT','db')
 
-key = config.get('DEFAULT','key')
+keys = config.get('DEFAULT','key')
 data = config.get('DEFAULT','data')
 useblob = config.get('DEFAULT','useblob')
 
@@ -41,6 +41,6 @@ for currdb in testdbs:
 	for i in range(numtimes):
 		for someaction in actions:
 			if someaction=='insert':
-				somedb.insert(key,data)
+				somedb.insert(tuple(keys.split(',')),tuple(data.split(',')))
 			elif someaction=='get':
-				somedb.get(key)
+				somedb.get(tuple(keys.split(',')))
