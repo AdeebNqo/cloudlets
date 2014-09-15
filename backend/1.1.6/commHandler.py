@@ -47,7 +47,7 @@ class commHandler(object):
 	for mqtt. The method names should be enough
 	to explain what each method does.
 	'''
-	def on_subscribe(self,mosq, obj, qos_list):
+	def on_subscribe(self, mosq, obj, mid, qos_list):
 		print('broker subscribed to channel.')
 	def on_unsubscribe(self,mosq, obj):
 		print('broker: unsubscribe')
@@ -106,7 +106,7 @@ class commHandler(object):
 	Called once, only when the communication
 	handler is connecting to mosquitto.
 	'''
-	def on_connect(self,mosq, rc):
+	def on_connect(self,mosq, obj, rc):
 		if (rc==0):
 			#
 			# If connection is successful, registering for topics
