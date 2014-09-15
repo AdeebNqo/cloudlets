@@ -51,7 +51,7 @@ class commHandler(object):
 		print('broker subscribed to channel.')
 	def on_unsubscribe(self,mosq, obj):
 		print('broker: unsubscribe')
-	def on_message(self,obj, msg):
+	def on_message(self,mosq, obj, msg):
 		if (msg.topic=='server/connectedusers'):
 			#broadcast available users
 			for user in self.usermanager.get_connected():
@@ -147,6 +147,7 @@ class commHandler(object):
 	macaddress: Macaddress of the connecting/disconnecting party.
 	'''
 	def on_userconnect(self,username,macaddress):
+		macaddress = macaddress.split()[0]
 		response = self.usermanager.connect(username, macaddress)
 		time.sleep(2)
 		self.mqttserver.publish('server/login',response)

@@ -29,7 +29,7 @@ compression = None
 def compression():
 	global serversocket
 	while True:
-		client, address = serversocket.accept() 
+		client, address = serversocket.accept()
 		data = client.recv(1024)
 		print('compression service says {}'.format(data))
 def interface():
@@ -44,9 +44,9 @@ def interface():
 		elif(choice==4):
 			global myservices
 			mqttclient.publish('server/service',myservices)
-def on_publish(mosq, obj):
+def on_publish(mosq, obj, mid):
 	print("log: Message "+str(obj)+" published.")
-def on_message(obj, msg):
+def on_message(mosq, obj, msg):
 	print(msg.topic)
 	global iprequestpattern
 	if (msg.topic=='client/service'):
@@ -73,9 +73,9 @@ def on_message(obj, msg):
 		s.sendall('500')
 	else:
 		print('received {0}, on channel {1}'.format(msg.payload, msg.topic))
-def on_subscribe(mosq, obj, qos_list):
+def on_subscribe(mosq, obj, mid, qos_list):
 	print("log: Subscribed!!")
-def on_connect(mosq, rc):
+def on_connect(mosq, obj, rc):
 	global mqttclient
 	if rc==0:
 		print('connected!')
