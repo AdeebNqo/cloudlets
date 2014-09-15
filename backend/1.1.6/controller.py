@@ -2,7 +2,7 @@
 #
 # Copyright 2014 Zola Mahlaza <adeebnqo@gmail.com>
 # This file controls the cloudlet
-# 
+#
 #
 from mqttEventEmitter import mqttEventEmitter
 from commHandler import commHandler
