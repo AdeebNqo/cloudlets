@@ -86,7 +86,7 @@ class commHandler(object):
 						#or not to reject the connection
 						self.mqttserver.publish('client/service_request/{}'.format(ipport),'{0}|{1}|{2}'.format(username,macaddress,servicename))
 					elif (ipport != 'Service not available'):
-						print('requested service is not available')
+						print('requested service is available')
 						self.mqttserver.publish('client/service_request/{2}/{0}|{1}/recvIP'.format(username,macaddress, servicename), '{0}|{1}'.format(servicename, ipport))
 				else:
 					self.mqttserver.publish('client/useservice/{}'.format(items[0]),'NE')
