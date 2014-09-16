@@ -13,6 +13,8 @@ import re
 
 class Client(object):
 	def __init__(self,username,macaddress, ip, portX):
+		self.filesharingclient = None #Object that will interface with the file sharing service
+
 		self.username = username
 		self.macaddress = macaddress
 		self.ip = ip
@@ -37,7 +39,7 @@ class Client(object):
 	'''
 	The following are actions the client can make.
 	'''
-	def requestservice(servicename):
+	def requestservice(self,servicename):
 		self.mqttclient.publish('server/useservice','{0};{1}'.format(self.identifier,servicename))
 	def requestconnectedusers(self):
 		self.mqttclient.publish('server/connectedusers',"true")
@@ -77,7 +79,7 @@ class Client(object):
 			(servicename, address) = msg.payload.split('|')
 			(host, port) = address.split(':')
 			print('receieved address {0}:{1}'.format(host,port))
-			self.filesharingclient = FileSharingClient(self.username, host, int(port))
+			self.filesharingclient = FileSharingClient(self.username, self.ip, int(port))
 			self.activeserviceclients[servicename] = (self.filesharingclient)
 		else:
 			print('received {0}, on channel {1}'.format(msg.payload, msg.topic))
@@ -89,14 +91,15 @@ import json
 class FileSharingClient(object):
 	def __init__(self,username, ip, port):
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.s.connect((host,port))
+		print('connecting to {0}:{1}'.format(ip, port))
+		self.s.connect((ip,port))
 		self.username = username
 		self.identify()
 		self.recvdata = ''
 	def identify(self):
 		jsonstring = "{\"action\":\"identify\", \"username\":\""+self.username+"\"}"
 		self.send(jsonstring)
-	def upload(self, duration, access, accesslist=[None], compression, filename, owner, objectdata):
+	def upload(self, duration, access, accesslist, compression, filename, owner, objectdata):
 		print('upload')
 		jsonstring = "{\"duration\":\"{0}\", \"access\":\"{1}\", \"accesslist\":{2}, \"compression\":\"{3}\", \"filename\":\"{4}\", \"owner\":\"{5}\", \"objectdata\":\"{6}\"".format(duration, access, accesslist, compression, filename, owner, objectdata)
 		self.send(jsonstring)
@@ -106,6 +109,7 @@ class FileSharingClient(object):
 	def download(self, owner, requester, filename):
 		jsonstring = "{\"owner\":\"{0}\", \"requester\":\"{1}\", \"filename\":\"{2}\"}".format(owner, requester, filename)
 		self.send(jsonstring)
+		response = self.recv()
 	def heartbeat(self):
 		print('heartbeat')
 		jsonstring = "{\"action\":\"heartbeat\"}"
@@ -120,7 +124,7 @@ class FileSharingClient(object):
 		self.send(jsonstring)
 	def send(self, jsonstring):
 		length = len(jsonstring)
-		self.s.sendall(length)
+		self.s.sendall("{}".format(length))
 		response = self.s.recv(1024)
 		if (response=='OK'):
 			self.s.sendall(jsonstring)
