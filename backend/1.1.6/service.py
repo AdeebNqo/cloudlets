@@ -23,15 +23,17 @@ class service(object):
 	def isallowed(self,username,macaddress):
 		return (not ((username,macaddress) in self.blocklist))
 	def add_module(self,module):
-		self.__obj = getattr(module, self.simplename)()
-		self.__obj.start()
+		self.obj = getattr(module, self.simplename)()
+		self.obj.start()
 	def ipport(self):
 		#check if service on mobile
-		if (not '_service__obj' in locals()):
+		print(locals())
+		if (not 'obj' in locals()):
+			print('did not find obj')
 			return '{0}|{1}'.format(self.username, self.macaddress)
 		else:
-			if (self.__obj!=None):
-				return self.__obj.request_service()
+			if (not 'obj' in self.__dict__.keys()):
+				return self.obj.request_service()
 			elif (self.username!='local' and self.macaddress!='local'):
 				return '{0}|{1}'.format(self.username, self.macaddress)
 			else:
