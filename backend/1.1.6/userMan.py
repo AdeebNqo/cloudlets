@@ -29,10 +29,13 @@ class userMan(object):
 	# handler when a client requests a service
 	#
 	def service_request(self,userdetails,servicename):
-		if servicename in self.connectedusers[userdetails]:
-			return 'NOTOK'
-		else:
-			self.connectedusers[userdetails].add(servicename)
+		try:
+			if servicename in self.connectedusers[userdetails]:
+				return 'NOTOK'
+			else:
+				self.connectedusers[userdetails].add(servicename)
+				return 'OK'
+		except KeyError:
 			return 'OK'
 	#
 	# Method for getting all connected users
