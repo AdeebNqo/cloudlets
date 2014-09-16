@@ -62,7 +62,7 @@ class mysql(object):
 	'''
 	def get(self,key):
 		self.cur.execute('SELECT * FROM {0} where {1}={2}'.format(self.tablename, key.keys()[0], key.values()[0]))
-		return cur.fetchall()
+		return cur.fetchone()
 	def update(self, key, keys, data):
 		length = len(keys)
 		updatestring = ''
@@ -131,9 +131,14 @@ class file_sharer():
 				owner = data['owner']
 				requester = data['requester']
 				filename = data['filename']
-				files = self.currdb.get({'id':'{0}:{1}'.format(owner,filename)})
-				print(files)
-				#now need to check if requester has access
+				(idX, accessX, filenameX, ownerX, accesslistX) = self.currdb.get({'id':'{0}:{1}'.format(owner,filename)})
+				#check if request has access
+				if (accessX=='public' or requester==owner or requester in accesslistX):
+					jsonstring = "{\"actionresponse\":\"download\", \"OK\"}"
+					self.send(requester, jsonstring)
+				else:
+					jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOACCESS\"}"
+					self.send(requester, jsonstring)
 			elif action=='upload':
 				print('uploading something')
 				duration = data['duration']
@@ -176,6 +181,13 @@ class file_sharer():
 			elif action == 'identify':
 				self.connections[data['username']] = (somesocket, address)
 
+	def send(self,username, data):
+		(sock, addr) = self.connections[username]
+		length = len(data)
+		sock.sendall(length)
+		response = sock.recv(1024)
+		if (response=='OK'):
+			sock.sendall(data)
 	def stop(self):
 		print('stopping')
 		self.sockt.close()
