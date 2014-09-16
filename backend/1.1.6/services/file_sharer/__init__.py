@@ -90,7 +90,7 @@ class file_sharer():
 		self.currdb.set_credentials('localhost', 'root', 101, 'cloudletX', 'files')
 		self.currdb.connect()
 		self.sockt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.sockt.bind(('127.0.0.1', 0))
+		self.sockt.bind(('10.0.0.51', 0))
 		self.sockt.listen(1)
 		self.users = {}
 		print('service created')
@@ -179,10 +179,10 @@ class file_sharer():
 				if (recv_socket.recv(1024)=='OK'):
 					recv_socket.sendall(jsonstring)
 			elif action == 'identify':
-				self.connections[data['username']] = (somesocket, address)
+				self.users[data['username']] = (somesocket, address)
 
 	def send(self,username, data):
-		(sock, addr) = self.connections[username]
+		(sock, addr) = self.users[username]
 		length = len(data)
 		sock.sendall(length)
 		response = sock.recv(1024)
