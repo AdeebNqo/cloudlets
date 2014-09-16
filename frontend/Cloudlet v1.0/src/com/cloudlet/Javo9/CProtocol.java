@@ -91,6 +91,16 @@ public class CProtocol implements MqttCallback{
 		identifier = name +"|"+ vals[1];
 		new Connector().execute(identifier);
 	}
+	/*
+	 * Method for disconnecting from cloudlet
+	 */
+	public void disconnectFromCloudlet() throws MqttException, NullPointerException{
+		if (mqttClient==null){
+			throw new NullPointerException("Mqtt Client is null.");
+		}else{
+			mqttClient.disconnect();
+		}
+	}
 	private class Connector extends AsyncTask<String, Void, Void>{
 		@Override
 		protected Void doInBackground(String... params) {
@@ -118,9 +128,7 @@ public class CProtocol implements MqttCallback{
 		@Override
 		protected void onPostExecute(Void result) {
 			try {
-				Log.d("cloudletXdebug", "inside the execute thing");
-				CProtocol.this.requestConnectedUsers();
-				Log.d("cloudletXdebug", "after requesting");
+				CProtocol.this.requestAvailableServices();;
 			} catch (MqttPersistenceException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -177,18 +185,22 @@ public class CProtocol implements MqttCallback{
 	
 	@Override
 	public void connectionLost(Throwable arg0) {
+		Log.d("cloudletXdebug", "the connection has been lost: "+arg0.getMessage());
 		for (CProtocolInterface somereceiver: cprotocollisteners){
 			somereceiver.connectionLost(arg0);
 		}
+		arg0.printStackTrace();
 	}
 	@Override
 	public void deliveryComplete(IMqttDeliveryToken arg0) {
+		Log.d("cloudletXdebug", "msg delivered");
 		for (CProtocolInterface somereceiver: cprotocollisteners){
 			somereceiver.deliveryComplete(arg0);
 		}
 	}
 	@Override
 	public void messageArrived(String arg0, MqttMessage arg1) throws Exception {
+		Log.d("cloudletXdebug", "msg has been received");
 		for (CProtocolInterface somereceiver: cprotocollisteners){
 			somereceiver.messageArrived(arg0, arg1);
 		}

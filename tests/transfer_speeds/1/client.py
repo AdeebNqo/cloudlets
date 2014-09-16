@@ -96,7 +96,7 @@ class FileSharingClient(object):
 	def identify(self):
 		jsonstring = "{\"action\":\"identify\", \"username\":\""+self.username+"\"}"
 		self.send(jsonstring)
-	def upload(self, duration, access, accesslist=[], compression, filename, owner, objectdata):
+	def upload(self, duration, access, accesslist=[None], compression, filename, owner, objectdata):
 		print('upload')
 		jsonstring = "{\"duration\":\"{0}\", \"access\":\"{1}\", \"accesslist\":{2}, \"compression\":\"{3}\", \"filename\":\"{4}\", \"owner\":\"{5}\", \"objectdata\":\"{6}\"".format(duration, access, accesslist, compression, filename, owner, objectdata)
 		self.send(jsonstring)
