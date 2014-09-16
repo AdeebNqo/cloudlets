@@ -213,16 +213,15 @@ public final class R {
         public static final int selectable_background_cardbank=0x7f020002;
     }
     public static final class id {
-        public static final int action_settings=0x7f06000b;
+        public static final int action_settings=0x7f06000a;
         public static final int animation_layout_content=0x7f060001;
         public static final int animation_layout_sidebar=0x7f060000;
-        public static final int cardsview=0x7f060006;
         public static final int container=0x7f060002;
-        public static final int description=0x7f060008;
+        public static final int description=0x7f060007;
         public static final int filelist=0x7f060005;
-        public static final int imageView1=0x7f060009;
-        public static final int statustext=0x7f06000a;
-        public static final int title=0x7f060007;
+        public static final int imageView1=0x7f060008;
+        public static final int statustext=0x7f060009;
+        public static final int title=0x7f060006;
         public static final int upload=0x7f060004;
         public static final int viewlocalfiles=0x7f060003;
     }

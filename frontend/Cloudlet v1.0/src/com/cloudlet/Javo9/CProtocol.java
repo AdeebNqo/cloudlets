@@ -24,17 +24,19 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
+import android.util.Log;
 
 public class CProtocol implements MqttCallback{
 	private WifiManager manager=null;
 	private Context appContext = null;
-	private CProtocol instance = null;
+	private static CProtocol instance = null;
 	private String cloudletAddress = null;
 	private MqttClient mqttClient = null ;
 	private MemoryPersistence persistence = new MemoryPersistence();
+	int i = 0;
 	LinkedList<CProtocolInterface> cprotocollisteners = new LinkedList<CProtocolInterface>();
 	
-	public CProtocol getCProtocol(){
+	public static CProtocol getCProtocol(){
 		if (instance==null){
 			instance = new CProtocol();
 			return instance;
@@ -46,13 +48,14 @@ public class CProtocol implements MqttCallback{
 	 * CProtocol will operate.
 	 */
 	public void init(Context appContext){
-		instance.appContext = appContext;
+		this.appContext = appContext;
+		manager = (WifiManager) appContext.getSystemService(Context.WIFI_SERVICE);
 	}
 	/*
 	 * Method for setting IP and Port of cloudlet
 	 */
 	public void setCloudletAddress(String ip, int port){
-		instance.cloudletAddress = "tcp://"+ip+":"+port;
+		cloudletAddress = "tcp://"+ip+":"+port;
 	}
 	/*
 	 * Method for connecting to a specified WiFi network.
@@ -60,7 +63,6 @@ public class CProtocol implements MqttCallback{
 	 */
 	public void connectToWiFi(String ssid, String password)
 	{
-		instance.manager = (WifiManager) instance.appContext.getSystemService(Context.WIFI_SERVICE);
 		List<ScanResult> networks = manager.getScanResults();
 		for (ScanResult network: networks){
 			if (network.SSID.equals(ssid)){
@@ -83,24 +85,30 @@ public class CProtocol implements MqttCallback{
 	 * Method for connecting to a cloudlet
 	 */
 	public void connectToCloudlet(String identifier) throws MqttException{
+		String[] vals = identifier.split("\\|");
+		//Log.d("cloudletXdebug", "mqttClient creation failed");
+		String name = vals[0].substring(0, 6);
+		identifier = name +"|"+ vals[1];
 		new Connector().execute(identifier);
 	}
 	private class Connector extends AsyncTask<String, Void, Void>{
-
 		@Override
 		protected Void doInBackground(String... params) {
 			try{
 				String identifier = params[0];
-				instance.mqttClient = new MqttClient(instance.cloudletAddress, identifier, persistence);
-				MqttConnectOptions connOpts = new MqttConnectOptions();
+				Log.d("cloudletXdebug", identifier);
+				Log.d("cloudletXdebug", cloudletAddress);
+				mqttClient = new MqttClient(cloudletAddress, identifier, persistence);
+				/*MqttConnectOptions connOpts = new MqttConnectOptions();
 		        connOpts.setCleanSession(true);
 		        mqttClient.connect();
 		        mqttClient.subscribe("client/connecteduser"); //connected users will be broadcasted here
 	            mqttClient.subscribe("client/service"); //available services will be broadcasted here
 	            mqttClient.subscribe("client/service_request/"+identifier);
-	            mqttClient.subscribe("client/service_request/+/"+identifier+"/recvIP");
+	            mqttClient.subscribe("client/service_request/+/"+identifier+"/recvIP");*/
 			}catch(MqttException e){
-				e.printStackTrace();
+				Log.d("cloudletXdebug", "mqttClient creation failed");
+				//e.printStackTrace();
 			}
 			return null;
 		}
@@ -139,7 +147,7 @@ public class CProtocol implements MqttCallback{
 	 * Method for retrieving the mac address
 	 */
 	public String getMacAddress(){
-		WifiInfo info = instance.manager.getConnectionInfo();
+		WifiInfo info = manager.getConnectionInfo();
 		String address = info.getMacAddress();
 		return address;
 	}
@@ -147,24 +155,24 @@ public class CProtocol implements MqttCallback{
 	 * 
 	 */
 	public void setCProtocolListener(CProtocolInterface somereceiver){
-		instance.cprotocollisteners.add(somereceiver);
+		cprotocollisteners.add(somereceiver);
 	}
 	
 	@Override
 	public void connectionLost(Throwable arg0) {
-		for (CProtocolInterface somereceiver: instance.cprotocollisteners){
+		for (CProtocolInterface somereceiver: cprotocollisteners){
 			somereceiver.connectionLost(arg0);
 		}
 	}
 	@Override
 	public void deliveryComplete(IMqttDeliveryToken arg0) {
-		for (CProtocolInterface somereceiver: instance.cprotocollisteners){
+		for (CProtocolInterface somereceiver: cprotocollisteners){
 			somereceiver.deliveryComplete(arg0);
 		}
 	}
 	@Override
 	public void messageArrived(String arg0, MqttMessage arg1) throws Exception {
-		for (CProtocolInterface somereceiver: instance.cprotocollisteners){
+		for (CProtocolInterface somereceiver: cprotocollisteners){
 			somereceiver.messageArrived(arg0, arg1);
 		}
 	}
