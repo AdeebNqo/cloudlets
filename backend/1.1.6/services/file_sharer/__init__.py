@@ -184,7 +184,7 @@ class file_sharer():
 	def send(self,username, data):
 		(sock, addr) = self.users[username]
 		length = len(data)
-		sock.sendall(length)
+		sock.sendall("{}".format(length))
 		response = sock.recv(1024)
 		if (response=='OK'):
 			sock.sendall(data)
