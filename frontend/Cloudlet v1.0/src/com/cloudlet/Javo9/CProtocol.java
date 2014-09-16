@@ -99,20 +99,37 @@ public class CProtocol implements MqttCallback{
 				Log.d("cloudletXdebug", identifier);
 				Log.d("cloudletXdebug", cloudletAddress);
 				mqttClient = new MqttClient(cloudletAddress, identifier, persistence);
-				/*MqttConnectOptions connOpts = new MqttConnectOptions();
+				mqttClient.setCallback(CProtocol.this);
+				MqttConnectOptions connOpts = new MqttConnectOptions();
 		        connOpts.setCleanSession(true);
 		        mqttClient.connect();
 		        mqttClient.subscribe("client/connecteduser"); //connected users will be broadcasted here
 	            mqttClient.subscribe("client/service"); //available services will be broadcasted here
 	            mqttClient.subscribe("client/service_request/"+identifier);
-	            mqttClient.subscribe("client/service_request/+/"+identifier+"/recvIP");*/
+	            mqttClient.subscribe("client/service_request/+/"+identifier+"/recvIP");
+	            Log.d("cloudletXdebug", "done with connecting and subscribing");
 			}catch(MqttException e){
 				Log.d("cloudletXdebug", "mqttClient creation failed");
 				//e.printStackTrace();
 			}
 			return null;
 		}
-	
+
+		@Override
+		protected void onPostExecute(Void result) {
+			try {
+				Log.d("cloudletXdebug", "inside the execute thing");
+				CProtocol.this.requestConnectedUsers();
+				Log.d("cloudletXdebug", "after requesting");
+			} catch (MqttPersistenceException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (MqttException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			super.onPostExecute(result);
+		}
 	}
 	/*
 	 * Method for requesting connected users

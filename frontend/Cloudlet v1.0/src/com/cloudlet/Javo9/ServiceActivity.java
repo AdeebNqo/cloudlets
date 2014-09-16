@@ -21,9 +21,10 @@ public class ServiceActivity extends Activity implements CProtocolInterface{
 			protocol = CProtocol.getCProtocol();
 			protocol.init(getBaseContext());
 			protocol.setCloudletAddress("10.10.0.51", 9999);
-			//protocol.connectToWiFi("CloudletX", "none");
+			protocol.connectToWiFi("CloudletX", "none");
 			String macaddress = protocol.getMacAddress();
 			protocol.connectToCloudlet("clientandroid|"+macaddress);
+			//protocol.requestConnectedUsers();
     	}catch(MqttException e){
     		e.printStackTrace();
     		//show error connecting dialog
@@ -38,7 +39,7 @@ public class ServiceActivity extends Activity implements CProtocolInterface{
 	@Override
 	public void messageArrived(String arg0, MqttMessage arg1) throws Exception {
 		String msg = new String(arg1.getPayload());
-		Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+		Toast.makeText(getApplicationContext(), arg0, Toast.LENGTH_LONG).show();
 	}
 	@Override
 	public void deliveryComplete(IMqttDeliveryToken arg0) {
