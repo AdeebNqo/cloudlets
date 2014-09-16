@@ -77,7 +77,7 @@ class Client(object):
 			(servicename, address) = msg.payload.split('|')
 			(host, port) = address.split(':')
 			print('receieved address {0}:{1}'.format(host,port))
-			self.filesharingclient = FileSharingClient(host,int(port))
+			self.filesharingclient = FileSharingClient(self.username, host, int(port))
 			self.activeserviceclients[servicename] = (self.filesharingclient)
 		else:
 			print('received {0}, on channel {1}'.format(msg.payload, msg.topic))
@@ -85,7 +85,52 @@ class Client(object):
 The following class should handle all interactions between
 client and cloudlet with respect to the file sharing services
 '''
+import json
 class FileSharingClient(object):
-	def __init__(self,ip,port):
+	def __init__(self,username, ip, port):
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.s.connect((host,port))
+		self.username = username
+		self.identify()
+		self.recvdata = ''
+	def identify(self):
+		jsonstring = "{\"action\":\"identify\", \"username\":\""+self.username+"\"}"
+		self.send(jsonstring)
+	def upload(self, duration, access, accesslist=[], compression, filename, owner, objectdata):
+		print('upload')
+		jsonstring = "{\"duration\":\"{0}\", \"access\":\"{1}\", \"accesslist\":{2}, \"compression\":\"{3}\", \"filename\":\"{4}\", \"owner\":\"{5}\", \"objectdata\":\"{6}\"".format(duration, access, accesslist, compression, filename, owner, objectdata)
+		self.send(jsonstring)
+	def remove(self,owner,filename):
+		jsonstring = "{\"action\":\"remove\", \"owner\":\"{0}\", \"filename\":\"{1}\"}".format(owner, filename)
+		self.send(jsonstring)
+	def download(self, owner, requester, filename):
+		jsonstring = "{\"owner\":\"{0}\", \"requester\":\"{1}\", \"filename\":\"{2}\"}".format(owner, requester, filename)
+		self.send(jsonstring)
+	def heartbeat(self):
+		print('heartbeat')
+		jsonstring = "{\"action\":\"heartbeat\"}"
+		self.send(jsonstring)
+		response = self.recv()
+		if (response['status']!='OK'):
+			#connecting broken
+			self.s.close()
+	def transfer(self, owner, receiver, oncloudlet, filename, objectdata):
+		print('transfer')
+		jsonstring = "{\"action\":\"transfer\", \"owner\":\"{0}\", \"receiver\":\"{1}\", \"oncloudlet\":\"{2}\", \"filename\":\"{3}\", \"objectdata\":\"{4}\"}".format(owner, receiver, oncloudlet, filename, objectdata)
+		self.send(jsonstring)
+	def send(self, jsonstring):
+		length = len(jsonstring)
+		self.s.sendall(length)
+		response = self.s.recv(1024)
+		if (response=='OK'):
+			self.s.sendall(jsonstring)
+	def recv(self):
+		length = int(self.s.recv(1024))
+		data = None
+		if self.recvdata != '':
+			data += self.recvdata
+		while (len(data) < length):
+			data += self.s.recv(1024)
+		self.recvdata = data[length:]
+		data = data[:length]
+		return json.loads(data)

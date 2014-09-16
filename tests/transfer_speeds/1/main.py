@@ -27,8 +27,9 @@ print('creating clients...')
 for i in range(numclients):
         client = Client('client{}'.format(i), macaddress, ip, port)
         sleep(2)
-        print('requesting available services...')
-        print(client.requestavailableservices())
+        print('perfoming actions...')
+        client.requestavailableservices()
+        client.requestconnectedusers()
 print('done.')
 while True:
         pass
