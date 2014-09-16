@@ -30,6 +30,10 @@ for i in range(numclients):
         print('perfoming actions...')
         client.requestavailableservices()
         client.requestconnectedusers()
+        client.requestservice('file_sharer')
+        while (client.filesharingclient == None):
+                pass
+
 print('done.')
 while True:
         pass
