@@ -117,6 +117,7 @@ class FileSharingClient(object):
 		jsonstring = "{\"owner\":\""+owner+"\", \"requester\":\""+requester+"\", \"filename\":\""+filename+"\"}"
 		self.send(jsonstring)
 		response = self.recv()
+		return response
 	def heartbeat(self):
 		print('heartbeat')
 		jsonstring = "{\"action\":\"heartbeat\"}"
