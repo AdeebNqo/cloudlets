@@ -47,15 +47,12 @@ class mysql(object):
 		values = '('
 		for i in range(length):
 			string = string + keys[i]
-			values = values + data[i]
+			values = values + "\""+data[i]+"\""
 			if (i!=length-1):
 				string = string+','
 				values = values+','
 		string = string+')'
-		if (data[len(keys)-1]==''):
-			values = values+"\"\""+")"
-		else:
-			values = values+')'
+		values = values+')'
 		print('INSERT INTO {0}{1} VALUES {2};'.format(self.tablename, string, values))
 		self.cur.execute('INSERT INTO {0} {1} VALUES {2};'.format(self.tablename, string, values))
 		self.db.commit()
@@ -65,7 +62,7 @@ class mysql(object):
 	'''
 	def get(self,key):
 		print('SELECT * FROM {0} where {1}={2}'.format(self.tablename, key.keys()[0], key.values()[0])
-		self.cur.execute('SELECT * FROM {0} where {1}={2}'.format(self.tablename, key.keys()[0], key.values()[0]))
+		self.cur.execute('SELECT * FROM {0} where \"{1}\"=\"{2}\"'.format(self.tablename, key.keys()[0], key.values()[0]))
 		return cur.fetchone()
 	def update(self, key, keys, data):
 		length = len(keys)
@@ -74,7 +71,7 @@ class mysql(object):
 			updatestring = updatestring+keys[i]+'='+data[i]
 			if (i!=length-1):
 				updatestring=updatestring+','
-		self.cur.execute('UPDATE {0} SET {1} where {2}={3}'.format(self.tablename, updatestring, key.keys()[0], key.values()[0]))
+		self.cur.execute('UPDATE {0} SET {1} where \"{2}\"=\"{3}\"'.format(self.tablename, updatestring, key.keys()[0], key.values()[0]))
 		self.cur.commit()
 import bsddb3 as bsddb
 class berkelydb(object):
@@ -187,6 +184,7 @@ class file_sharer():
 							jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"OK\"}"
 							self.send2(somesocket, jsonstring)
 						except MySQLdb.Error,e:
+							print(e)
 							jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \""+e.args[0]+"\"}"
 							self.send2(somesocket, jsonstring)
 					else:
