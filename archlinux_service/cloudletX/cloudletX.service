@@ -1,0 +1,10 @@
+[Unit]
+Description=Cloudlet starter
+
+[Service]
+User=root
+ExecStart=/usr/bin/python2.7 /root/cloudletX/startup.py
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target
