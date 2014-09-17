@@ -145,23 +145,39 @@ class file_sharer():
 					print('uploading something')
 					duration = packet['duration']
 					access = packet['access']
+					accesslist = packet['accesslist']
+					if (accesslist=='None'):
+						accesslist = []
 					if (access!='public'):
 						accesslist = packet['accesslist']
 					compression = packet['compression']
 					filename = packet['filename']
 					owner = packet['owner']
-					objectdata = packet['data']
+					objectdata = packet['objectdata']
 
+					print('checking existence of folder: {}'.format(owner))
 					if not os.path.exists(owner):
 						os.makedirs(owner)
+						print('owner did not have any shared files. his folder has been created')
 					filepath = '{0}/{1}'.format(owner, filename)
 					if not os.path.isfile(filepath):
+						print('The upload does not yet exist')
 						_file = open(filepath, 'w')
 						_file.write(objectdata)
 						_file.close()
 						#primary key
 						primkey = '{0}:{1}'.format(owner,filename)
-						self.currdb.insert(('id', 'access', 'filename', 'owner', 'accesslist'), (primkey, access, filename, owner, accesslist.join(':')))
+						try:
+							self.currdb.insert(('id', 'access', 'filename', 'owner', 'accesslist'), (primkey, access, filename, owner, accesslist.join(':')))
+							jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"OK\"}"
+							self.send2(somesocket, jsonstring)
+						except MySQLdb.Error,e:
+							jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \""+e.args[0]+"\"}"
+							self.send2(somesocket, jsonstring)
+					else:
+						jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \"The file already exists.\"}"
+						self.send2(somesocket, jsonstring)
+					print('done uploading something.')
 				elif action=='transfer':
 					print('transefering something to someone')
 					owner = data['owner']
@@ -192,6 +208,12 @@ class file_sharer():
 		response = sock.recv(1024)
 		if (response=='OK'):
 			sock.sendall(data)
+	def send2(self,somesocket,data):
+		length = len(data)
+		sock.sendall("{}".format(length))
+		response = somesocket.recv(1024)
+		if (response=='OK'):
+			somesocket.sendall(data)
 	def stop(self):
 		print('stopping')
 		self.sockt.close()
