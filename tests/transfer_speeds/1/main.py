@@ -22,18 +22,27 @@ ip = config.get('DEFAULT','ip')
 port = config.get('DEFAULT', 'port')
 interface = config.get('DEFAULT','interface')
 macaddress = getmac(interface)
+transferfile = config.get('DEFAULT', 'testfile')
 
 print('creating clients...')
+clients = []
 for i in range(numclients):
         client = Client('client{}'.format(i), macaddress, ip, port)
         sleep(2)
         print('perfoming actions...')
         client.requestavailableservices()
         client.requestconnectedusers()
+        print('requesting file sharing service...')
         client.requestservice('file_sharer')
+        print('waiting for authentication...')
         while (client.filesharingclient == None):
                 pass
+        clients.append(client)
 
 print('done.')
+somfile = open(transferfile, 'r').read()
+print('client 1 uploading file...')
+clients[0].filesharingclient.upload('1h', 'public', None, '0', transferfile, clients[0].filesharingclient.username, somfile)
+print('client 1 uploaded file!')
 while True:
         pass

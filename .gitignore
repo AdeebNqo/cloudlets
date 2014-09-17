@@ -10,3 +10,4 @@ frontend/Cloudlet v1.0/bin/*
 /home/zmahlaza/Documents/uct/project/cloudlets/backend/vers1.4/services/file_sharerc
 *.mp3
 *cloudletX.db
+*.jpg

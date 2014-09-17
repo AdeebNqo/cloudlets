@@ -10,6 +10,7 @@ import uuid
 import socket
 import zlib
 import re
+import base64
 
 class Client(object):
 	def __init__(self,username,macaddress, ip, portX):
@@ -100,9 +101,14 @@ class FileSharingClient(object):
 		jsonstring = "{\"action\":\"identify\", \"username\":\""+self.username+"\"}"
 		self.send(jsonstring)
 	def upload(self, duration, access, accesslist, compression, filename, owner, objectdata):
+
+		objectdata = base64.b64encode(objectdata)
+		jsonstring = "{\"action\":\"upload\", \"duration\":\""+duration+"\", \"access\":\""+access+"\", \"accesslist\":"
 		if accesslist==None:
-			accesslist = ''
-		jsonstring = "{\"duration\":\""+duration+"\", \"access\":\""+access+"\", \"accesslist\":"+accesslist+",\"compression\":\""+compression+"\", \"filename\":\""+filename+"\", \"owner\":\""+owner+"\", \"objectdata\":\""+objectdata+"\"}"
+			jsonstring += "\"None\""
+		else:
+			jsonstring += "\""+":".join(accesslist)+"\""
+		jsonstring += ",\"compression\":\""+compression+"\", \"filename\":\""+filename+"\", \"owner\":\""+owner+"\", \"objectdata\":\""+objectdata+"\"}"
 		self.send(jsonstring)
 	def remove(self,owner,filename):
 		jsonstring = "{\"action\":\"remove\", \"owner\":\""+owner+"\", \"filename\":\""+filename+"\"}"
@@ -120,8 +126,8 @@ class FileSharingClient(object):
 			#connecting broken
 			self.s.close()
 	def transfer(self, owner, receiver, oncloudlet, filename, objectdata):
-		print('transfer')
-		jsonstring = "{\"action\":\"transfer\", \"owner\":\""++owner"\", \"receiver\":\""+receiver+"\", \"oncloudlet\":\""+oncloudlet+"\", \"filename\":\""+filename+"\", \"objectdata\":\""+objectdata+"\"}"
+		objectdata = base64.b64encode(objectdata)
+		jsonstring = "{\"action\":\"transfer\", \"owner\":\""+owner+"\", \"receiver\":\""+receiver+"\", \"oncloudlet\":\""+oncloudlet+"\", \"filename\":\""+filename+"\", \"objectdata\":\""+objectdata+"\"}"
 		self.send(jsonstring)
 	def send(self, jsonstring):
 		length = len(jsonstring)
