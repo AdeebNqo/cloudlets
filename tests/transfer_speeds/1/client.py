@@ -110,11 +110,12 @@ class FileSharingClient(object):
 			jsonstring += "\""+":".join(accesslist)+"\""
 		jsonstring += ",\"compression\":\""+compression+"\", \"filename\":\""+filename+"\", \"owner\":\""+owner+"\", \"objectdata\":\""+objectdata+"\"}"
 		self.send(jsonstring)
+		return self.recv()
 	def remove(self,owner,filename):
 		jsonstring = "{\"action\":\"remove\", \"owner\":\""+owner+"\", \"filename\":\""+filename+"\"}"
 		self.send(jsonstring)
 	def download(self, owner, requester, filename):
-		jsonstring = "{\"owner\":\""+owner+"\", \"requester\":\""+requester+"\", \"filename\":\""+filename+"\"}"
+		jsonstring = "{\"action\":\"download\",\"owner\":\""+owner+"\", \"requester\":\""+requester+"\", \"filename\":\""+filename+"\"}"
 		self.send(jsonstring)
 		response = self.recv()
 		return response
@@ -141,8 +142,11 @@ class FileSharingClient(object):
 		data = None
 		if self.recvdata != '':
 			data += self.recvdata
-		while (len(data) < length):
+		recvsize = 0
+		while (recvsize < length):
 			data += self.s.recv(1024)
+			if (data!=None):
+				recvsize += len(data)
 		self.recvdata = data[length:]
 		data = data[:length]
 		return json.loads(data)
