@@ -179,6 +179,7 @@ class file_sharer():
 				if (recv_socket.recv(1024)=='OK'):
 					recv_socket.sendall(jsonstring)
 			elif action == 'identify':
+				data = json.loads(data)
 				self.users[data['username']] = (somesocket, address)
 
 	def send(self,username, data):
