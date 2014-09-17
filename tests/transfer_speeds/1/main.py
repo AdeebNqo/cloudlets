@@ -42,7 +42,8 @@ for i in range(numclients):
 print('done.')
 somfile = open(transferfile, 'r').read()
 print('client 1 uploading file...')
-clients[0].filesharingclient.upload('1h', 'public', None, '0', transferfile, clients[0].filesharingclient.username, somfile)
+print(clients[0].filesharingclient.upload('1h', 'public', None, '0', transferfile, clients[0].filesharingclient.username, somfile))
+print(clients[0].filesharingclient.download(clients[0].filesharingclient.username, clients[0].filesharingclient.username, transferfile))
 print('Done!')
 while True:
         pass
