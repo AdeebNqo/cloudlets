@@ -9,5 +9,6 @@
     <string name="title_activity_service">Services</string>
     <string name="service_text">Services</string>
     <string name="title_activity_file_list">FileListActivity</string>
+    <string name="title_activity_user">UserActivity</string>
 
 </resources>

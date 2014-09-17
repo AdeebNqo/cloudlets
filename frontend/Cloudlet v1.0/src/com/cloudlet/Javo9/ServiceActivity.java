@@ -2,14 +2,17 @@ package com.cloudlet.Javo9;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -30,6 +33,8 @@ public class ServiceActivity extends Activity implements CProtocolInterface{
 	ArrayList<String> list = new ArrayList<String>();
 	ServiceAdapter adapter = null;
 	String identifier = null;
+	String username = null;
+	FileSharingClient filesharingclient = null;
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
@@ -43,7 +48,8 @@ public class ServiceActivity extends Activity implements CProtocolInterface{
 			protocol.setCloudletAddress("10.10.0.51", 9999);
 			protocol.connectToWiFi("CloudletX", "none");
 			String macaddress = protocol.getMacAddress();
-			identifier = "clientandroid|"+macaddress;
+			username = "clientandroid";
+			identifier = username+"|"+macaddress;
 			protocol.connectToCloudlet(identifier);
 			protocol.setCProtocolListener(ServiceActivity.this);
     	}catch(MqttException e){
@@ -112,6 +118,21 @@ public class ServiceActivity extends Activity implements CProtocolInterface{
 		Log.d("cloudletXdebug", arg0);
 		if (arg0.equals("client/service")){
 			addService(msg);
+			int i = msg.indexOf("=");
+			String serviceName = msg.substring(i+1);
+			protocol.subscribeServiceChannel(serviceName);
+		}
+		else if (Pattern.matches("client/service_request/.*/"+identifier+"/recvIP", arg0)){
+			String[] vals = new String(arg1.getPayload()).split("\\|");
+			String servicename = vals[0];
+			String[] portandip = vals[1].split(":");
+			String ip = portandip[0];
+			String port = portandip[1];
+			if (servicename.endsWith("file_sharer")){
+				filesharingclient = FileSharingClient.getFileSharingClient(username, ip , Integer.parseInt(port));
+				Intent intent = new Intent(this, UserActivity.class);
+				startActivity(intent);
+			}
 		}
 	}
 	@Override
