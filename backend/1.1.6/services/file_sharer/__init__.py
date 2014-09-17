@@ -52,8 +52,11 @@ class mysql(object):
 				string = string+','
 				values = values+','
 		string = string+')'
-		values = values+')'
-		print('INSERT INTO {0} {1} VALUES {2};'.format(self.tablename, string, values))
+		if (data[len(keys)-1]==''):
+			values = values+"\"\""+")"
+		else:
+			values = values+')'
+		print('INSERT INTO {0}{1} VALUES {2};'.format(self.tablename, string, values))
 		self.cur.execute('INSERT INTO {0} {1} VALUES {2};'.format(self.tablename, string, values))
 		self.db.commit()
 	'''
@@ -61,6 +64,7 @@ class mysql(object):
 	The argument is a dictionary. {name:value}
 	'''
 	def get(self,key):
+		print('SELECT * FROM {0} where {1}={2}'.format(self.tablename, key.keys()[0], key.values()[0])
 		self.cur.execute('SELECT * FROM {0} where {1}={2}'.format(self.tablename, key.keys()[0], key.values()[0]))
 		return cur.fetchone()
 	def update(self, key, keys, data):
@@ -133,7 +137,7 @@ class file_sharer():
 					owner = packet['owner']
 					requester = packet['requester']
 					filename = packet['filename']
-					(idX, accessX, filenameX, ownerX, accesslistX) = self.currdb.get({'id':'{0}:{1}'.format(owner,filename)})
+					(idX, accessX, filenameX, ownerX, accesslistX) = self.currdb.get({'id':'{0}#{1}'.format(owner,filename)})
 					#check if request has access
 					if (accessX=='public' or requester==owner or requester in accesslistX):
 						try:
@@ -173,13 +177,13 @@ class file_sharer():
 					filepath = '{0}/{1}'.format(owner, filename)
 					if not os.path.isfile(filepath):
 						print('The upload does not yet exist')
-						_file = open(filepath, 'w')
-						_file.write(objectdata)
-						_file.close()
 						#primary key
-						primkey = '{0}:{1}'.format(owner,filename)
+						primkey = '{0}#{1}'.format(owner,filename)
 						try:
 							self.currdb.insert(('id', 'access', 'filename', 'owner', 'accesslist'), (primkey, access, filename, owner, accesslist.join(':')))
+							_file = open(filepath, 'w')
+							_file.write(objectdata)
+							_file.close()
 							jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"OK\"}"
 							self.send2(somesocket, jsonstring)
 						except MySQLdb.Error,e:
