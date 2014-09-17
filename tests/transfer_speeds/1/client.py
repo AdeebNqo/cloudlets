@@ -118,8 +118,7 @@ class FileSharingClient(object):
 	def download(self, owner, requester, filename):
 		jsonstring = "{\"action\":\"download\", \"owner\":\""+owner+"\", \"requester\":\""+requester+"\", \"filename\":\""+filename+"\"}"
 		self.send(jsonstring)
-		response = self.recv()
-		return response
+		return self.recv()
 	def heartbeat(self):
 		print('heartbeat')
 		jsonstring = "{\"action\":\"heartbeat\"}"
@@ -141,7 +140,7 @@ class FileSharingClient(object):
 			self.s.sendall(jsonstring)
 	def recv(self):
 		length = ''
-		while (length==''):
+		while (length=='' or length==None):
 			length = self.s.recv(1024)
 			pass
 		length = int(length)
@@ -152,9 +151,8 @@ class FileSharingClient(object):
 			data += self.recvdata
 		recvsize = 0
 		while (recvsize < length):
-			data += self.s.recv(1024)
-			if (data != None):
-				recvsize += len(data)
-		self.recvdata = data[length:]
-		data = data[:length]
+			datachunk = self.s.recv(1024)
+			if (datachunk != None):
+				recvsize = recvsize + len(datachunk)
+				data += datachunk
 		return json.loads(data)

@@ -62,7 +62,7 @@ class mysql(object):
 	'''
 	def get(self,key):
 		print('SELECT * FROM {0} where {1}={2}'.format(self.tablename, key.keys()[0], key.values()[0]))
-		self.cur.execute("SELECT * FROM {0} where \"{1}\"=\"{2}\"".format(self.tablename, key.keys()[0], key.values()[0]))
+		self.cur.execute("SELECT * FROM {0} where {1}=\"{2}\"".format(self.tablename, key.keys()[0], key.values()[0]))
 		return self.cur.fetchone()
 	def update(self, key, keys, data):
 		length = len(keys)
@@ -153,7 +153,7 @@ class file_sharer():
 								else:
 									self.send(requester, jsonstring)
 							except IOError, e:
-								jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\""+e.args[0]+"\"}"
+								jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\""+str(e)+"\"}"
 								if (requester==ownerX):
 									self.send2(somesocket, jsonstring)
 								else:
@@ -193,7 +193,7 @@ class file_sharer():
 							self.send2(somesocket, jsonstring)
 						except MySQLdb.Error,e:
 							print(e)
-							jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \""+e.args[0]+"\"}"
+							jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \""+str(e)+"\"}"
 							self.send2(somesocket, jsonstring)
 					else:
 						jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \"The file already exists.\"}"
