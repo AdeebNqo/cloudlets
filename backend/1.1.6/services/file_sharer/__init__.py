@@ -130,9 +130,9 @@ class file_sharer():
 						somesocket.sendall(response)
 				elif action=='download':
 					print('downloading something')
-					owner = data['owner']
-					requester = data['requester']
-					filename = data['filename']
+					owner = packet['owner']
+					requester = packet['requester']
+					filename = packet['filename']
 					(idX, accessX, filenameX, ownerX, accesslistX) = self.currdb.get({'id':'{0}:{1}'.format(owner,filename)})
 					#check if request has access
 					if (accessX=='public' or requester==owner or requester in accesslistX):
@@ -143,14 +143,14 @@ class file_sharer():
 						self.send(requester, jsonstring)
 				elif action=='upload':
 					print('uploading something')
-					duration = data['duration']
-					access = data['access']
+					duration = packet['duration']
+					access = packet['access']
 					if (access!='public'):
-						accesslist = data['accesslist']
-					compression = data['compression']
-					filename = data['filename']
-					owner = data['owner']
-					objectdata = data['data']
+						accesslist = packet['accesslist']
+					compression = packet['compression']
+					filename = packet['filename']
+					owner = packet['owner']
+					objectdata = packet['data']
 
 					if not os.path.exists(owner):
 						os.makedirs(owner)
@@ -168,7 +168,7 @@ class file_sharer():
 					receiver = data['receiver']
 					oncloudlet = data['oncloudlet']
 					if (oncloudlet=='0'):
-						objectdata = data['data']
+						objectdata = packet['data']
 					filename = data['filename']
 
 					(recv_socket, recv_address) = self.connections[receiver]
@@ -181,8 +181,9 @@ class file_sharer():
 					if (recv_socket.recv(1024)=='OK'):
 						recv_socket.sendall(jsonstring)
 				elif action == 'identify':
-					data = json.loads(data)
-					self.users[data['username']] = (somesocket, address)
+					accessor = json.loads(data)
+					self.users[accessor['username']] = (somesocket, address)
+				data = ''
 
 	def send(self,username, data):
 		(sock, addr) = self.users[username]
