@@ -63,7 +63,7 @@ class mysql(object):
 	def get(self,key):
 		print('SELECT * FROM {0} where {1}={2}'.format(self.tablename, key.keys()[0], key.values()[0])
 		self.cur.execute('SELECT * FROM {0} where \"{1}\"=\"{2}\"'.format(self.tablename, key.keys()[0], key.values()[0]))
-		return cur.fetchone()
+		return self.cur.fetchone()
 	def update(self, key, keys, data):
 		length = len(keys)
 		updatestring = ''
