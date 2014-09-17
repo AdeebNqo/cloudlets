@@ -136,10 +136,21 @@ class file_sharer():
 					(idX, accessX, filenameX, ownerX, accesslistX) = self.currdb.get({'id':'{0}:{1}'.format(owner,filename)})
 					#check if request has access
 					if (accessX=='public' or requester==owner or requester in accesslistX):
-						jsonstring = "{\"actionresponse\":\"download\", \"OK\"}"
-						self.send(requester, jsonstring)
+						try:
+							objectdata = open('{0}/{1}'.format(ownerX, filenameX)).read()
+							jsonstring = "{\"actionresponse\":\"download\", \"status\":\"OK\", \"objectdata\":\""+objectdata+"\"}"
+							if (requester==ownerX):
+								self.send2(somesocket, jsonstring)
+							else:
+								self.send(requester, jsonstring)
+						except IOError, e:
+							jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\""+e.args[0]+"\"}"
+							if (requester==ownerX):
+								self.send2(somesocket, jsonstring)
+							else:
+								self.send(requester, jsonstring)
 					else:
-						jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOACCESS\"}"
+						jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\"Do not have access to file.\"}"
 						self.send(requester, jsonstring)
 				elif action=='upload':
 					print('uploading something')
