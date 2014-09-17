@@ -100,14 +100,15 @@ class FileSharingClient(object):
 		jsonstring = "{\"action\":\"identify\", \"username\":\""+self.username+"\"}"
 		self.send(jsonstring)
 	def upload(self, duration, access, accesslist, compression, filename, owner, objectdata):
-		print('upload')
-		jsonstring = "{\"duration\":\"{0}\", \"access\":\"{1}\", \"accesslist\":{2}, \"compression\":\"{3}\", \"filename\":\"{4}\", \"owner\":\"{5}\", \"objectdata\":\"{6}\"".format(duration, access, accesslist, compression, filename, owner, objectdata)
+		if accesslist==None:
+			accesslist = ''
+		jsonstring = "{\"duration\":\""+duration+"\", \"access\":\""+access+"\", \"accesslist\":"+accesslist+",\"compression\":\""+compression+"\", \"filename\":\""+filename+"\", \"owner\":\""+owner+"\", \"objectdata\":\""+objectdata+"\"}"
 		self.send(jsonstring)
 	def remove(self,owner,filename):
-		jsonstring = "{\"action\":\"remove\", \"owner\":\"{0}\", \"filename\":\"{1}\"}".format(owner, filename)
+		jsonstring = "{\"action\":\"remove\", \"owner\":\""+owner+"\", \"filename\":\""+filename+"\"}"
 		self.send(jsonstring)
 	def download(self, owner, requester, filename):
-		jsonstring = "{\"owner\":\"{0}\", \"requester\":\"{1}\", \"filename\":\"{2}\"}".format(owner, requester, filename)
+		jsonstring = "{\"owner\":\""+owner+"\", \"requester\":\""+requester+"\", \"filename\":\""+filename+"\"}"
 		self.send(jsonstring)
 		response = self.recv()
 	def heartbeat(self):
@@ -120,7 +121,7 @@ class FileSharingClient(object):
 			self.s.close()
 	def transfer(self, owner, receiver, oncloudlet, filename, objectdata):
 		print('transfer')
-		jsonstring = "{\"action\":\"transfer\", \"owner\":\"{0}\", \"receiver\":\"{1}\", \"oncloudlet\":\"{2}\", \"filename\":\"{3}\", \"objectdata\":\"{4}\"}".format(owner, receiver, oncloudlet, filename, objectdata)
+		jsonstring = "{\"action\":\"transfer\", \"owner\":\""++owner"\", \"receiver\":\""+receiver+"\", \"oncloudlet\":\""+oncloudlet+"\", \"filename\":\""+filename+"\", \"objectdata\":\""+objectdata+"\"}"
 		self.send(jsonstring)
 	def send(self, jsonstring):
 		length = len(jsonstring)
