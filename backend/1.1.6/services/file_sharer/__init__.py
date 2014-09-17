@@ -231,7 +231,7 @@ class file_sharer():
 			sock.sendall(data)
 	def send2(self,somesocket,data):
 		length = len(data)
-		sock.sendall("{}".format(length))
+		somesocket.sendall("{}".format(length))
 		response = somesocket.recv(1024)
 		if (response=='OK'):
 			somesocket.sendall(data)
