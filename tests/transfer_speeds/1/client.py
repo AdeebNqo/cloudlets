@@ -114,8 +114,9 @@ class FileSharingClient(object):
 	def remove(self,owner,filename):
 		jsonstring = "{\"action\":\"remove\", \"owner\":\""+owner+"\", \"filename\":\""+filename+"\"}"
 		self.send(jsonstring)
+		return self.recv()
 	def download(self, owner, requester, filename):
-		jsonstring = "{\"action\":\"download\",\"owner\":\""+owner+"\", \"requester\":\""+requester+"\", \"filename\":\""+filename+"\"}"
+		jsonstring = "{\"action\":\"download\", \"owner\":\""+owner+"\", \"requester\":\""+requester+"\", \"filename\":\""+filename+"\"}"
 		self.send(jsonstring)
 		response = self.recv()
 		return response
@@ -131,6 +132,7 @@ class FileSharingClient(object):
 		objectdata = base64.b64encode(objectdata)
 		jsonstring = "{\"action\":\"transfer\", \"owner\":\""+owner+"\", \"receiver\":\""+receiver+"\", \"oncloudlet\":\""+oncloudlet+"\", \"filename\":\""+filename+"\", \"objectdata\":\""+objectdata+"\"}"
 		self.send(jsonstring)
+		return self.recv()
 	def send(self, jsonstring):
 		length = len(jsonstring)
 		self.s.sendall("{}".format(length))
@@ -138,14 +140,20 @@ class FileSharingClient(object):
 		if (response=='OK'):
 			self.s.sendall(jsonstring)
 	def recv(self):
-		length = int(self.s.recv(1024))
-		data = None
+		length = ''
+		while (length==''):
+			length = self.s.recv(1024)
+			pass
+		length = int(length)
+		print('expected packet {} (bytes)'.format(length))
+		self.s.sendall('OK')
+		data = ''
 		if self.recvdata != '':
 			data += self.recvdata
 		recvsize = 0
 		while (recvsize < length):
 			data += self.s.recv(1024)
-			if (data!=None):
+			if (data != None):
 				recvsize += len(data)
 		self.recvdata = data[length:]
 		data = data[:length]
