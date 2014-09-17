@@ -61,8 +61,8 @@ class mysql(object):
 	The argument is a dictionary. {name:value}
 	'''
 	def get(self,key):
-		print('SELECT * FROM {0} where {1}={2}'.format(self.tablename, key.keys()[0], key.values()[0])
-		self.cur.execute('SELECT * FROM {0} where \"{1}\"=\"{2}\"'.format(self.tablename, key.keys()[0], key.values()[0]))
+		print('SELECT * FROM {0} where {1}={2}'.format(self.tablename, key.keys()[0], key.values()[0]))
+		self.cur.execute("SELECT * FROM {0} where \"{1}\"=\"{2}\"".format(self.tablename, key.keys()[0], key.values()[0]))
 		return self.cur.fetchone()
 	def update(self, key, keys, data):
 		length = len(keys)
@@ -91,7 +91,7 @@ class file_sharer():
 		self.currdb.set_credentials('localhost', 'root', 101, 'cloudletX', 'files')
 		self.currdb.connect()
 		self.sockt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.sockt.bind(('10.0.0.51', 0))
+		self.sockt.bind(('10.10.0.51', 0))
 		self.sockt.listen(1)
 		self.users = {}
 		print('service created')
@@ -134,25 +134,33 @@ class file_sharer():
 					owner = packet['owner']
 					requester = packet['requester']
 					filename = packet['filename']
-					(idX, accessX, filenameX, ownerX, accesslistX) = self.currdb.get({'id':'{0}#{1}'.format(owner,filename)})
-					#check if request has access
-					if (accessX=='public' or requester==owner or requester in accesslistX):
-						try:
-							objectdata = open('{0}/{1}'.format(ownerX, filenameX)).read()
-							jsonstring = "{\"actionresponse\":\"download\", \"status\":\"OK\", \"objectdata\":\""+objectdata+"\"}"
-							if (requester==ownerX):
-								self.send2(somesocket, jsonstring)
-							else:
-								self.send(requester, jsonstring)
-						except IOError, e:
-							jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\""+e.args[0]+"\"}"
-							if (requester==ownerX):
-								self.send2(somesocket, jsonstring)
-							else:
-								self.send(requester, jsonstring)
+					result = self.currdb.get({'id':'{0}#{1}'.format(owner,filename)})
+					if (result==None):
+						jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\"Request file does not exist.\"}"
+						if (requester==owner):
+							self.send2(somesocket, jsonstring)
+						else:
+							self.send(requester, jsonstring)
 					else:
-						jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\"Do not have access to file.\"}"
-						self.send(requester, jsonstring)
+						(idX, accessX, filenameX, ownerX, accesslistX) = result
+						#check if request has access
+						if (accessX=='public' or requester==owner or requester in accesslistX):
+							try:
+								objectdata = open('{0}/{1}'.format(ownerX, filenameX)).read()
+								jsonstring = "{\"actionresponse\":\"download\", \"status\":\"OK\", \"objectdata\":\""+objectdata+"\"}"
+								if (requester==ownerX):
+									self.send2(somesocket, jsonstring)
+								else:
+									self.send(requester, jsonstring)
+							except IOError, e:
+								jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\""+e.args[0]+"\"}"
+								if (requester==ownerX):
+									self.send2(somesocket, jsonstring)
+								else:
+									self.send(requester, jsonstring)
+						else:
+							jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\"Do not have access to file.\"}"
+							self.send(requester, jsonstring)
 				elif action=='upload':
 					print('uploading something')
 					duration = packet['duration']
