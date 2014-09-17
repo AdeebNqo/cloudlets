@@ -142,12 +142,12 @@ class file_sharer():
 						else:
 							self.send(requester, jsonstring)
 					else:
-						(idX, accessX, filenameX, ownerX, accesslistX) = result
+						(idX, accessX, filenameX, ownerX, accesslistX, compressionX) = result
 						#check if request has access
 						if (accessX=='public' or requester==owner or requester in accesslistX):
 							try:
 								objectdata = open('{0}/{1}'.format(ownerX, filenameX)).read()
-								jsonstring = "{\"actionresponse\":\"download\", \"status\":\"OK\", \"objectdata\":\""+objectdata+"\"}"
+								jsonstring = "{\"actionresponse\":\"download\", \"status\":\"OK\", \"objectdata\":\""+objectdata+"\", \"compression\":\""+compressionX+"\"}"
 								if (requester==ownerX):
 									self.send2(somesocket, jsonstring)
 								else:
@@ -185,7 +185,7 @@ class file_sharer():
 						#primary key
 						primkey = '{0}#{1}'.format(owner,filename)
 						try:
-							self.currdb.insert(('id', 'access', 'filename', 'owner', 'accesslist'), (primkey, access, filename, owner, accesslist.join(':')))
+							self.currdb.insert(('id', 'access', 'filename', 'owner', 'accesslist', 'compression'), (primkey, access, filename, owner, ':'.join(accesslist), compression))
 							_file = open(filepath, 'w')
 							_file.write(objectdata)
 							_file.close()
