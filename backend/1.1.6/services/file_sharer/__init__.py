@@ -90,7 +90,7 @@ class file_sharer():
 		self.currdb.set_credentials('localhost', 'root', 101, 'cloudletX', 'files')
 		self.currdb.connect()
 		self.sockt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.sockt.bind(('10.0.0.51', 0))
+		self.sockt.bind(('10.10.0.51', 0))
 		self.sockt.listen(1)
 		self.users = {}
 		print('service created')
@@ -136,6 +136,7 @@ class file_sharer():
 					(idX, accessX, filenameX, ownerX, accesslistX) = self.currdb.get({'id':'{0}:{1}'.format(owner,filename)})
 					#check if request has access
 					if (accessX=='public' or requester==owner or requester in accesslistX):
+						print('requester has access to file')
 						try:
 							objectdata = open('{0}/{1}'.format(ownerX, filenameX)).read()
 							jsonstring = "{\"actionresponse\":\"download\", \"status\":\"OK\", \"objectdata\":\""+objectdata+"\"}"
@@ -144,12 +145,13 @@ class file_sharer():
 							else:
 								self.send(requester, jsonstring)
 						except IOError, e:
-							jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\""+e.args[0]+"\"}"
+							jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\""+str(e)+"\"}"
 							if (requester==ownerX):
 								self.send2(somesocket, jsonstring)
 							else:
 								self.send(requester, jsonstring)
 					else:
+						print('requester does not have access to file')
 						jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\"Do not have access to file.\"}"
 						self.send(requester, jsonstring)
 				elif action=='upload':
@@ -179,11 +181,11 @@ class file_sharer():
 						#primary key
 						primkey = '{0}:{1}'.format(owner,filename)
 						try:
-							self.currdb.insert(('id', 'access', 'filename', 'owner', 'accesslist'), (primkey, access, filename, owner, accesslist.join(':')))
+							self.currdb.insert(('id', 'access', 'filename', 'owner', 'accesslist'), (primkey, access, filename, owner, ':'.join(accesslist))
 							jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"OK\"}"
 							self.send2(somesocket, jsonstring)
 						except MySQLdb.Error,e:
-							jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \""+e.args[0]+"\"}"
+							jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \""+str(e)+"\"}"
 							self.send2(somesocket, jsonstring)
 					else:
 						jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \"The file already exists.\"}"
@@ -211,6 +213,7 @@ class file_sharer():
 					accessor = json.loads(data)
 					self.users[accessor['username']] = (somesocket, address)
 				data = ''
+				packet = None
 
 	def send(self,username, data):
 		(sock, addr) = self.users[username]
@@ -221,7 +224,7 @@ class file_sharer():
 			sock.sendall(data)
 	def send2(self,somesocket,data):
 		length = len(data)
-		sock.sendall("{}".format(length))
+		somesocket.sendall("{}".format(length))
 		response = somesocket.recv(1024)
 		if (response=='OK'):
 			somesocket.sendall(data)
@@ -229,5 +232,5 @@ class file_sharer():
 		print('stopping')
 		self.sockt.close()
 	def request_service(self):
-		(host,port) = self.sockt.getsocketname()
+		(host,port) = self.sockt.getsockname()
 		return '{0}:{1}'.format(host,port)
