@@ -239,5 +239,5 @@ class file_sharer():
 		print('stopping')
 		self.sockt.close()
 	def request_service(self):
-		(host,port) = self.sockt.getsocketname()
+		(host,port) = self.sockt.getsockname()
 		return '{0}:{1}'.format(host,port)
