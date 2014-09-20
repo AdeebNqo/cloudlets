@@ -45,9 +45,11 @@ class Client(object):
 	def requestconnectedusers(self):
 		self.mqttclient.publish('server/connectedusers',self.username)
 	def requestavailableservices(self):
-		self.mqttclient.publish('server/servicelist',self.username)
+		self.mqttclient.publish('server/servicelist', self.username)
 	def advertizeservices(self,services):
 		self.mqttclient.publish('server/service',services)
+	def requestserviceuserlist(self,servicename):
+		self.mqttclient.publish('server/serviceusers','{0}|{1}'.format(servicename, self.username))
 	'''
 	The following are mqtt callback methods. Their names should be enough to explain
 	what they do.
@@ -57,16 +59,18 @@ class Client(object):
 			print('connected!')
 			self.mqttclient.subscribe('client/connecteduser/{}'.format(self.username),1)#receive connected user
 			self.mqttclient.subscribe('client/service/{}'.format(self.username),1)#receive available service
+			self.mqttclient.subscribe('client/serviceuserslist/{}'.format(self.username),1)#receive available service
 			self.mqttclient.subscribe('client/service_request/{}'.format(self.identifier),1)#receive service requests
 			self.mqttclient.subscribe('client/service_request/+/{0}/recvIP'.format(self.identifier),1)#receive ip:port for service requests made
 	def on_message(self, mosq, obj, msg):
-		print(msg.topic)
-		if (msg.topic=='client/service'):
-			print(msg.payload)
+		if (msg.topic==('client/service/{}'.format(self.username))):
+			print('cloudlet service is {}'.format(msg.payload))
 		elif (msg.topic=='client/useservice/{}'.format(self.identifier)):
 			print('trying to use service')
-		elif (msg.topic=='client/connecteduser'):
-			print(msg.payload)
+		elif (msg.topic=='client/connecteduser/{}'.format(self.username)):
+			print('cloudlet connected user is {}'.format(msg.payload))
+		elif (msg.topic=='client/serviceuserslist/{}'.format(self.username)):
+			print('file_sharer user is {}'.format(msg.payload))
 		elif (msg.topic=='client/service_request/{0}'.format(self.identifier)):
 			#the first thing the client should do is use the payload
 			# to determine whether to allow the request
@@ -79,7 +83,6 @@ class Client(object):
 		elif (self.iprequestpattern.match(msg.topic)):
 			(servicename, address) = msg.payload.split('|')
 			(host, port) = address.split(':')
-			print('receieved address {0}:{1}'.format(host,port))
 			self.filesharingclient = FileSharingClient(self.username, self.ip, int(port))
 			self.activeserviceclients[servicename] = (self.filesharingclient)
 		else:
@@ -92,7 +95,6 @@ import json
 class FileSharingClient(object):
 	def __init__(self,username, ip, port):
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		print('connecting to {0}:{1}'.format(ip, port))
 		self.s.connect((ip,port))
 		self.username = username
 		self.identify()

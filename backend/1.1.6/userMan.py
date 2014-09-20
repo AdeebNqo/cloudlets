@@ -48,3 +48,12 @@ class userMan(object):
 	#
 	def get_servicesofclient(self,nameandmacaddr):
 		return self.connectedusers[nameandmacaddr]
+	#
+	# Method for listing users of service
+	#
+	def who_uses(self, servicename):
+		users = []
+		for user, servicelist in self.connectedusers:
+			if servicename in servicelist:
+				users.append(user[0])
+		return users
