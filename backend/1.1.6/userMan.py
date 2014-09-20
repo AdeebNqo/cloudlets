@@ -42,3 +42,9 @@ class userMan(object):
 	#
 	def get_connected(self):
 		return self.connectedusers.keys()
+	#
+	# Method to retrieve all services used by a client
+	# returns set of services
+	#
+	def get_servicesofclient(self,nameandmacaddr):
+		return self.connectedusers[nameandmacaddr]

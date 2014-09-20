@@ -25,14 +25,19 @@ class service(object):
 	def add_module(self,module):
 		self.obj = getattr(module, self.simplename)()
 		self.obj.start()
+	#Method for disconnecting a person from service
+	def disconnect(self, username):
+		try:
+			self.obj.disconnect(username)
+		except:
+			pass
 	def ipport(self):
 		#check if service on mobile
-		print(locals())
-		if (not 'obj' in locals()):
+		if (not 'obj' in self.__dict__.keys()):
 			print('did not find obj')
 			return '{0}|{1}'.format(self.username, self.macaddress)
 		else:
-			if (not 'obj' in self.__dict__.keys()):
+			if (self.obj!=None):
 				return self.obj.request_service()
 			elif (self.username!='local' and self.macaddress!='local'):
 				return '{0}|{1}'.format(self.username, self.macaddress)
