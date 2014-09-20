@@ -23,6 +23,7 @@ public class FileSharingClient
 	private Socket s;
 	private String username;
 	private String recvdata;
+	private static FileSharingClient instance = null;
 	
 	public FileSharingClient(String username, String ip, int port)
 	{
@@ -42,6 +43,16 @@ public class FileSharingClient
 		{
 			e.printStackTrace();
 		}
+	}
+	
+	public static FileSharingClient getFileSharingClient(String username, String ip, int port)
+	{
+		if (instance==null)
+		{
+			instance = new FileSharingClient(username, ip, port);
+			return instance;
+		}
+		return instance;
 	}
 	
 	/*

@@ -91,6 +91,12 @@ public class CProtocol implements MqttCallback{
 		identifier = name +"|"+ vals[1];
 		new Connector().execute(identifier);
 	}
+	
+	public void subscribeServiceChannel(String servicename) throws MqttException
+	{
+		mqttClient.subscribe("client/servicename/"+servicename, 1);
+	}
+	
 	/*
 	 * Method for disconnecting from cloudlet
 	 */
@@ -139,6 +145,16 @@ public class CProtocol implements MqttCallback{
 			super.onPostExecute(result);
 		}
 	}
+	
+	/*
+	 * Method for requesting list of users using a service.
+	 */
+	public void requestUsersOnService(String channel) throws MqttPersistenceException, MqttException
+	{
+		MqttMessage msg = new MqttMessage("file_sharing".getBytes());
+		mqttClient.publish(channel, msg);
+	}
+	
 	/*
 	 * Method for requesting connected users
 	 */
