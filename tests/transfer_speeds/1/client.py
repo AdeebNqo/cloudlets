@@ -43,9 +43,9 @@ class Client(object):
 	def requestservice(self,servicename):
 		self.mqttclient.publish('server/useservice','{0};{1}'.format(self.identifier,servicename))
 	def requestconnectedusers(self):
-		self.mqttclient.publish('server/connectedusers',"true")
+		self.mqttclient.publish('server/connectedusers',self.username)
 	def requestavailableservices(self):
-		self.mqttclient.publish('server/servicelist',"true")
+		self.mqttclient.publish('server/servicelist',self.username)
 	def advertizeservices(self,services):
 		self.mqttclient.publish('server/service',services)
 	'''
@@ -55,8 +55,8 @@ class Client(object):
 	def on_connect(self, mosq, obj, rc):
 		if rc==0:
 			print('connected!')
-			self.mqttclient.subscribe('client/connecteduser',1)#receive connected user
-			self.mqttclient.subscribe('client/service',1)#receive available service
+			self.mqttclient.subscribe('client/connecteduser/{}'.format(self.username),1)#receive connected user
+			self.mqttclient.subscribe('client/service/{}'.format(self.username),1)#receive available service
 			self.mqttclient.subscribe('client/service_request/{}'.format(self.identifier),1)#receive service requests
 			self.mqttclient.subscribe('client/service_request/+/{0}/recvIP'.format(self.identifier),1)#receive ip:port for service requests made
 	def on_message(self, mosq, obj, msg):

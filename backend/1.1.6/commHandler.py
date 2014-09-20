@@ -55,12 +55,12 @@ class commHandler(object):
 		if (msg.topic=='server/connectedusers'):
 			#broadcast available users
 			for user in self.usermanager.get_connected():
-				self.mqttserver.publish('client/connecteduser','|'.join(user),1)
+				self.mqttserver.publish('client/connecteduser/{}'.format(msg.payload),'|'.join(user),1)
 			print('received msg. topic is server/connectedusers')
 		elif (msg.topic=='server/servicelist'):
 			#broadcast available services
 			for servicedetail in self.servicemanager.get_servicelist():
-				self.mqttserver.publish('client/service',servicedetail.__str__(),1)
+				self.mqttserver.publish('client/service/{}'.format(msg.payload),servicedetail.__str__(),1)
 			print('received msg. topic is server/servicelist')
 		elif (msg.topic=='server/useservice'):
 			items = msg.payload.split(';')
