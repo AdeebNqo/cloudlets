@@ -10,11 +10,13 @@ import broadcaster
 import re
 import subprocess
 import broadcaster
+import select
 
 class mqttEventEmitter(object):
 	def __init__(self, port):
+		print('event handler started...fuck dat b!')
 		self.connect = re.compile('(\d+): New client connected from (.+) as (.+).')
-		self.disconnect = re.compile('\d+: Socket read error on client .+, disconnecting.')
+		self.disconnect = re.compile('.*, disconnecting.')
 		self.t = threading.Thread(target=self.startmosquitto, args=(port,))
 		self.t.daemon = True
 		self.t.start()
@@ -23,18 +25,28 @@ class mqttEventEmitter(object):
 	# and reads all the error messages it
 	# produces.
 	def startmosquitto(self, port):	
-		process = subprocess.Popen('mosquitto -p {}'.format(port),shell=True,stderr=subprocess.PIPE)
+		process = subprocess.Popen('mosquitto -p {}'.format(port), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)		
 		# Poll process for new output until finished
 		while True:
-			nextline = process.stderr.readline()
-			if nextline == '' and process.poll() != None:
-				break
-			lines = nextline.split('\n')
+			#the items to be read by process
+			reads = [process.stderr.fileno()]
+			returned = select.select(reads, [], [])
+			for readydata in returned[0]:
+				#if (readydata == process.stdout.fileno()):
+				#	self.processline(process.stdout.readline())
+				if (readydata == process.stderr.fileno()):
+					self.processline(process.stderr.readline())
+	#	
+	# Method for processing line comming out of mosquitto
+	#
+	def processline(self,line):
+		if (len(line)>0):
+			lines = line.split('\n')
 			if (len(lines)>1):
 				for line in lines:
 					self.notify(line)
 			else:
-				self.notify(nextline)
+				self.notify(line)
 					
 	#
 	# Method called when an
@@ -42,14 +54,17 @@ class mqttEventEmitter(object):
 	#
 	def notify(self,value):
 		if self.connect.match(value):
+			print('detected connection')
 			(username,macaddress) = re.search(self.connect,value).group(3).split('|')
+			macaddress = macaddress.split()[0]
+			print('connected person has details (username,macaddress): ({0}, {1})'.format(username,macaddress))
 			broadcaster.connect(username,macaddress)
-			print('connect: {}'.format(username))
 		elif self.disconnect.match(value):
+			print('detected disconnection')
 			items = value.split()
 			vals = items[len(items)-2].split('|')
+			print('disconnected person has details (username,macaddress): ({0}, {1})'.format(vals[0], vals[1][:len(vals[1])-1]))
 			broadcaster.disconnect(vals[0],vals[1][:len(vals[1])-1])
-			print('disconnect: {}'.format(vals[0]))
 		else:
 			print(value)
 	#
