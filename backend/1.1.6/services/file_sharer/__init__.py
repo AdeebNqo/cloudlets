@@ -30,6 +30,12 @@ class db(object):
 		self.instance.insert(key,data)
 	def get(self,key):
 		return self.instance.get(key)
+	def delete(self, key):
+		return self.instance.delete(key)
+	def getpublicfiles(self):
+		return self.instance.getpublicfiles()
+	def getsharedfiles(self, requester):
+		return self.instance.getsharedfiles(requester)
 import MySQLdb
 class mysql(object):
 	def connect(self):
@@ -77,15 +83,18 @@ class mysql(object):
 		try:
 			self.cur.execute("DELETE FROM {0} where {1}=\"{2}\"".format(self.tablename, key.keys()[0], key.values()[0]))
 			self.db.commit()
+			return 0
 		except:
 			self.db.rollback()
+			return 1
 	# Method for getting public files
 	def getpublicfiles(self):
 		self.cur.execute("SELECT * FROM {0} where access=\"public\"".format(self.tablename))
 		return self.cur.fetchall()
 	# Method for getting all shared file
 	def getsharedfiles(self, requester):
-		self.cur.execute("SELECT * FROM {0} where NOT(access=\"public\") AND accesslist LIKE \"%{"+requester+"}%\"")
+		cmd = "SELECT * FROM "+self.tablename+" where NOT (access=\"public\") AND accesslist LIKE \"%"+requester+"%\""
+		self.cur.execute(cmd)
 		return self.cur.fetchall()
 import bsddb3 as bsddb
 class berkelydb(object):
@@ -239,7 +248,7 @@ class file_sharer():
 					elif action == 'getfiles':
 						requester = packet['requester']
 						#compiling a json list with the files
-						filelist = "files : ["
+						filelist = "\"files\" : ["
 						public = self.currdb.getpublicfiles()
 						lenpublic = len(public)
 						accesssible = self.currdb.getsharedfiles(requester)
@@ -248,7 +257,7 @@ class file_sharer():
 						for row in public:
 							(idX, accessX, filenameX, ownerX, accesslistX, compressionX) = row
 							filelist += "{\"id\":\""+idX+"\", \"access\":\""+accessX+"\", \"filename\":\""+filenameX+"\", \"compression\":\""+compressionX+"\", \"owner\":\""+ownerX+"\"}"
-							if (i != lenpublic):
+							if (i != lenpublic-1):
 								filelist += ','
 							i += 1
 						i = 0
@@ -258,7 +267,7 @@ class file_sharer():
 							for row in accesssible:
 								(idX, accessX, filenameX, ownerX, accesslistX, compressionX) = row
 								filelist += "{\"id\":\""+idX+"\", \"access\":\""+accessX+"\", \"filename\":\""+filenameX+"\", \"compression\":\""+compressionX+"\", \"owner\":\""+ownerX+"\"}"
-								if (i != lenpublic):
+								if (i != lenaccesssible-1):
 									filelist += ','
 								i += 1
 							filelist += ']'
