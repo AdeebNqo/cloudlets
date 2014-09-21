@@ -102,19 +102,18 @@ class FileSharingClient(object):
 	def identify(self):
 		jsonstring = "{\"action\":\"identify\", \"username\":\""+self.username+"\"}"
 		self.send(jsonstring)
-	def upload(self, duration, access, accesslist, compression, filename, owner, objectdata):
-
+	def upload(self, duration, access, accesslist, compression, filename, objectdata):
 		objectdata = base64.b64encode(objectdata)
 		jsonstring = "{\"action\":\"upload\", \"duration\":\""+duration+"\", \"access\":\""+access+"\", \"accesslist\":"
 		if accesslist==None:
 			jsonstring += "\"None\""
 		else:
 			jsonstring += "\""+":".join(accesslist)+"\""
-		jsonstring += ",\"compression\":\""+compression+"\", \"filename\":\""+filename+"\", \"owner\":\""+owner+"\", \"objectdata\":\""+objectdata+"\"}"
+		jsonstring += ",\"compression\":\""+compression+"\", \"filename\":\""+filename+"\", \"owner\":\""+self.username+"\", \"objectdata\":\""+objectdata+"\"}"
 		self.send(jsonstring)
 		return self.recv()
 	def remove(self,owner,filename):
-		jsonstring = "{\"action\":\"remove\", \"owner\":\""+owner+"\", \"filename\":\""+filename+"\"}"
+		jsonstring = "{\"action\":\"remove\", \"owner\":\""+owner+"\", \"requester\":\""+self.username+"\", \"filename\":\""+filename+"\"}"
 		self.send(jsonstring)
 		return self.recv()
 	def download(self, owner, requester, filename):
@@ -132,6 +131,10 @@ class FileSharingClient(object):
 	def transfer(self, owner, receiver, oncloudlet, filename, objectdata):
 		objectdata = base64.b64encode(objectdata)
 		jsonstring = "{\"action\":\"transfer\", \"owner\":\""+owner+"\", \"receiver\":\""+receiver+"\", \"oncloudlet\":\""+oncloudlet+"\", \"filename\":\""+filename+"\", \"objectdata\":\""+objectdata+"\"}"
+		self.send(jsonstring)
+		return self.recv()
+	def getaccessiblefiles(self):
+		jsonstring = "{\"action\":\"getfiles\", \"requester\":\""+self.username+"\"}"
 		self.send(jsonstring)
 		return self.recv()
 	def send(self, jsonstring):

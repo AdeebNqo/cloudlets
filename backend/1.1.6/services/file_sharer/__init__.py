@@ -61,7 +61,6 @@ class mysql(object):
 	The argument is a dictionary. {name:value}
 	'''
 	def get(self,key):
-		print('SELECT * FROM {0} where {1}=\"{2}\"'.format(self.tablename, key.keys()[0], key.values()[0]))
 		self.cur.execute("SELECT * FROM {0} where {1}=\"{2}\"".format(self.tablename, key.keys()[0], key.values()[0]))
 		return self.cur.fetchone()
 	def update(self, key, keys, data):
@@ -73,6 +72,21 @@ class mysql(object):
 				updatestring=updatestring+','
 		self.cur.execute('UPDATE {0} SET {1} where \"{2}\"=\"{3}\"'.format(self.tablename, updatestring, key.keys()[0], key.values()[0]))
 		self.cur.commit()
+	# Method for deleting item from database
+	def delete(self, key):
+		try:
+			self.cur.execute("DELETE FROM {0} where {1}=\"{2}\"".format(self.tablename, key.keys()[0], key.values()[0]))
+			self.db.commit()
+		except:
+			self.db.rollback()
+	# Method for getting public files
+	def getpublicfiles(self):
+		self.cur.execute("SELECT * FROM {0} where access=\"public\"".format(self.tablename))
+		return self.cur.fetchall()
+	# Method for getting all shared file
+	def getsharedfiles(self, requester):
+		self.cur.execute("SELECT * FROM {0} where NOT(access=\"public\") AND accesslist LIKE \"%{"+requester+"}%\"")
+		return self.cur.fetchall()
 import bsddb3 as bsddb
 class berkelydb(object):
 	def connect(self):
@@ -200,30 +214,57 @@ class file_sharer():
 								jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \""+str(e)+"\"}"
 								self.send2(somesocket, jsonstring)
 						else:
-							jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \"The file already exists.\"}"
+							jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \"The file already exists.\"}"
 							self.send2(somesocket, jsonstring)
-						print('done uploading something.')
-					elif action=='transfer':
-						print('transefering something to someone')
-						owner = data['owner']
-						receiver = data['receiver']
-						oncloudlet = data['oncloudlet']
-						if (oncloudlet=='0'):
-							objectdata = packet['data']
-						filename = data['filename']
-
-						(recv_socket, recv_address) = self.connections[receiver]
-						filepath = '{0}/{1}'.format(owner,filename)
-						if oncloudlet==1:
-							with open(filepath) as _file:
-								objectdata = _file.read()
-						jsonstring = '{\"action\":\"recv\", \"owner\":\"{0}\", \"filename\":\"{1}\", \"objectdata\":\"{2}\"}'.format(owner, filename, objectdata)
-						recv_socket.sendal(len(jsonstring))
-						if (recv_socket.recv(1024)=='OK'):
-							recv_socket.sendall(jsonstring)
 					elif action == 'identify':
 						accessor = json.loads(data)
 						self.users[accessor['username']] = (somesocket, address)
+					elif action == 'remove':
+						owner = packet['owner']
+						requester = packet['requester']
+						filename = packet['filename']
+						if (owner==requester):
+							try:
+								self.currdb.delete({'id':'{0}#{1}'.format(owner,filename)})
+								filepath = '{2}/{0}/{1}'.format(owner, filename, self.curd)
+								os.remove(filepath)
+								jsonstring = jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"OK\"}"
+								self.send2(somesocket, jsonstring)
+							except Exception,e:
+								jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"NOTOK\", \"reason\": \""+str(e)+"\"}"
+								self.send2(somesocket, jsonstring)
+						else:
+							jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"NOTOK\", \"reason\": \"Access denied.\"}"
+							self.send2(somesocket, jsonstring)
+					elif action == 'getfiles':
+						requester = packet['requester']
+						#compiling a json list with the files
+						filelist = "files : ["
+						public = self.currdb.getpublicfiles()
+						lenpublic = len(public)
+						accesssible = self.currdb.getsharedfiles(requester)
+						lenaccesssible = len(accesssible)
+						i = 0
+						for row in public:
+							(idX, accessX, filenameX, ownerX, accesslistX, compressionX) = row
+							filelist += "{\"id\":\""+idX+"\", \"access\":\""+accessX+"\", \"filename\":\""+filenameX+"\", \"compression\":\""+compressionX+"\", \"owner\":\""+ownerX+"\"}"
+							if (i != lenpublic):
+								filelist += ','
+							i += 1
+						i = 0
+						if (lenaccesssible==0):
+							filelist += ']'
+						else:
+							for row in accesssible:
+								(idX, accessX, filenameX, ownerX, accesslistX, compressionX) = row
+								filelist += "{\"id\":\""+idX+"\", \"access\":\""+accessX+"\", \"filename\":\""+filenameX+"\", \"compression\":\""+compressionX+"\", \"owner\":\""+ownerX+"\"}"
+								if (i != lenpublic):
+									filelist += ','
+								i += 1
+							filelist += ']'
+						#compiling final json response
+						jsonstring = "{\"actionresponse\":\"getfiles\", "+filelist+"}"
+						self.send2(somesocket, jsonstring)
 					data = ''
 		except Exception,e:
 			print(e)
