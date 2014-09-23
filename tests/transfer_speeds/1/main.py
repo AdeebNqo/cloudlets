@@ -19,10 +19,13 @@ config = ConfigParser.ConfigParser()
 config.read("config.ini")
 numclients = int(config.get('DEFAULT','numclients'))
 ip = config.get('DEFAULT','ip')
+action = config.get('DEFAULT','action')
+numtimes = int(config.get('DEFAULT','numtimes'))
 port = config.get('DEFAULT', 'port')
 interface = config.get('DEFAULT','interface')
 macaddress = getmac(interface)
 transferfile = config.get('DEFAULT', 'testfile')
+actions = action.split(',')
 
 print('creating clients...')
 clients = []
@@ -37,17 +40,20 @@ for i in range(numclients):
         while (client.filesharingclient == None):
                 pass
         clients.append(client)
-
-print('done.')
+#Perfoming the assigned actions
 somfile = open(transferfile, 'r').read()
-print('\t--------Uploading---------')
-print(clients[0].filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile))
-#print('\t--------Removing---------')
-#print(clients[0].filesharingclient.remove(clients[0].filesharingclient.username+'x', transferfile))
-#print('\t--------Downloading---------')
-#print(clients[0].filesharingclient.download(clients[0].filesharingclient.username, clients[0].filesharingclient.username, transferfile))
-print('\t--------Viewing files---------')
-print(clients[0].filesharingclient.getaccessiblefiles())
-print('Done!')
+for actionX in actions:
+    if (actionX=='upload'):
+        for i in range(numtimes):
+            print(clients[0].filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile))
+    elif(actionX=='download'):
+        for i in range(numtimes):
+            print(clients[0].filesharingclient.download(clients[0].filesharingclient.username, clients[0].filesharingclient.username, transferfile))
+    elif(actionX=='remove'):
+        for i in range(numtimes):
+            print(clients[0].filesharingclient.remove(clients[0].filesharingclient.username+'x', transferfile))
+    elif(actionX=='view'):
+        for i in range(numtimes):
+            print(clients[0].filesharingclient.getaccessiblefiles())
 while True:
         pass
