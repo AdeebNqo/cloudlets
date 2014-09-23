@@ -42,21 +42,15 @@ public class ServiceActivity extends Activity implements CProtocolInterface{
 	    final ListView servicelist = (ListView) findViewById(R.id.servicelist);
 	    adapter = new ServiceAdapter(this, R.layout.service, list);
 	    servicelist.setAdapter(adapter);
-    	try{
-			protocol = CProtocol.getCProtocol();
-			protocol.init(getBaseContext());
-			protocol.setCloudletAddress("10.10.0.51", 9999);
-			protocol.connectToWiFi("CloudletX", "none");
-			String macaddress = protocol.getMacAddress();
-			username = "clientandroid";
-			identifier = username+"|"+macaddress;
-			protocol.connectToCloudlet(identifier);
-			protocol.setCProtocolListener(ServiceActivity.this);
-    	}catch(MqttException e){
-    		e.printStackTrace();
-    		//show error connecting dialog
-    		Toast.makeText(getApplicationContext(), "Could not connect", Toast.LENGTH_LONG).show();
-    	}
+		protocol = CProtocol.getCProtocol();
+		protocol.setCProtocolListener(ServiceActivity.this);
+		try {
+			protocol.requestAvailableServices();
+		} catch (MqttPersistenceException e1) {
+			e1.printStackTrace();
+		} catch (MqttException e1) {
+			e1.printStackTrace();
+		}
     	servicelist.setOnItemClickListener(new OnItemClickListener(){
 
 			@Override
@@ -76,6 +70,7 @@ public class ServiceActivity extends Activity implements CProtocolInterface{
 				}
 			}
     	});
+    	Log.d("cloudletXdebug", "last line of oncreate");
     }
 	@Override
 	protected void onDestroy() {

@@ -35,6 +35,7 @@ public class CProtocol implements MqttCallback{
 	private MemoryPersistence persistence = new MemoryPersistence();
 	int i = 0;
 	LinkedList<CProtocolInterface> cprotocollisteners = new LinkedList<CProtocolInterface>();
+	String name = null;
 	
 	public static CProtocol getCProtocol(){
 		if (instance==null){
@@ -87,7 +88,7 @@ public class CProtocol implements MqttCallback{
 	public void connectToCloudlet(String identifier) throws MqttException{
 		String[] vals = identifier.split("\\|");
 		//Log.d("cloudletXdebug", "mqttClient creation failed");
-		String name = vals[0].substring(0, 6);
+		name = vals[0].substring(0, 6);
 		identifier = name +"|"+ vals[1];
 		new Connector().execute(identifier);
 	}
@@ -112,6 +113,7 @@ public class CProtocol implements MqttCallback{
 		protected Void doInBackground(String... params) {
 			try{
 				String identifier = params[0];
+				String username = identifier.split("\\|")[0];
 				Log.d("cloudletXdebug", identifier);
 				Log.d("cloudletXdebug", cloudletAddress);
 				mqttClient = new MqttClient(cloudletAddress, identifier, persistence);
@@ -119,10 +121,12 @@ public class CProtocol implements MqttCallback{
 				MqttConnectOptions connOpts = new MqttConnectOptions();
 		        connOpts.setCleanSession(true);
 		        mqttClient.connect();
-		        mqttClient.subscribe("client/connecteduser"); //connected users will be broadcasted here
-	            mqttClient.subscribe("client/service"); //available services will be broadcasted here
+		        mqttClient.subscribe("server/login/"+username);
+		        mqttClient.subscribe("client/connecteduser/"+username); //connected users will be broadcasted here
+	            mqttClient.subscribe("client/service/"+username); //available services will be broadcasted here
 	            mqttClient.subscribe("client/service_request/"+identifier);
 	            mqttClient.subscribe("client/service_request/+/"+identifier+"/recvIP");
+	            mqttClient.subscribe("client/serviceuserslist/"+username);
 	            Log.d("cloudletXdebug", "done with connecting and subscribing");
 			}catch(MqttException e){
 				Log.d("cloudletXdebug", "mqttClient creation failed");
@@ -149,10 +153,10 @@ public class CProtocol implements MqttCallback{
 	/*
 	 * Method for requesting list of users using a service.
 	 */
-	public void requestUsersOnService(String channel) throws MqttPersistenceException, MqttException
+	public void requestUsersOnService(String servicename) throws MqttPersistenceException, MqttException
 	{
-		MqttMessage msg = new MqttMessage("file_sharing".getBytes());
-		mqttClient.publish(channel, msg);
+		MqttMessage msg = new MqttMessage((servicename+"|"+name).getBytes());
+		mqttClient.publish("server/serviceusers", msg);
 	}
 	
 	/*
@@ -201,7 +205,7 @@ public class CProtocol implements MqttCallback{
 	
 	@Override
 	public void connectionLost(Throwable arg0) {
-		Log.d("cloudletXdebug", "the connection has been lost: "+arg0.getMessage());
+		Log.d("cloudletXdebug", "the connection has been lost: "+arg0.toString());
 		for (CProtocolInterface somereceiver: cprotocollisteners){
 			somereceiver.connectionLost(arg0);
 		}
