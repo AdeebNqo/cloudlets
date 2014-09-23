@@ -1,0 +1,16 @@
+import subprocess
+import time
+print('setting ip on wlan0...')
+ifconfig = subprocess.Popen(['ifconfig','wlan0','10.10.0.51'])
+print('starting starting dnsmasq...')
+masq = subprocess.Popen(['systemctl','start','dnsmasq'])
+print('starting hostapd...')
+host = subprocess.Popen(['hostapd','-B','/etc/hostapd/hostapd.conf'])
+print('starting cloudlet controller...')
+controller = subprocess.Popen(['/usr/bin/python2.7','/root/cloudletX/controller.py','-p','9999'])
+print('waiting...')
+#ifconfig.wait()
+#masq.wait()
+#host.wait()
+#controller.wait()
+#print('hello world')

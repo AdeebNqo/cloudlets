@@ -43,11 +43,13 @@ class Client(object):
 	def requestservice(self,servicename):
 		self.mqttclient.publish('server/useservice','{0};{1}'.format(self.identifier,servicename))
 	def requestconnectedusers(self):
-		self.mqttclient.publish('server/connectedusers',"true")
+		self.mqttclient.publish('server/connectedusers',self.username)
 	def requestavailableservices(self):
-		self.mqttclient.publish('server/servicelist',"true")
+		self.mqttclient.publish('server/servicelist', self.username)
 	def advertizeservices(self,services):
 		self.mqttclient.publish('server/service',services)
+	def requestserviceuserlist(self,servicename):
+		self.mqttclient.publish('server/serviceusers','{0}|{1}'.format(servicename, self.username))
 	'''
 	The following are mqtt callback methods. Their names should be enough to explain
 	what they do.
@@ -55,18 +57,20 @@ class Client(object):
 	def on_connect(self, mosq, obj, rc):
 		if rc==0:
 			print('connected!')
-			self.mqttclient.subscribe('client/connecteduser',1)#receive connected user
-			self.mqttclient.subscribe('client/service',1)#receive available service
+			self.mqttclient.subscribe('client/connecteduser/{}'.format(self.username),1)#receive connected user
+			self.mqttclient.subscribe('client/service/{}'.format(self.username),1)#receive available service
+			self.mqttclient.subscribe('client/serviceuserslist/{}'.format(self.username),1)#receive available service
 			self.mqttclient.subscribe('client/service_request/{}'.format(self.identifier),1)#receive service requests
 			self.mqttclient.subscribe('client/service_request/+/{0}/recvIP'.format(self.identifier),1)#receive ip:port for service requests made
 	def on_message(self, mosq, obj, msg):
-		print(msg.topic)
-		if (msg.topic=='client/service'):
-			print(msg.payload)
+		if (msg.topic==('client/service/{}'.format(self.username))):
+			print('cloudlet service is {}'.format(msg.payload))
 		elif (msg.topic=='client/useservice/{}'.format(self.identifier)):
 			print('trying to use service')
-		elif (msg.topic=='client/connecteduser'):
-			print(msg.payload)
+		elif (msg.topic=='client/connecteduser/{}'.format(self.username)):
+			print('cloudlet connected user is {}'.format(msg.payload))
+		elif (msg.topic=='client/serviceuserslist/{}'.format(self.username)):
+			print('file_sharer user is {}'.format(msg.payload))
 		elif (msg.topic=='client/service_request/{0}'.format(self.identifier)):
 			#the first thing the client should do is use the payload
 			# to determine whether to allow the request
@@ -79,7 +83,6 @@ class Client(object):
 		elif (self.iprequestpattern.match(msg.topic)):
 			(servicename, address) = msg.payload.split('|')
 			(host, port) = address.split(':')
-			print('receieved address {0}:{1}'.format(host,port))
 			self.filesharingclient = FileSharingClient(self.username, self.ip, int(port))
 			self.activeserviceclients[servicename] = (self.filesharingclient)
 		else:
@@ -92,7 +95,6 @@ import json
 class FileSharingClient(object):
 	def __init__(self,username, ip, port):
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		print('connecting to {0}:{1}'.format(ip, port))
 		self.s.connect((ip,port))
 		self.username = username
 		self.identify()
@@ -100,19 +102,18 @@ class FileSharingClient(object):
 	def identify(self):
 		jsonstring = "{\"action\":\"identify\", \"username\":\""+self.username+"\"}"
 		self.send(jsonstring)
-	def upload(self, duration, access, accesslist, compression, filename, owner, objectdata):
-
+	def upload(self, duration, access, accesslist, compression, filename, objectdata):
 		objectdata = base64.b64encode(objectdata)
 		jsonstring = "{\"action\":\"upload\", \"duration\":\""+duration+"\", \"access\":\""+access+"\", \"accesslist\":"
 		if accesslist==None:
 			jsonstring += "\"None\""
 		else:
 			jsonstring += "\""+":".join(accesslist)+"\""
-		jsonstring += ",\"compression\":\""+compression+"\", \"filename\":\""+filename+"\", \"owner\":\""+owner+"\", \"objectdata\":\""+objectdata+"\"}"
+		jsonstring += ",\"compression\":\""+compression+"\", \"filename\":\""+filename+"\", \"owner\":\""+self.username+"\", \"objectdata\":\""+objectdata+"\"}"
 		self.send(jsonstring)
 		return self.recv()
 	def remove(self,owner,filename):
-		jsonstring = "{\"action\":\"remove\", \"owner\":\""+owner+"\", \"filename\":\""+filename+"\"}"
+		jsonstring = "{\"action\":\"remove\", \"owner\":\""+owner+"\", \"requester\":\""+self.username+"\", \"filename\":\""+filename+"\"}"
 		self.send(jsonstring)
 		return self.recv()
 	def download(self, owner, requester, filename):
@@ -130,6 +131,10 @@ class FileSharingClient(object):
 	def transfer(self, owner, receiver, oncloudlet, filename, objectdata):
 		objectdata = base64.b64encode(objectdata)
 		jsonstring = "{\"action\":\"transfer\", \"owner\":\""+owner+"\", \"receiver\":\""+receiver+"\", \"oncloudlet\":\""+oncloudlet+"\", \"filename\":\""+filename+"\", \"objectdata\":\""+objectdata+"\"}"
+		self.send(jsonstring)
+		return self.recv()
+	def getaccessiblefiles(self):
+		jsonstring = "{\"action\":\"getfiles\", \"requester\":\""+self.username+"\"}"
 		self.send(jsonstring)
 		return self.recv()
 	def send(self, jsonstring):

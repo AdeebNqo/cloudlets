@@ -19,31 +19,43 @@ config = ConfigParser.ConfigParser()
 config.read("config.ini")
 numclients = int(config.get('DEFAULT','numclients'))
 ip = config.get('DEFAULT','ip')
+action = config.get('DEFAULT','action')
+numtimes = int(config.get('DEFAULT','numtimes'))
 port = config.get('DEFAULT', 'port')
 interface = config.get('DEFAULT','interface')
 macaddress = getmac(interface)
 transferfile = config.get('DEFAULT', 'testfile')
+actions = action.split(',')
 
-print('creating clients...')
-clients = []
-for i in range(numclients):
+def clientwork():
         client = Client('client{}'.format(i), macaddress, ip, port)
         sleep(2)
-        print('perfoming actions...')
         client.requestavailableservices()
         client.requestconnectedusers()
-        print('requesting file sharing service...')
+        client.requestserviceuserlist('file_sharer')
         client.requestservice('file_sharer')
         print('waiting for authentication...')
         while (client.filesharingclient == None):
                 pass
         clients.append(client)
-
-print('done.')
-somfile = open(transferfile, 'r').read()
-print('client 1 uploading file...')
-print(clients[0].filesharingclient.upload('1h', 'public', None, '0', transferfile, clients[0].filesharingclient.username, somfile))
-print(clients[0].filesharingclient.download(clients[0].filesharingclient.username, clients[0].filesharingclient.username, transferfile))
-print('Done!')
+        #Perfoming the assigned actions
+        somfile = open(transferfile, 'r').read()
+        for actionX in actions:
+            if (actionX=='upload'):
+                for i in range(numtimes):
+                    print(clients[0].filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile))
+            elif(actionX=='download'):
+                for i in range(numtimes):
+                    print(clients[0].filesharingclient.download(clients[0].filesharingclient.username, clients[0].filesharingclient.username, transferfile))
+            elif(actionX=='remove'):
+                for i in range(numtimes):
+                    print(clients[0].filesharingclient.remove(clients[0].filesharingclient.username+'x', transferfile))
+            elif(actionX=='view'):
+                for i in range(numtimes):
+                    print(clients[0].filesharingclient.getaccessiblefiles())
+print('creating clients...')
+clients = []
+for i in range(numclients):
+        t = threading.Thread(target=clientwork)
 while True:
         pass

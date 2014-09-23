@@ -26,7 +26,8 @@ class serviceMan(object):
 		# Fields that will keep reference to the
 		# services
 		#
-		self.curdir = os.getcwd()
+		self.curdir = os.path.dirname(__file__)
+		print(self.curdir)
 		self.servicesfolder = '{0}{1}services'.format(self.curdir, os.sep)
 		self.servicefolders = [x[0] for x in os.walk(self.servicesfolder)]
 
@@ -66,39 +67,54 @@ class serviceMan(object):
 	def loadlocal_services(self):
 		if (len(self.servicefolders)>1):
 			for folder in self.servicefolders[1:]:
-				input_data = ''
-				desc = open('{0}{1}description.txt'.format(folder,os.sep))
-				for line in desc.readlines():
-					input_data+=line
-					self.analyzer.input(input_data)
-					name,cloudletv,description,authors,copyright,website = (None,)*6
-					for token in self.analyzer:
-						if (token.type=='Name'):
-							name = token.value
-						elif (token.type=='CloudletV'):
-							cloudletv = token.value
-						elif (token.type=='Description'):
-							description = token.value
-						elif (token.type=='Authors'):
-							authors = token.value
-						elif (token.type=='Copyright'):
-							copyright = token.value
-						elif (token.type=='Website'):
-							website = token.value
-				someservice = serv.service(name, cloudletv, description, authors, copyright, website)
-				someservice.add_module(imp.load_source(name.split('=')[1], '{0}/__init__.py'.format(folder)))
-				someservice.macaddress = 'local'
-				someservice.username = 'local'
-				self.services.add(someservice)
+				try:
+					input_data = ''
+					desc = open('{0}{1}description.txt'.format(folder,os.sep))
+					for line in desc.readlines():
+						input_data+=line
+						self.analyzer.input(input_data)
+						name,cloudletv,description,authors,copyright,website = (None,)*6
+						for token in self.analyzer:
+							if (token.type=='Name'):
+								name = token.value
+							elif (token.type=='CloudletV'):
+								cloudletv = token.value
+							elif (token.type=='Description'):
+								description = token.value
+							elif (token.type=='Authors'):
+								authors = token.value
+							elif (token.type=='Copyright'):
+								copyright = token.value
+							elif (token.type=='Website'):
+								website = token.value
+					someservice = serv.service(name, cloudletv, description, authors, copyright, website)
+					someservice.add_module(imp.load_source(name.split('=')[1], '{0}/__init__.py'.format(folder)))
+					someservice.macaddress = 'local'
+					someservice.username = 'local'
+					self.services.add(someservice)
+				except Exception,e:
+					pass
 	def request_service(self, userdetails, servicename):
 		for service in self.services:
 			if (service.simplename==servicename and service.isallowed(userdetails[0], userdetails[1])):
 				response = 'OK '+service.ipport()
 				print('response is {}'.format(response))
 				return response
+		print('services are : {}'.format(self.services))
 		return 'NE'
 	def get_servicelist(self):
 		return self.services
+	#
+	# Method for removing person from services
+	#
+	def disconnectfromservice(self, servicename, username):
+		try:
+			for service in self.services:
+				if (service.name == 'Name={}'.format(servicename)):
+					service.disconnect(username)
+					break
+		except:
+			pass
 	'''
 	Skiping errors when parsing service description file
 

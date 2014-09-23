@@ -55,13 +55,22 @@ class commHandler(object):
 		if (msg.topic=='server/connectedusers'):
 			#broadcast available users
 			for user in self.usermanager.get_connected():
-				self.mqttserver.publish('client/connecteduser','|'.join(user),1)
+				self.mqttserver.publish('client/connecteduser/{}'.format(msg.payload),'|'.join(user),1)
 			print('received msg. topic is server/connectedusers')
 		elif (msg.topic=='server/servicelist'):
 			#broadcast available services
 			for servicedetail in self.servicemanager.get_servicelist():
-				self.mqttserver.publish('client/service',servicedetail.__str__(),1)
+				self.mqttserver.publish('client/service/{}'.format(msg.payload),servicedetail.__str__(),1)
 			print('received msg. topic is server/servicelist')
+		elif (msg.topic=='server/serviceusers'):
+			#channel used by client when requesting to know users of a specific service
+			try:
+				(servicename, requester) = msg.payload.split('|')
+				serviceusers = self.usermanager.who_uses(servicename)
+				for user in serviceusers:
+					self.mqttserver.publish('client/serviceuserslist/{}'.format(requester), user)
+			except:
+				pass
 		elif (msg.topic=='server/useservice'):
 			items = msg.payload.split(';')
 			(username,macaddress) = items[0].split('|')
@@ -108,6 +117,7 @@ class commHandler(object):
 	'''
 	def on_connect(self,mosq, obj, rc):
 		if (rc==0):
+			print('commhandler just connected!')
 			#
 			# If connection is successful, registering for topics
 			#
@@ -115,7 +125,8 @@ class commHandler(object):
 			self.mqttserver.subscribe('server/servicelist',1)
 			self.mqttserver.subscribe('server/useservice',1)
 			self.mqttserver.subscribe('server/service',1)
-
+			self.mqttserver.subscribe('server/serviceusers',1)
+			print('creating service manager!')
 			# Creating the user manager if the communication is functioning
 			self.usermanager = userMan.userMan()
 			# Creating the service manager and loading services
@@ -150,9 +161,19 @@ class commHandler(object):
 		macaddress = macaddress.split()[0]
 		response = self.usermanager.connect(username, macaddress)
 		time.sleep(2)
-		self.mqttserver.publish('server/login',response)
+		self.mqttserver.publish('server/login/{}'.format(username),response)
 	def on_userdisconnect(self,username,macaddress):
-		self.usermanager.connect(username, macaddress)
+		#
+		# Notifying services used by client to remove it
+		#
+		usedservices = self.usermanager.get_servicesofclient((username,macaddress))
+		for service in usedservices:
+			self.servicemanager.disconnectfromservice(service,username)
+		#
+		#disconnecting user from user manager and removing all
+		#their advertized services
+		#
+		self.usermanager.disconnect(username, macaddress)
 		self.servicemanager.remove_allservices('{0}|{1}'.format(username, macaddress))
 
 if __name__=='__main__':
