@@ -161,7 +161,7 @@ class commHandler(object):
 		macaddress = macaddress.split()[0]
 		response = self.usermanager.connect(username, macaddress)
 		time.sleep(2)
-		self.mqttserver.publish('server/login',response)
+		self.mqttserver.publish('server/login/{}'.format(username),response)
 	def on_userdisconnect(self,username,macaddress):
 		#
 		# Notifying services used by client to remove it
