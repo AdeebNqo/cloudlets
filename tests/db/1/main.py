@@ -1,5 +1,6 @@
 import ConfigParser
 from db import db
+import datetime
 
 #opening config file
 config = ConfigParser.ConfigParser()
@@ -32,15 +33,27 @@ actions = action.split(',')
 
 #testing each selected db
 for currdb in testdbs:
+	print('testing db: {}'.format(currdb))
 	somedb = db(currdb)
 	if currdb == 'berkelydb':
 		somedb.set_credentials(host,username,password,dbnameBerkely,tablename)
 	else:
 		somedb.set_credentials(host,username,password,dbname,tablename)
 	somedb.connect()
+	inserttime = 0
+	retrievetime = 0
 	for i in range(numtimes):
 		for someaction in actions:
 			if someaction=='insert':
+				start = datetime.datetime.now()
 				somedb.insert(tuple(keys.split(',')),tuple(data.split(',')))
+				diff = datetime.datetime.now()-start
+				inserttime += diff.total_seconds()
 			elif someaction=='get':
-				somedb.get(tuple(keys.split(',')))
+				start = datetime.datetime.now()
+				somedb.get(data.split(',')[0])
+				diff = datetime.datetime.now()-start
+				retrievetime += diff.total_seconds()
+	print('Number of runs: {}'.format(numtimes))
+	print('Insert time: {} seconds'.format(inserttime))
+	print('Retrieve time: {} seconds'.format(retrievetime))

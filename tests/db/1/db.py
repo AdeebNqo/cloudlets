@@ -34,13 +34,12 @@ class mysql(object):
 		values = '('
 		for i in range(length):
 			string = string + keys[i]
-			values = values + data[i]
+			values = values + '\"'+data[i]+'\"'
 			if (i!=length-1):
 				string = string+','
 				values = values+','
 		string = string+')'
 		values = values+')'
-		print('INSERT INTO {0} {1} VALUES {2};'.format(self.tablename, string, values))
 		self.cur.execute('INSERT INTO {0} {1} VALUES {2};'.format(self.tablename, string, values))
 		self.db.commit()
 	'''
@@ -48,8 +47,8 @@ class mysql(object):
 	The argument is a dictionary. {name:value}
 	'''
 	def get(self,key):
-		self.cur.execute('SELECT * FROM {0} where {1}={2}'.format(self.tablename, key.keys()[0], key.values()[0]))
-		return cur.fetchall()
+		self.cur.execute('SELECT * FROM {0} where {1}=\"{2}\"'.format(self.tablename, 'id', key))
+		return self.cur.fetchall()
 	def update(self, key, keys, data):
 		length = len(keys)
 		updatestring = ''
@@ -66,6 +65,11 @@ class berkelydb(object):
 		self.db.open(self.dbname, None, bsddb.db.DB_HASH, bsddb.db.DB_CREATE)
 		self.cur = self.db.cursor()
 	def insert(self,key,data):
-		self.db.put(key,data)
+		key = data[0]
+		dataX = ''
+		for item in data:
+			if not '#' in item:
+				dataX += item+','
+		self.db.put(key,dataX)
 	def get(self,keys):
-		return self.db.get(key)
+		return self.db.get(keys)
