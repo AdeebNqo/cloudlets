@@ -49,11 +49,9 @@ def clientwork(i):
         #client.requestavailableservices()
         #client.requestconnectedusers()
         #client.requestserviceuserlist('file_sharer')
-        print('requesting service...')
         client.requestservice('file_sharer')
         while (client.filesharingclient == None):
                 pass
-	print('service request granted!')
         #Perfoming the assigned actions
         f = open(transferfile, 'r')
         somfile = f.read()
@@ -77,13 +75,12 @@ def clientwork(i):
                                 recv = client.filesharingclient.download(client.filesharingclient.username, client.filesharingclient.username, transferfile)
                                 diff = datetime.datetime.now() - start
                                 rate = (sys.getsizeof(recv) / abs(diff.total_seconds()))
-                                downloadrate.append(rate)
+                                downloadrates.append(rate)
                 #
                 # For the following actions, we will measure the
                 # time it takes to get a response.
                 #
                 elif(actionX=='remove'):
-                        print('removing...')
                         for i in range(numtimes):
                                 client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile)
                                 start = datetime.datetime.now()
@@ -98,18 +95,17 @@ def clientwork(i):
                                 diff = datetime.datetime.now() - start
                                 rate = abs(diff.total_seconds())
                                 viewrates.append(rate)
-        print('name: client{}'.format(i)[:6])
-        print('upload: {}'.format(uploadrates))
-        print('download: {}'.format(downloadrates))
+        print('name: client{}'.format((i)[:6]))
+        print('upload (bytes/s): {}'.format(uploadrates))
+        print('download (bytes/s): {}'.format(downloadrates))
         print('remove response times: {}'.format(removerates))
         print('view response times: {}'.format(viewrates))
-print('creating clients...')
+        print('\n')
 clients = []
 for i in range(numclients):
         t = threading.Thread(target=clientwork, args=(i,))
         t.daemon = True
         t.start()
         clients.append(t)
-print('waiting...')
 for t in clients:
         t.join()
