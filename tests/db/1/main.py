@@ -42,6 +42,7 @@ for currdb in testdbs:
 	somedb.connect()
 	inserttime = 0
 	retrievetime = 0
+	updatetime = 0
 	for i in range(numtimes):
 		for someaction in actions:
 			if someaction=='insert':
@@ -54,6 +55,13 @@ for currdb in testdbs:
 				somedb.get(data.split(',')[0])
 				diff = datetime.datetime.now()-start
 				retrievetime += diff.total_seconds()
+			elif someaction=='update':
+				start = datetime.datetime.now()
+				somedb.update('anele#data.mp3',('access',),('private',))
+				diff = datetime.datetime.now()-start
+				updatetime += diff.total_seconds()
 	print('Number of runs: {}'.format(numtimes))
 	print('Insert time: {} seconds'.format(inserttime))
 	print('Retrieve time: {} seconds'.format(retrievetime))
+	print('Update time: {} seconds'.format(updatetime))
+	print('\n')

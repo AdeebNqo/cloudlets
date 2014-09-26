@@ -17,6 +17,8 @@ class db(object):
 		self.instance.insert(key,data)
 	def get(self,key):
 		return self.instance.get(key)
+	def update(self,key,keys,newvalues):
+		self.instance.update(key,keys,newvalues)
 import MySQLdb
 class mysql(object):
 	def connect(self):
@@ -51,13 +53,9 @@ class mysql(object):
 		return self.cur.fetchall()
 	def update(self, key, keys, data):
 		length = len(keys)
-		updatestring = ''
-		for i in range(length):
-			updatestring = updatestring+keys[i]+'='+data[i]
-			if (i!=length-1):
-				updatestring=updatestring+','
-		self.cur.execute('UPDATE {0} SET {1} where {2}={3}'.format(self.tablename, updatestring, key.keys()[0], key.values()[0]))
-		self.cur.commit()
+		updatestring = keys[0]+'='+'\"'+data[0]+'\"'
+		self.cur.execute('UPDATE {0} SET {1} where {2}=\"{3}\"'.format(self.tablename, updatestring, 'id', key))
+		self.db.commit()
 import bsddb3 as bsddb
 class berkelydb(object):
 	def connect(self):
@@ -73,3 +71,8 @@ class berkelydb(object):
 		self.db.put(key,dataX)
 	def get(self,keys):
 		return self.db.get(keys)
+	def update(self,key,keys,data):
+		old = self.db.get(key)
+		oldvals = old.split(',')
+		oldvals[0] = data[0]
+		self.db.put(key, ','.join(oldvals))
