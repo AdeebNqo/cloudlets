@@ -35,7 +35,7 @@ public class CProtocol implements MqttCallback {
 	private static CProtocol instance = null;
 	private String cloudletAddress = null;
 	private MqttClient mqttClient = null;
-	private MemoryPersistence persistence = new MemoryPersistence();
+	private MemoryPersistence persistence = null;
 	LinkedList<CProtocolInterface> cprotocollisteners = new LinkedList<CProtocolInterface>();
 
 	String name = null;

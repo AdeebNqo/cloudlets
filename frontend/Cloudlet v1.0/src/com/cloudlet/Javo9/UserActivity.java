@@ -34,90 +34,96 @@ public class UserActivity extends Activity implements CProtocolInterface
 	CProtocol protocol = null;
 	FileSharingClient filesharing = null;
 	ArrayList<String> list = new ArrayList<String>();
-	ListView userlist = null;
+	ListView userListView = null;
 	UserAdapter adapter = null;
 	
 	Button sync = null;
 	Button upload = null;
+	private boolean alreadyCreated = false;
 	
 	private static final int REQUEST_CHOOSER = 6384;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_user);
-		userlist = (ListView) findViewById(R.id.userlist);
-	    adapter = new UserAdapter(getBaseContext(), R.layout.user, list);
-	    userlist.setAdapter(adapter);
-	    userlist.setOnItemClickListener(new OnItemClickListener(){
-			@Override
-			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
-					long arg3) {
-				Object chosenuser = userlist.getItemAtPosition(arg2);
-				String c = (String)chosenuser;
-				Log.d("cloudletXdebug","chosen "+c);
-				Intent liststarter = new Intent(getApplicationContext(), FileActivity.class);
-				Log.d("cloudletXdebug","putting chosen user in intent");
-				liststarter.putExtra("owner", c);
-				Log.d("cloudletXdebug","starting file activity");
-				startActivity(liststarter);
-				Log.d("cloudletXdebug","started file activity");
-			}
-	    });
-	    
-	    protocol = CProtocol.getCProtocol();
-	    protocol.setCProtocolListener(this);
-	    filesharing = FileSharingClient.getFileSharingClient();
-	    if (filesharing==null){
-	    	//retrieving filesharerclient object in future
-	    	final Handler handler = new Handler();
-	    	handler.postDelayed(new Runnable() {
-	    		  @Override
-	    		  public void run() {
-	    			  filesharing = FileSharingClient.getFileSharingClient();
-	    		  }
-	    		}, 3000);
-	    }
-	    try 
-	    {
-			protocol.requestUsersOnService("file_sharer");
-		} 
-	    catch (MqttPersistenceException e)
-	    {
-			e.printStackTrace();
-		} 
-	    catch (MqttException e) 
+		if (!isCreated())
 		{
-			e.printStackTrace();
+			alreadyCreated = true;
+			super.onCreate(savedInstanceState);
+			setContentView(R.layout.activity_user);
+			userListView = (ListView) findViewById(R.id.userlist);
+		    adapter = new UserAdapter(getBaseContext(), R.layout.user, list);
+		    userListView.setAdapter(adapter);
+		    userListView.setOnItemClickListener(new OnItemClickListener()
+		    {
+				@Override
+				public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+						long arg3) {
+					Object chosenuser = userListView.getItemAtPosition(arg2);
+					String c = (String)chosenuser;
+					Log.d("cloudletXdebug","chosen "+c);
+					Intent liststarter = new Intent(getApplicationContext(), FileActivity.class);
+					Log.d("cloudletXdebug","putting chosen user in intent");
+					liststarter.putExtra("owner", c);
+					Log.d("cloudletXdebug","starting file activity");
+					startActivity(liststarter);
+					Log.d("cloudletXdebug","started file activity");
+				}
+		    });
+		    
+		    protocol = CProtocol.getCProtocol();
+		    protocol.setCProtocolListener(this);
+		    filesharing = FileSharingClient.getFileSharingClient();
+		    if (filesharing==null){
+		    	//retrieving filesharerclient object in future
+		    	final Handler handler = new Handler();
+		    	handler.postDelayed(new Runnable() {
+		    		  @Override
+		    		  public void run() {
+		    			  filesharing = FileSharingClient.getFileSharingClient();
+		    		  }
+		    		}, 3000);
+		    }
+		    try 
+		    {
+				protocol.requestUsersOnService("file_sharer");
+			} 
+		    catch (MqttPersistenceException e)
+		    {
+				e.printStackTrace();
+			} 
+		    catch (MqttException e) 
+			{
+				e.printStackTrace();
+			}
+		    
+		    sync = (Button) findViewById(R.id.sync);
+		    sync.setOnClickListener(new OnClickListener(){
+	
+				@Override
+				public void onClick(View arg0) {
+					new Thread()
+					{
+						public void run()
+						{
+							filesharing.sync();
+						}
+					}.start();
+				}
+		    	
+		    });
+		    upload = (Button) findViewById(R.id.upload);
+		    upload.setOnClickListener(new OnClickListener(){
+	
+				@Override
+				public void onClick(View arg0) {
+					Intent uploadIntent = new Intent(getApplicationContext(), FileChooserActivity.class);
+					uploadIntent.setType(Phone.CONTENT_TYPE);
+					startActivityForResult(uploadIntent, REQUEST_CHOOSER);
+				}
+		    	
+		    });
 		}
-	    
-	    sync = (Button) findViewById(R.id.sync);
-	    sync.setOnClickListener(new OnClickListener(){
-
-			@Override
-			public void onClick(View arg0) {
-				filesharing.sync();
-			}
-	    	
-	    });
-	    upload = (Button) findViewById(R.id.upload);
-	    upload.setOnClickListener(new OnClickListener(){
-
-			@Override
-			public void onClick(View arg0) {
-				Intent uploadIntent = new Intent(getApplicationContext(), FileChooserActivity.class);
-				uploadIntent.setType(Phone.CONTENT_TYPE);
-				startActivityForResult(uploadIntent, REQUEST_CHOOSER);
-				
-//				Log.d("cloudletXdebug", "BEFORE GETDATA ");
-//				Uri uploadFileUri = uploadIntent.getData();
-//				Log.d("cloudletXdebug", "AFTER GETDATA ");
-//				String uriString = uploadFileUri.getPath();
-//				Log.d("cloudletXdebug", "uri: "+uriString);
-			}
-	    	
-	    });
 	}
 
 	@Override
@@ -134,7 +140,8 @@ public class UserActivity extends Activity implements CProtocolInterface
 
 	//Method for adding user in listview
 	public void addUser(String someuser){
-		runOnUiThread(new myRunnable(someuser));
+		if (!list.contains(new String(someuser)))
+			runOnUiThread(new myRunnable(someuser));
     }
     class myRunnable implements Runnable{
     	String someuser;
@@ -199,6 +206,13 @@ public class UserActivity extends Activity implements CProtocolInterface
 			}
 			return customv;
 		}
-
+	}
+	
+	/*
+	 * Method to check if this activity was created before within this session.
+	 */
+	private boolean isCreated()
+	{
+		return alreadyCreated;
 	}
 }

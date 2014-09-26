@@ -33,52 +33,60 @@ public class ServiceActivity extends Activity implements CProtocolInterface {
 	String identifier = null;
 	String username = null;
 	FileSharingClient filesharingclient = null;
+	private boolean alreadyCreated = false;
 
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_service);
-		final ListView servicelist = (ListView) findViewById(R.id.servicelist);
-		adapter = new ServiceAdapter(this, R.layout.service, list);
-		servicelist.setAdapter(adapter);
-		protocol = CProtocol.getCProtocol();
-		protocol.setCProtocolListener(ServiceActivity.this);
-		try {
-			protocol.requestAvailableServices();
-		} catch (MqttPersistenceException e1) {
-			e1.printStackTrace();
-		} catch (MqttException e1) {
-			e1.printStackTrace();
-		}
-		servicelist.setOnItemClickListener(new OnItemClickListener() {
-
-			@Override
-			public void onItemClick(AdapterView<?> parent, View view,
-					int position, long id) {
-				if (filesharingclient == null) {
-					String chosenservice = servicelist.getItemAtPosition(
-							position).toString();
-					String[] items = chosenservice.split(";");
-					String name = items[0].split("=")[1];
-					try {
-						protocol.requestService(protocol.identifier, name);
-					} catch (MqttPersistenceException e) {
-						e.printStackTrace();
-					} catch (MqttException e) {
-						e.printStackTrace();
-					}
-				} else {
-					// start file sharing activity
-				}
+	public void onCreate(Bundle savedInstanceState) 
+	{
+		if (!isCreated())
+		{
+			alreadyCreated = true;
+			super.onCreate(savedInstanceState);
+			setContentView(R.layout.activity_service);
+			final ListView servicelist = (ListView) findViewById(R.id.servicelist);
+			adapter = new ServiceAdapter(this, R.layout.service, list);
+			servicelist.setAdapter(adapter);
+			protocol = CProtocol.getCProtocol();
+			protocol.setCProtocolListener(ServiceActivity.this);
+			try {
+				protocol.requestAvailableServices();
+			} catch (MqttPersistenceException e1) {
+				e1.printStackTrace();
+			} catch (MqttException e1) {
+				e1.printStackTrace();
 			}
-		});
+			
+			servicelist.setOnItemClickListener(new OnItemClickListener() 
+			{
+				@Override
+				public void onItemClick(AdapterView<?> parent, View view,
+						int position, long id) {
+					if (filesharingclient == null) {
+						String chosenservice = servicelist.getItemAtPosition(
+								position).toString();
+						String[] items = chosenservice.split(";");
+						String name = items[0].split("=")[1];
+						try {
+							protocol.requestService(protocol.identifier, name);
+						} catch (MqttPersistenceException e) {
+							e.printStackTrace();
+						} catch (MqttException e) {
+							e.printStackTrace();
+						}
+					} else {
+						// start file sharing activity
+					}
+				}
+			});
+		}
 	}
 
 	/*
 	 * Method for adding service to the list of services which will be displayed
 	 */
 	public void addService(String service) {
-		runOnUiThread(new myRunnable(service));
+		if (!list.contains(new String(service)))
+			runOnUiThread(new myRunnable(service));
 	}
 
 	class myRunnable implements Runnable {
@@ -177,6 +185,13 @@ public class ServiceActivity extends Activity implements CProtocolInterface {
 			}
 			return customv;
 		}
-
+	}
+	
+	/*
+	 * Method to check if this activity was created before within this session.
+	 */
+	private boolean isCreated()
+	{
+		return alreadyCreated;
 	}
 }
