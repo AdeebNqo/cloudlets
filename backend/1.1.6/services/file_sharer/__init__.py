@@ -134,147 +134,153 @@ class file_sharer():
 			lastend = None
 			while True:
 				length = somesocket.recv(1024)
-				if (length!=''):
-					length = int(length)
-					somesocket.sendall('OK')
-					if (lastend!=None):
-						data=data+lastend
-						lastend = None
-					data = data+somesocket.recv(length)
-					while (len(data) < length):
-						data = data + somesocket.recv(length)
-					if (len(data)>length):
-						lastend = data[length:]
-						data = data[:length]
-					packet = json.loads(data)
-					action = packet['action']
-					if action=='heartbeat':
-						response = '{\"status\":\"OK\"}'
-						somesocket.sendall(len(response))
-						statusresponse = somesocket.recv(1024)
-						if (statusresponse=='OK'):
-							somesocket.sendall(response)
-					elif action=='download':
-						print('downloading something')
-						owner = packet['owner']
-						requester = packet['requester']
-						filename = packet['filename']
-						result = self.currdb.get({'id':'{0}#{1}'.format(owner,filename)})
-						if (result==None):
-							print('db get result was null')
-							jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\"Request file does not exist.\"}"
-							if (requester==owner):
-								self.send2(somesocket, jsonstring)
+				if (length!='' or length!=None):
+					dosomething = False
+					try:
+						length = int(length)
+						dosomething = True
+					except:
+						pass
+					if (dosomething):
+						somesocket.sendall('OK')
+						if (lastend!=None):
+							data=data+lastend
+							lastend = None
+						data = data+somesocket.recv(length)
+						while (len(data) < length):
+							data = data + somesocket.recv(length)
+						if (len(data)>length):
+							lastend = data[length:]
+							data = data[:length]
+						packet = json.loads(data)
+						action = packet['action']
+						if action=='heartbeat':
+							response = '{\"status\":\"OK\"}'
+							somesocket.sendall(len(response))
+							statusresponse = somesocket.recv(1024)
+							if (statusresponse=='OK'):
+								somesocket.sendall(response)
+						elif action=='download':
+							print('downloading something')
+							owner = packet['owner']
+							requester = packet['requester']
+							filename = packet['filename']
+							result = self.currdb.get({'id':'{0}#{1}'.format(owner,filename)})
+							if (result==None):
+								print('db get result was null')
+								jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\"Request file does not exist.\"}"
+								if (requester==owner):
+									self.send2(somesocket, jsonstring)
+								else:
+									self.send(requester, jsonstring)
 							else:
-								self.send(requester, jsonstring)
-						else:
-							(idX, accessX, filenameX, ownerX, accesslistX, compressionX) = result
-							#check if request has access
-							if (accessX=='public' or requester==owner or requester in accesslistX):
-								try:
-									objectdata = open('{2}/{0}/{1}'.format(ownerX, filenameX,self.curd)).read()
-									jsonstring = "{\"actionresponse\":\"download\", \"status\":\"OK\", \"objectdata\":\""+objectdata+"\", \"compression\":\""+compressionX+"\"}"
-									if (requester==ownerX):
-										self.send2(somesocket, jsonstring)
-									else:
-										self.send(requester, jsonstring)
-								except IOError, e:
-									jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\""+str(e)+"\"}"
-									if (requester==ownerX):
-										self.send2(somesocket, jsonstring)
-									else:
-										self.send(requester, jsonstring)
-							else:
-								print('no access.')
-								jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\"Do not have access to file.\"}"
-								self.send(requester, jsonstring)
-					elif action=='upload':
-						print('uploading something')
-						duration = packet['duration']
-						access = packet['access']
-						accesslist = packet['accesslist']
-						if (accesslist=='None'):
-							accesslist = []
-						if (access!='public'):
+								(idX, accessX, filenameX, ownerX, accesslistX, compressionX) = result
+								#check if request has access
+								if (accessX=='public' or requester==owner or requester in accesslistX):
+									try:
+										objectdata = open('{2}/{0}/{1}'.format(ownerX, filenameX,self.curd)).read()
+										jsonstring = "{\"actionresponse\":\"download\", \"status\":\"OK\", \"objectdata\":\""+objectdata+"\", \"compression\":\""+compressionX+"\"}"
+										if (requester==ownerX):
+											self.send2(somesocket, jsonstring)
+										else:
+											self.send(requester, jsonstring)
+									except IOError, e:
+										jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\""+str(e)+"\"}"
+										if (requester==ownerX):
+											self.send2(somesocket, jsonstring)
+										else:
+											self.send(requester, jsonstring)
+								else:
+									print('no access.')
+									jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\"Do not have access to file.\"}"
+									self.send(requester, jsonstring)
+						elif action=='upload':
+							print('uploading something')
+							duration = packet['duration']
+							access = packet['access']
 							accesslist = packet['accesslist']
-						compression = packet['compression']
-						filename = packet['filename']
-						owner = packet['owner']
-						objectdata = packet['objectdata']
+							if (accesslist=='None'):
+								accesslist = []
+							if (access!='public'):
+								accesslist = packet['accesslist']
+							compression = packet['compression']
+							filename = packet['filename']
+							owner = packet['owner']
+							objectdata = packet['objectdata']
 
-						print('checking existence of folder: {}'.format(owner))
-						if not os.path.exists('{0}/{1}'.format(self.curd, owner)):
-							os.makedirs('{0}/{1}'.format(self.curd,owner))
-							print('owner did not have any shared files. his folder has been created')
-						filepath = '{2}/{0}/{1}'.format(owner, filename, self.curd)
-						if not os.path.isfile(filepath):
-							print('The upload does not yet exist')
-							#primary key
-							primkey = '{0}#{1}'.format(owner,filename)
-							try:
-								self.currdb.insert(('id', 'access', 'filename', 'owner', 'accesslist','compression'), (primkey, access, filename, owner, ':'.join(accesslist), compression))
-								_file = open(filepath, 'w')
-								_file.write(objectdata)
-								_file.close()
-								jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"OK\"}"
+							print('checking existence of folder: {}'.format(owner))
+							if not os.path.exists('{0}/{1}'.format(self.curd, owner)):
+								os.makedirs('{0}/{1}'.format(self.curd,owner))
+								print('owner did not have any shared files. his folder has been created')
+							filepath = '{2}/{0}/{1}'.format(owner, filename, self.curd)
+							if not os.path.isfile(filepath):
+								print('The upload does not yet exist')
+								#primary key
+								primkey = '{0}#{1}'.format(owner,filename)
+								try:
+									self.currdb.insert(('id', 'access', 'filename', 'owner', 'accesslist','compression'), (primkey, access, filename, owner, ':'.join(accesslist), compression))
+									_file = open(filepath, 'w')
+									_file.write(objectdata)
+									_file.close()
+									jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"OK\"}"
+									self.send2(somesocket, jsonstring)
+								except MySQLdb.Error,e:
+									print(e)
+									jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \""+str(e)+"\"}"
+									self.send2(somesocket, jsonstring)
+							else:
+								jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \"The file already exists.\"}"
 								self.send2(somesocket, jsonstring)
-							except MySQLdb.Error,e:
-								print(e)
-								jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \""+str(e)+"\"}"
+						elif action == 'identify':
+							accessor = json.loads(data)
+							self.users[accessor['username']] = (somesocket, address)
+						elif action == 'remove':
+							owner = packet['owner']
+							requester = packet['requester']
+							filename = packet['filename']
+							if (owner==requester):
+								try:
+									self.currdb.delete({'id':'{0}#{1}'.format(owner,filename)})
+									filepath = '{2}/{0}/{1}'.format(owner, filename, self.curd)
+									os.remove(filepath)
+									jsonstring = jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"OK\"}"
+									self.send2(somesocket, jsonstring)
+								except Exception,e:
+									jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"NOTOK\", \"reason\": \""+str(e)+"\"}"
+									self.send2(somesocket, jsonstring)
+							else:
+								jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"NOTOK\", \"reason\": \"Access denied.\"}"
 								self.send2(somesocket, jsonstring)
-						else:
-							jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \"The file already exists.\"}"
-							self.send2(somesocket, jsonstring)
-					elif action == 'identify':
-						accessor = json.loads(data)
-						self.users[accessor['username']] = (somesocket, address)
-					elif action == 'remove':
-						owner = packet['owner']
-						requester = packet['requester']
-						filename = packet['filename']
-						if (owner==requester):
-							try:
-								self.currdb.delete({'id':'{0}#{1}'.format(owner,filename)})
-								filepath = '{2}/{0}/{1}'.format(owner, filename, self.curd)
-								os.remove(filepath)
-								jsonstring = jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"OK\"}"
-								self.send2(somesocket, jsonstring)
-							except Exception,e:
-								jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"NOTOK\", \"reason\": \""+str(e)+"\"}"
-								self.send2(somesocket, jsonstring)
-						else:
-							jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"NOTOK\", \"reason\": \"Access denied.\"}"
-							self.send2(somesocket, jsonstring)
-					elif action == 'getfiles':
-						requester = packet['requester']
-						#compiling a json list with the files
-						filelist = "\"files\" : ["
-						public = self.currdb.getpublicfiles()
-						lenpublic = len(public)
-						accesssible = self.currdb.getsharedfiles(requester)
-						lenaccesssible = len(accesssible)
-						i = 0
-						for row in public:
-							(idX, accessX, filenameX, ownerX, accesslistX, compressionX) = row
-							filelist += "{\"id\":\""+idX+"\", \"access\":\""+accessX+"\", \"filename\":\""+filenameX+"\", \"compression\":\""+compressionX+"\", \"owner\":\""+ownerX+"\"}"
-							if (i != lenpublic-1):
-								filelist += ','
-							i += 1
-						i = 0
-						if (lenaccesssible==0):
-							filelist += ']'
-						else:
-							for row in accesssible:
+						elif action == 'getfiles':
+							requester = packet['requester']
+							#compiling a json list with the files
+							filelist = "\"files\" : ["
+							public = self.currdb.getpublicfiles()
+							lenpublic = len(public)
+							accesssible = self.currdb.getsharedfiles(requester)
+							lenaccesssible = len(accesssible)
+							i = 0
+							for row in public:
 								(idX, accessX, filenameX, ownerX, accesslistX, compressionX) = row
 								filelist += "{\"id\":\""+idX+"\", \"access\":\""+accessX+"\", \"filename\":\""+filenameX+"\", \"compression\":\""+compressionX+"\", \"owner\":\""+ownerX+"\"}"
-								if (i != lenaccesssible-1):
+								if (i != lenpublic-1):
 									filelist += ','
 								i += 1
-							filelist += ']'
-						#compiling final json response
-						jsonstring = "{\"actionresponse\":\"getfiles\", "+filelist+"}"
-						self.send2(somesocket, jsonstring)
-					data = ''
+							i = 0
+							if (lenaccesssible==0):
+								filelist += ']'
+							else:
+								for row in accesssible:
+									(idX, accessX, filenameX, ownerX, accesslistX, compressionX) = row
+									filelist += "{\"id\":\""+idX+"\", \"access\":\""+accessX+"\", \"filename\":\""+filenameX+"\", \"compression\":\""+compressionX+"\", \"owner\":\""+ownerX+"\"}"
+									if (i != lenaccesssible-1):
+										filelist += ','
+									i += 1
+								filelist += ']'
+							#compiling final json response
+							jsonstring = "{\"actionresponse\":\"getfiles\", "+filelist+"}"
+							self.send2(somesocket, jsonstring)
+						data = ''
 		except Exception,e:
 			print(e)
 	def send(self,username, data):
