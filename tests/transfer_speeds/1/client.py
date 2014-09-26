@@ -149,7 +149,6 @@ class FileSharingClient(object):
 			length = self.s.recv(1024)
 			pass
 		length = int(length)
-		print('expected packet {} (bytes)'.format(length))
 		self.s.sendall('OK')
 		data = ''
 		if self.recvdata != '':
