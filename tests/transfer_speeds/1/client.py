@@ -21,7 +21,6 @@ class Client(object):
 		self.ip = ip
 		self.port = portX
 		self.identifier = '{0}|{1}'.format(username, macaddress)
-		print(self.identifier)
 		self.iprequestpattern = re.compile('client/service_request/.*/'+self.identifier+'/recvIP')
 		self.mqttclient = mosquitto.Mosquitto(self.identifier)
 		#self.mqttclient.on_publish = self.on_publish
@@ -56,7 +55,6 @@ class Client(object):
 	'''
 	def on_connect(self, mosq, obj, rc):
 		if rc==0:
-			print('connected!')
 			self.mqttclient.subscribe('client/connecteduser/{}'.format(self.username),1)#receive connected user
 			self.mqttclient.subscribe('client/service/{}'.format(self.username),1)#receive available service
 			self.mqttclient.subscribe('client/serviceuserslist/{}'.format(self.username),1)#receive available service
@@ -64,13 +62,17 @@ class Client(object):
 			self.mqttclient.subscribe('client/service_request/+/{0}/recvIP'.format(self.identifier),1)#receive ip:port for service requests made
 	def on_message(self, mosq, obj, msg):
 		if (msg.topic==('client/service/{}'.format(self.username))):
-			print('cloudlet service is {}'.format(msg.payload))
+			#print('cloudlet service is {}'.format(msg.payload))
+			debug = 0
 		elif (msg.topic=='client/useservice/{}'.format(self.identifier)):
-			print('trying to use service')
+			#print('trying to use service')
+			debug = 0
 		elif (msg.topic=='client/connecteduser/{}'.format(self.username)):
-			print('cloudlet connected user is {}'.format(msg.payload))
+			#print('cloudlet connected user is {}'.format(msg.payload))
+			debug = 0
 		elif (msg.topic=='client/serviceuserslist/{}'.format(self.username)):
-			print('file_sharer user is {}'.format(msg.payload))
+			#print('file_sharer user is {}'.format(msg.payload))
+			debug = 0
 		elif (msg.topic=='client/service_request/{0}'.format(self.identifier)):
 			#the first thing the client should do is use the payload
 			# to determine whether to allow the request
@@ -149,7 +151,6 @@ class FileSharingClient(object):
 			length = self.s.recv(1024)
 			pass
 		length = int(length)
-		print('expected packet {} (bytes)'.format(length))
 		self.s.sendall('OK')
 		data = ''
 		if self.recvdata != '':

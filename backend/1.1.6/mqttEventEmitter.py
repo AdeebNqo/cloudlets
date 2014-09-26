@@ -2,7 +2,7 @@
 #
 # Copyright 2014 Zola Mahlaza <adeebnqo@gmail.com>
 # This file starts mosquitto and registers connect/disconnect events
-# 
+#
 #
 import threading
 import os
@@ -24,8 +24,8 @@ class mqttEventEmitter(object):
 	# This method starts Mosquitto
 	# and reads all the error messages it
 	# produces.
-	def startmosquitto(self, port):	
-		process = subprocess.Popen('mosquitto -p {}'.format(port), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)		
+	def startmosquitto(self, port):
+		process = subprocess.Popen('mosquitto -p {}'.format(port), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		# Poll process for new output until finished
 		while True:
 			#the items to be read by process
@@ -36,7 +36,7 @@ class mqttEventEmitter(object):
 				#	self.processline(process.stdout.readline())
 				if (readydata == process.stderr.fileno()):
 					self.processline(process.stderr.readline())
-	#	
+	#
 	# Method for processing line comming out of mosquitto
 	#
 	def processline(self,line):
@@ -47,7 +47,7 @@ class mqttEventEmitter(object):
 					self.notify(line)
 			else:
 				self.notify(line)
-					
+
 	#
 	# Method called when an
 	# error message is receieved.
@@ -63,8 +63,13 @@ class mqttEventEmitter(object):
 			print('detected disconnection')
 			items = value.split()
 			vals = items[len(items)-2].split('|')
-			print('disconnected person has details (username,macaddress): ({0}, {1})'.format(vals[0], vals[1][:len(vals[1])-1]))
-			broadcaster.disconnect(vals[0],vals[1][:len(vals[1])-1])
+			lengthofvals = len(vals)
+			if (lengthofvals>1):
+				print('disconnected person has details (username,macaddress): ({0}, {1})'.format(vals[0], vals[1][:len(vals[1])-1]))
+				broadcaster.disconnect(vals[0],vals[1][:len(vals[1])-1])
+			elif(lengthofvals==1):
+				(name,mac) = items[2].split('|')
+				broadcaster.disconnect(name, mac)
 		else:
 			print(value)
 	#
