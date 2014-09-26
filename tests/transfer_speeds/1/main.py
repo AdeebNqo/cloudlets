@@ -71,6 +71,7 @@ def clientwork(i):
                                 client.filesharingclient.remove(client.filesharingclient.username, transferfile)
                 elif(actionX=='download'):
                         for i in range(numtimes):
+                                client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile)
                                 start = datetime.datetime.now()
                                 recv = client.filesharingclient.download(client.filesharingclient.username, client.filesharingclient.username, transferfile)
                                 diff = datetime.datetime.now() - start
@@ -92,10 +93,11 @@ def clientwork(i):
                         for i in range(numtimes):
                                 start = datetime.datetime.now()
                                 response = client.filesharingclient.getaccessiblefiles()
+                                print(response)
                                 diff = datetime.datetime.now() - start
                                 rate = abs(diff.total_seconds())
                                 viewrates.append(rate)
-        print('name: client{}'.format((i)[:6]))
+        print('name: user{}'.format(i))
         print('upload (bytes/s): {}'.format(uploadrates))
         print('download (bytes/s): {}'.format(downloadrates))
         print('remove response times: {}'.format(removerates))
@@ -109,3 +111,5 @@ for i in range(numclients):
         clients.append(t)
 for t in clients:
         t.join()
+while True:
+        pass

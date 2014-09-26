@@ -10,7 +10,8 @@ import socket
 import json
 import os
 import threading
-
+import shutil
+import traceback
 #
 # Copyright 2014 Zola Mahlaza
 #
@@ -36,6 +37,8 @@ class db(object):
 		return self.instance.getpublicfiles()
 	def getsharedfiles(self, requester):
 		return self.instance.getsharedfiles(requester)
+	def cleandata(self):
+		self.instance.cleandata()
 import MySQLdb
 class mysql(object):
 	def connect(self):
@@ -96,6 +99,10 @@ class mysql(object):
 		cmd = "SELECT * FROM "+self.tablename+" where NOT (access=\"public\") AND accesslist LIKE \"%"+requester+"%\""
 		self.cur.execute(cmd)
 		return self.cur.fetchall()
+	def cleandata(self):
+		cmd = "DELETE FROM {}".format(self.tablename)
+		self.cur.execute(cmd)
+		self.db.commit()
 import bsddb3 as bsddb
 class berkelydb(object):
 	def connect(self):
@@ -106,7 +113,9 @@ class berkelydb(object):
 		self.db.put(key,data)
 	def get(self,keys):
 		return self.db.get(key)
-
+	def cleandata(self):
+		os.remove('{}.db'.format(self.dbname))
+		self.connect()
 
 class file_sharer():
 	def __init__(self):
@@ -118,7 +127,15 @@ class file_sharer():
 		self.sockt.listen(1)
 		self.users = {}
 		self.curd = os.path.dirname(__file__)
-		print('service created')
+		try:
+			#cleaning database
+			self.currdb.cleandata()
+			#cleaning folders
+			dirs = [x[0] for x in os.walk(directory)]
+			for DIR in dirs:
+				shutil.rmtree(DIR)
+		except:
+			traceback.print_exc()
 	def start(self):
 		print('starting')
 		t = threading.Thread(target=self.wait_connections)
