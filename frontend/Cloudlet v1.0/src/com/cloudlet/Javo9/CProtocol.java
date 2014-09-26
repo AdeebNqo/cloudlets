@@ -6,6 +6,7 @@
 
 package com.cloudlet.Javo9;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -24,113 +25,164 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.util.Log;
+import android.widget.Toast;
 
-public class CProtocol implements MqttCallback{
-	private WifiManager manager=null;
-	private Context appContext = null;
+public class CProtocol implements MqttCallback {
+	Context applicationContext = null;
+	private WifiManager manager = null;
 	private static CProtocol instance = null;
 	private String cloudletAddress = null;
-	private MqttClient mqttClient = null ;
+	private MqttClient mqttClient = null;
 	private MemoryPersistence persistence = new MemoryPersistence();
-	int i = 0;
 	LinkedList<CProtocolInterface> cprotocollisteners = new LinkedList<CProtocolInterface>();
+
 	String name = null;
-	
-	public static CProtocol getCProtocol(){
-		if (instance==null){
+	protected String identifier = null;
+	protected String macaddress = null;
+
+	public static CProtocol getCProtocol() {
+		if (instance == null) {
 			instance = new CProtocol();
 			return instance;
 		}
 		return instance;
 	}
+
 	/*
-	 * Initializing the context in which the
-	 * CProtocol will operate.
+	 * Initializing the context in which the CProtocol will operate.
 	 */
-	public void init(Context appContext){
-		this.appContext = appContext;
-		manager = (WifiManager) appContext.getSystemService(Context.WIFI_SERVICE);
+	public void init(Context appContext) {
+		applicationContext = appContext;
+		manager = (WifiManager) appContext
+				.getSystemService(Context.WIFI_SERVICE);
 	}
+
 	/*
 	 * Method for setting IP and Port of cloudlet
 	 */
-	public void setCloudletAddress(String ip, int port){
-		cloudletAddress = "tcp://"+ip+":"+port;
+	public void setCloudletAddress(String ip, int port) {
+		cloudletAddress = "tcp://" + ip + ":" + port;
 	}
+
 	/*
 	 * Method for connecting to a specified WiFi network.
-	 * 
 	 */
-	public void connectToWiFi(String ssid, String password)
-	{
+	public void connectToWiFi(String ssid, String password) {
 		List<ScanResult> networks = manager.getScanResults();
-		for (ScanResult network: networks){
-			if (network.SSID.equals(ssid)){
+		for (ScanResult network : networks) {
+			if (network.SSID.equals(ssid)) {
 				WifiConfiguration wc = new WifiConfiguration();
 				wc.SSID = network.SSID;
 				wc.BSSID = network.BSSID;
 				wc.status = WifiConfiguration.Status.ENABLED;
-			    wc.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-			    wc.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-			    wc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-			    wc.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-			    wc.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-			    wc.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+				wc.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+				wc.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+				wc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+				wc.allowedPairwiseCiphers
+						.set(WifiConfiguration.PairwiseCipher.TKIP);
+				wc.allowedPairwiseCiphers
+						.set(WifiConfiguration.PairwiseCipher.CCMP);
+				wc.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
 				int netID = manager.addNetwork(wc);
 				manager.enableNetwork(netID, true);
 			}
 		}
 	}
+
 	/*
 	 * Method for connecting to a cloudlet
 	 */
-	public void connectToCloudlet(String identifier) throws MqttException{
-		String[] vals = identifier.split("\\|");
-		//Log.d("cloudletXdebug", "mqttClient creation failed");
-		name = vals[0].substring(0, 6);
-		identifier = name +"|"+ vals[1];
-		new Connector().execute(identifier);
+	public void connectToCloudlet(String identifierX) throws MqttException {
+		String[] vals = identifierX.split("\\|");
+		// Log.d("cloudletXdebug", "mqttClient creation failed");
+		name = vals[0];
+		if (name.length() > 6) {
+			name = name.substring(0, 5);
+		}
+		Log.d("cloudletXdebug", "trncated name is " + name);
+		this.identifier = name + "|" + this.macaddress;
+		Log.d("cloudletXdebug", "after trncated name, identifier is "
+				+ this.identifier);
+		if (this.identifier.length() <= 23) {
+			new Connector().execute(this.identifier);
+		} else {
+			Toast.makeText(applicationContext, "Could not connect.",
+					Toast.LENGTH_LONG).show();
+		}
 	}
-	
-	public void subscribeServiceChannel(String servicename) throws MqttException
-	{
-		mqttClient.subscribe("client/servicename/"+servicename, 1);
+
+	public void subscribeServiceChannel(String servicename)
+			throws MqttException {
+		mqttClient.subscribe("client/servicename/" + servicename, 1);
 	}
-	
+
 	/*
 	 * Method for disconnecting from cloudlet
 	 */
-	public void disconnectFromCloudlet() throws MqttException, NullPointerException{
-		if (mqttClient==null){
+	public void disconnectFromCloudlet() throws MqttException,
+			NullPointerException {
+		if (mqttClient == null) {
 			throw new NullPointerException("Mqtt Client is null.");
-		}else{
-			mqttClient.disconnect();
+		} else {
+			Handler mainHandler = new Handler(
+					applicationContext.getMainLooper());
+			Runnable killer = new Runnable() {
+
+				@Override
+				public void run() {
+					try {
+						Runtime.getRuntime().exec(
+								"kill -SIGINT " + android.os.Process.myPid());
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			};
+			mainHandler.post(killer);
 		}
 	}
-	private class Connector extends AsyncTask<String, Void, Void>{
+
+	private class Connector extends AsyncTask<String, Void, Void> {
 		@Override
 		protected Void doInBackground(String... params) {
-			try{
+			try {
 				String identifier = params[0];
 				String username = identifier.split("\\|")[0];
 				Log.d("cloudletXdebug", identifier);
 				Log.d("cloudletXdebug", cloudletAddress);
-				mqttClient = new MqttClient(cloudletAddress, identifier, persistence);
+				mqttClient = new MqttClient(cloudletAddress, identifier,
+						persistence);
 				mqttClient.setCallback(CProtocol.this);
 				MqttConnectOptions connOpts = new MqttConnectOptions();
-		        connOpts.setCleanSession(true);
-		        mqttClient.connect();
-		        mqttClient.subscribe("server/login/"+username);
-		        mqttClient.subscribe("client/connecteduser/"+username); //connected users will be broadcasted here
-	            mqttClient.subscribe("client/service/"+username); //available services will be broadcasted here
-	            mqttClient.subscribe("client/service_request/"+identifier);
-	            mqttClient.subscribe("client/service_request/+/"+identifier+"/recvIP");
-	            mqttClient.subscribe("client/serviceuserslist/"+username);
-	            Log.d("cloudletXdebug", "done with connecting and subscribing");
-			}catch(MqttException e){
+				connOpts.setCleanSession(true);
+				//connOpts.setKeepAliveInterval(10);
+				mqttClient.connect(connOpts);
+				mqttClient.subscribe("server/login/" + username);
+				mqttClient.subscribe("client/connecteduser/" + username); // connected
+																			// users
+																			// will
+																			// be
+																			// broadcasted
+																			// here
+				mqttClient.subscribe("client/service/" + username); // available
+																	// services
+																	// will be
+																	// broadcasted
+																	// here
+				Log.d("cloudletXdebug",
+						"subscribing to client/service_request/file_sharer/"
+								+ identifier + "/recvIP");
+				mqttClient.subscribe("client/service_request/file_sharer/"
+						+ identifier + "/recvIP");
+				mqttClient.subscribe("client/service_request/" + identifier);
+				mqttClient.subscribe("client/serviceuserslist/" + name);
+				Log.d("cloudletXdebug", "done with connecting and subscribing");
+			} catch (MqttException e) {
 				Log.d("cloudletXdebug", "mqttClient creation failed");
-				//e.printStackTrace();
+				// e.printStackTrace();
 			}
 			return null;
 		}
@@ -138,7 +190,8 @@ public class CProtocol implements MqttCallback{
 		@Override
 		protected void onPostExecute(Void result) {
 			try {
-				CProtocol.this.requestAvailableServices();;
+				CProtocol.this.requestAvailableServices();
+				;
 			} catch (MqttPersistenceException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -149,79 +202,94 @@ public class CProtocol implements MqttCallback{
 			super.onPostExecute(result);
 		}
 	}
-	
+
 	/*
 	 * Method for requesting list of users using a service.
 	 */
-	public void requestUsersOnService(String servicename) throws MqttPersistenceException, MqttException
-	{
-		MqttMessage msg = new MqttMessage((servicename+"|"+name).getBytes());
+	public void requestUsersOnService(String servicename)
+			throws MqttPersistenceException, MqttException {
+		MqttMessage msg = new MqttMessage((servicename + "|" + name).getBytes());
 		mqttClient.publish("server/serviceusers", msg);
 	}
-	
+
 	/*
 	 * Method for requesting connected users
 	 */
-	public void requestConnectedUsers() throws MqttPersistenceException, MqttException{
-		MqttMessage msg = new MqttMessage("hello".getBytes());
+	public void requestConnectedUsers() throws MqttPersistenceException,
+			MqttException {
+		MqttMessage msg = new MqttMessage(name.getBytes());
 		mqttClient.publish("server/connectedusers", msg);
 	}
+
 	/*
 	 * Method for requesting available services
 	 */
-	public void requestAvailableServices() throws MqttPersistenceException, MqttException{
-		MqttMessage msg = new MqttMessage("world".getBytes());
+	public void requestAvailableServices() throws MqttPersistenceException,
+			MqttException {
+		MqttMessage msg = new MqttMessage(name.getBytes());
 		mqttClient.publish("server/servicelist", msg);
 	}
-	
+
 	/*
 	 * Method for requesting a service
 	 */
-	public void requestService(String identifier, String servicename) throws MqttPersistenceException, MqttException{
-		MqttMessage msg = new MqttMessage((identifier+";"+servicename).getBytes());
+	public void requestService(final String identifier, final String servicename)
+			throws MqttPersistenceException, MqttException {
+		final MqttMessage msg = new MqttMessage(
+				(identifier + ";" + servicename).getBytes());
 		mqttClient.publish("server/useservice", msg);
+		Log.d("cloudletXdebug", "use service publishing works fine.");
+
 	}
+
 	/*
 	 * Method for advertising clients' services
 	 */
-	public void advertizeServices(String servicesString) throws MqttPersistenceException, MqttException{
+	public void advertizeServices(String servicesString)
+			throws MqttPersistenceException, MqttException {
 		MqttMessage msg = new MqttMessage(servicesString.getBytes());
 		mqttClient.publish("server/service", msg);
 	}
+
 	/*
 	 * Method for retrieving the mac address
 	 */
-	public String getMacAddress(){
+	public String getMacAddress() {
 		WifiInfo info = manager.getConnectionInfo();
 		String address = info.getMacAddress();
+		this.macaddress = address;
 		return address;
 	}
+
 	/*
 	 * 
 	 */
-	public void setCProtocolListener(CProtocolInterface somereceiver){
+	public void setCProtocolListener(CProtocolInterface somereceiver) {
 		cprotocollisteners.add(somereceiver);
 	}
-	
+
 	@Override
 	public void connectionLost(Throwable arg0) {
-		Log.d("cloudletXdebug", "the connection has been lost: "+arg0.toString());
-		for (CProtocolInterface somereceiver: cprotocollisteners){
+		Log.d("cloudletXdebug",
+				"the connection has been lost: " + arg0.toString());
+		for (CProtocolInterface somereceiver : cprotocollisteners) {
 			somereceiver.connectionLost(arg0);
 		}
 		arg0.printStackTrace();
 	}
+
 	@Override
 	public void deliveryComplete(IMqttDeliveryToken arg0) {
 		Log.d("cloudletXdebug", "msg delivered");
-		for (CProtocolInterface somereceiver: cprotocollisteners){
+		for (CProtocolInterface somereceiver : cprotocollisteners) {
 			somereceiver.deliveryComplete(arg0);
 		}
 	}
+
 	@Override
 	public void messageArrived(String arg0, MqttMessage arg1) throws Exception {
 		Log.d("cloudletXdebug", "msg has been received");
-		for (CProtocolInterface somereceiver: cprotocollisteners){
+		for (CProtocolInterface somereceiver : cprotocollisteners) {
 			somereceiver.messageArrived(arg0, arg1);
 		}
 	}
