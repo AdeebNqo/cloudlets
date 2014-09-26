@@ -70,10 +70,11 @@ def clientwork(i):
                                 diff = datetime.datetime.now() - start
                                 rate = (os.path.getsize(transferfile) / abs(diff.total_seconds()))
                                 uploadrates.append(rate)
+                                client.filesharingclient.remove(client.filesharingclient.username, transferfile)
                 elif(actionX=='download'):
                         for i in range(numtimes):
                                 start = datetime.datetime.now()
-                                recv = client.filesharingclient.download(client.filesharingclient.username, client].filesharingclient.username, transferfile)
+                                recv = client.filesharingclient.download(client.filesharingclient.username, client.filesharingclient.username, transferfile)
                                 diff = datetime.datetime.now() - start
                                 rate = (sys.getsizeof(recv) / abs(diff.total_seconds()))
                                 downloadrate.append(rate)
@@ -84,8 +85,9 @@ def clientwork(i):
                 elif(actionX=='remove'):
                         print('removing...')
                         for i in range(numtimes):
+                                client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile)
                                 start = datetime.datetime.now()
-                                client.filesharingclient.remove(client.filesharingclient.username+'x', transferfile)
+                                client.filesharingclient.remove(client.filesharingclient.username, transferfile)
                                 diff = datetime.datetime.now() - start
                                 rate = abs(diff.total_seconds())
                                 removerates.append(rate)
