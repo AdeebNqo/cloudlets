@@ -1,7 +1,6 @@
 package com.cloudlet.Javo9;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -11,32 +10,80 @@ import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.example.cloudlet.R;
 
 public class UserActivity extends Activity implements CProtocolInterface 
 {
 	CProtocol protocol = null;
+	FileSharingClient filesharing = null;
 	ArrayList<String> list = new ArrayList<String>();
 	ListView userlist = null;
-	StableArrayAdapter adapter = null;
+	UserAdapter adapter = null;
+	
+	Button sync = null;
+	Button upload = null;
+	
+	private static final int REQUEST_CHOOSER = 6384;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_user);
 		userlist = (ListView) findViewById(R.id.userlist);
-	    adapter = new StableArrayAdapter(getBaseContext(), R.layout.user, list);
+	    adapter = new UserAdapter(getBaseContext(), R.layout.user, list);
+	    userlist.setAdapter(adapter);
+	    userlist.setOnItemClickListener(new OnItemClickListener(){
+			@Override
+			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+					long arg3) {
+				Object chosenuser = userlist.getItemAtPosition(arg2);
+				String c = (String)chosenuser;
+				Log.d("cloudletXdebug","chosen "+c);
+				Intent liststarter = new Intent(getApplicationContext(), FileActivity.class);
+				Log.d("cloudletXdebug","putting chosen user in intent");
+				liststarter.putExtra("owner", c);
+				Log.d("cloudletXdebug","starting file activity");
+				startActivity(liststarter);
+				Log.d("cloudletXdebug","started file activity");
+			}
+	    });
+	    
 	    protocol = CProtocol.getCProtocol();
+	    protocol.setCProtocolListener(this);
+	    filesharing = FileSharingClient.getFileSharingClient();
+	    if (filesharing==null){
+	    	//retrieving filesharerclient object in future
+	    	final Handler handler = new Handler();
+	    	handler.postDelayed(new Runnable() {
+	    		  @Override
+	    		  public void run() {
+	    			  filesharing = FileSharingClient.getFileSharingClient();
+	    		  }
+	    		}, 3000);
+	    }
 	    try 
 	    {
 			protocol.requestUsersOnService("file_sharer");
 		} 
-	    catch (MqttPersistenceException e) 
+	    catch (MqttPersistenceException e)
 	    {
 			e.printStackTrace();
 		} 
@@ -44,6 +91,33 @@ public class UserActivity extends Activity implements CProtocolInterface
 		{
 			e.printStackTrace();
 		}
+	    
+	    sync = (Button) findViewById(R.id.sync);
+	    sync.setOnClickListener(new OnClickListener(){
+
+			@Override
+			public void onClick(View arg0) {
+				filesharing.sync();
+			}
+	    	
+	    });
+	    upload = (Button) findViewById(R.id.upload);
+	    upload.setOnClickListener(new OnClickListener(){
+
+			@Override
+			public void onClick(View arg0) {
+				Intent uploadIntent = new Intent(getApplicationContext(), FileChooserActivity.class);
+				uploadIntent.setType(Phone.CONTENT_TYPE);
+				startActivityForResult(uploadIntent, REQUEST_CHOOSER);
+				
+//				Log.d("cloudletXdebug", "BEFORE GETDATA ");
+//				Uri uploadFileUri = uploadIntent.getData();
+//				Log.d("cloudletXdebug", "AFTER GETDATA ");
+//				String uriString = uploadFileUri.getPath();
+//				Log.d("cloudletXdebug", "uri: "+uriString);
+			}
+	    	
+	    });
 	}
 
 	@Override
@@ -68,7 +142,10 @@ public class UserActivity extends Activity implements CProtocolInterface
     		this.someuser = someuser;
     	}
     	public void run(){
+    		Log.d("cloudletXdebug","before adapter add");
+    		Log.d("cloudletXdebug",someuser);
     		adapter.add(someuser);
+    		Log.d("cloudletXdebug","after adapter add");
     	}
     }
     
@@ -80,7 +157,10 @@ public class UserActivity extends Activity implements CProtocolInterface
 
 	@Override
 	public void messageArrived(String arg0, MqttMessage arg1) throws Exception {
+		Log.d("cloudletXdebug", "3. recieved msg on channel "+arg0);
+		Log.d("cloudletXdebug", "client/serviceuserslist/"+protocol.name);
 		if (arg0.equals("client/serviceuserslist/"+protocol.name)){
+			Log.d("cloudletXdebug", "adding the user");
 			addUser(new String(arg1.getPayload()));
 		}
 	}
@@ -90,30 +170,35 @@ public class UserActivity extends Activity implements CProtocolInterface
 		// TODO Auto-generated method stub
 		
 	}
-	
+	/*
+	 * Custom adapter for list of services
+	 */
+	public class UserAdapter extends ArrayAdapter<String> {
+		private Context context;
 
-	  private class StableArrayAdapter extends ArrayAdapter<String> {
+		public UserAdapter(Context context, int textviewRId) {
+			super(context, textviewRId);
+			this.context = context;
+		}
 
-	    HashMap<String, Integer> mIdMap = new HashMap<String, Integer>();
+		public UserAdapter(Context context, int resource, List<String> items) {
+			super(context, resource, items);
+			this.context = context;
+		}
 
-	    public StableArrayAdapter(Context context, int textViewResourceId,
-	        List<String> objects) {
-	      super(context, textViewResourceId, objects);
-	      for (int i = 0; i < objects.size(); ++i) {
-	        mIdMap.put(objects.get(i), i);
-	      }
-	    }
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			LayoutInflater inflater = (LayoutInflater) context
+					.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			View customv = inflater.inflate(R.layout.user, parent, false);
 
-	    @Override
-	    public long getItemId(int position) {
-	      String item = getItem(position);
-	      return mIdMap.get(item);
-	    }
+			String user = getItem(position);
+			if (user != null) {
+				TextView name = (TextView) customv.findViewById(R.id.usernameXfield);
+				name.setText(user);
+			}
+			return customv;
+		}
 
-	    @Override
-	    public boolean hasStableIds() {
-	      return true;
-	    }
-
-	  }
+	}
 }

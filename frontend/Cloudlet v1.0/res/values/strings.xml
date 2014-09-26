@@ -8,7 +8,16 @@
     <string name="connectionfailed_text">cannot connect to cloudlet.</string>
     <string name="title_activity_service">Services</string>
     <string name="service_text">Services</string>
-    <string name="title_activity_file_list">FileListActivity</string>
-    <string name="title_activity_user">UserActivity</string>
+    <string name="title_activity_file_list">Files</string>
+    <string name="title_activity_user">Users</string>
+    <string name="sync">sync</string>
+    <string name="upload">upload</string>
+    <string name="files">Files</string>
+    <string name="chooser_title">Select A File</string>
+    <string name="empty_directory">Empty Directory</string>
+	<string name="storage_removed">Storage was removed or unmounted.</string>
+	<string name="choose_file">Select a file</string>
+	<string name="error_selecting_file">Error selecting File</string>
+	<string name="internal_storage">Internal storage</string>
 
 </resources>

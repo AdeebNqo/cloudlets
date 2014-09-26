@@ -16,47 +16,56 @@ import android.widget.Toast;
 
 import com.example.cloudlet.R;
 
-public class LogInActivity extends Activity implements CProtocolInterface
-{
+public class LogInActivity extends Activity implements CProtocolInterface {
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		try {
+			protocol.disconnectFromCloudlet();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		} catch (MqttException e) {
+			e.printStackTrace();
+		}
+	}
+
 	private EditText nametextbox = null;
 	private Button loginButton = null;
 	private CProtocol protocol = null;
 	private String username = null;
 	private String identifier = null;
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_login);
-		nametextbox = (EditText)findViewById(R.id.nametextbox);
-		loginButton = (Button)findViewById(R.id.submitname);
-		
+		setTitle("Cloudlet");
+		nametextbox = (EditText) findViewById(R.id.nametextbox);
+		loginButton = (Button) findViewById(R.id.submitname);
+
 		loginButton.setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				username = nametextbox.getText().toString();
-				if (username.equals(""))
-				{
-					Toast.makeText(getApplicationContext(), "Name field is empty", Toast.LENGTH_LONG);
-				}
-				else
-				{
-					try
-			    	{
+				if (username.equals("")) {
+					Toast.makeText(getApplicationContext(),
+							"Name field is empty", Toast.LENGTH_LONG);
+				} else {
+					try {
 						protocol = CProtocol.getCProtocol();
 						protocol.init(getBaseContext());
 						protocol.setCloudletAddress("10.10.0.51", 9999);
-						//protocol.connectToWiFi("CloudletX", "none");
 						String macaddress = protocol.getMacAddress();
-						identifier = username+"|"+macaddress;
-						protocol.connectToCloudlet(identifier);
+						protocol.identifier = username + "|" + macaddress;
+						protocol.connectToCloudlet(protocol.identifier);
 						protocol.setCProtocolListener(LogInActivity.this);
-			    	}catch(MqttException e){
-			    		e.printStackTrace();
-			    		//show error connecting dialog
-			    		Toast.makeText(getApplicationContext(), "Could not connect", Toast.LENGTH_LONG).show();
-			    	}
+					} catch (MqttException e) {
+						e.printStackTrace();
+						// show error connecting dialog
+						Toast.makeText(getApplicationContext(),
+								"Could not connect", Toast.LENGTH_LONG).show();
+					}
 				}
 			}
 		});
@@ -65,28 +74,24 @@ public class LogInActivity extends Activity implements CProtocolInterface
 	@Override
 	public void connectionLost(Throwable arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void messageArrived(String arg0, MqttMessage arg1) throws Exception {
-		if (arg0.equals("server/login/" + username))
-		{
+		Log.d("cloudletXdebug", "0. recieved msg on channel "+arg0);
+		if (arg0.equals("server/login/" + protocol.name)) {
 			String reply = new String(arg1.getPayload());
 			Log.d("cloudletXdebug", reply);
-			if (reply.equals("OK"))
-			{
+			if (reply.equals("OK")) {
 				Intent intent = new Intent(this, ServiceActivity.class);
 				startActivity(intent);
 			}
 		}
-		
 	}
 
 	@Override
 	public void deliveryComplete(IMqttDeliveryToken arg0) {
-		// TODO Auto-generated method stub
-		
-	}
 
+	}
 }
