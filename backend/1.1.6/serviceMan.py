@@ -3,6 +3,7 @@ import json
 import lex
 import os
 import imp
+import traceback
 class serviceMan(object):
 	def __init__(self):
 		#regular expressions for the tokens
@@ -94,13 +95,12 @@ class serviceMan(object):
 					self.services.add(someservice)
 				except Exception,e:
 					pass
+					#traceback.print_exc()
 	def request_service(self, userdetails, servicename):
 		for service in self.services:
 			if (service.simplename==servicename and service.isallowed(userdetails[0], userdetails[1])):
 				response = 'OK '+service.ipport()
-				print('response is {}'.format(response))
 				return response
-		print('services are : {}'.format(self.services))
 		return 'NE'
 	def get_servicelist(self):
 		return self.services
