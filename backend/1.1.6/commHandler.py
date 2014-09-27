@@ -62,6 +62,9 @@ class commHandler(object):
 			for servicedetail in self.servicemanager.get_servicelist():
 				self.mqttserver.publish('client/service/{}'.format(msg.payload),servicedetail.__str__(),1)
 			print('received msg. topic is server/servicelist')
+		elif (msg.topic=='server/logout'):
+			(name, mac) = msg.payload.split('|')
+			broadcaster.connect(name,mac)
 		elif (msg.topic=='server/serviceusers'):
 			#channel used by client when requesting to know users of a specific service
 			try:
@@ -125,6 +128,7 @@ class commHandler(object):
 			self.mqttserver.subscribe('server/useservice',1)
 			self.mqttserver.subscribe('server/service',1)
 			self.mqttserver.subscribe('server/serviceusers',1)
+			self.mqttserver.subscribe('server/logout',1)
 			# Creating the user manager if the communication is functioning
 			self.usermanager = userMan.userMan()
 			# Creating the service manager and loading services
