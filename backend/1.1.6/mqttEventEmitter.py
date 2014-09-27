@@ -14,7 +14,6 @@ import select
 
 class mqttEventEmitter(object):
 	def __init__(self, port):
-		print('event handler started...fuck dat b!')
 		self.connect = re.compile('(\d+): New client connected from (.+) as (.+).')
 		self.disconnect = re.compile('.*, disconnecting.')
 		self.t = threading.Thread(target=self.startmosquitto, args=(port,))
@@ -54,13 +53,11 @@ class mqttEventEmitter(object):
 	#
 	def notify(self,value):
 		if self.connect.match(value):
-			print('detected connection')
 			(username,macaddress) = re.search(self.connect,value).group(3).split('|')
 			macaddress = macaddress.split()[0]
 			print('connected person has details (username,macaddress): ({0}, {1})'.format(username,macaddress))
 			broadcaster.connect(username,macaddress)
 		elif self.disconnect.match(value):
-			print('detected disconnection')
 			items = value.split()
 			vals = items[len(items)-2].split('|')
 			lengthofvals = len(vals)
@@ -69,6 +66,7 @@ class mqttEventEmitter(object):
 				broadcaster.disconnect(vals[0],vals[1][:len(vals[1])-1])
 			elif(lengthofvals==1):
 				(name,mac) = items[2].split('|')
+				print('disconnected person has details (username,macaddress): ({0}, {1})'.format(name, mac))
 				broadcaster.disconnect(name, mac)
 		else:
 			print(value)

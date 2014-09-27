@@ -47,7 +47,10 @@ class userMan(object):
 	# returns set of services
 	#
 	def get_servicesofclient(self,nameandmacaddr):
-		return self.connectedusers[nameandmacaddr]
+		if nameandmacaddr in self.connectedusers:
+			return self.connectedusers[nameandmacaddr]
+		else:
+			return []
 	#
 	# Method for listing users of service
 	#

@@ -117,7 +117,6 @@ class commHandler(object):
 	'''
 	def on_connect(self,mosq, obj, rc):
 		if (rc==0):
-			print('commhandler just connected!')
 			#
 			# If connection is successful, registering for topics
 			#
@@ -126,7 +125,6 @@ class commHandler(object):
 			self.mqttserver.subscribe('server/useservice',1)
 			self.mqttserver.subscribe('server/service',1)
 			self.mqttserver.subscribe('server/serviceusers',1)
-			print('creating service manager!')
 			# Creating the user manager if the communication is functioning
 			self.usermanager = userMan.userMan()
 			# Creating the service manager and loading services
