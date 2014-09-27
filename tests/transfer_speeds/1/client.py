@@ -27,7 +27,7 @@ class Client(object):
 		self.mqttclient.on_message = self.on_message
 		#self.mqttclient.on_subscribe = self.on_subscribe
 		self.mqttclient.on_connect = self.on_connect
-		self.mqttclient.connect(ip, port=portX, keepalive=60)
+		self.mqttclient.connect(ip, port=portX, keepalive=20)
 		t = threading.Thread(target=self.loop)
 		t.daemon = True
 		t.start()
@@ -60,6 +60,7 @@ class Client(object):
 			self.mqttclient.subscribe('client/serviceuserslist/{}'.format(self.username),1)#receive available service
 			self.mqttclient.subscribe('client/service_request/{}'.format(self.identifier),1)#receive service requests
 			self.mqttclient.subscribe('client/service_request/+/{0}/recvIP'.format(self.identifier),1)#receive ip:port for service requests made
+			self.mqttclient.subscribe('server/login')
 	def on_message(self, mosq, obj, msg):
 		if (msg.topic==('client/service/{}'.format(self.username))):
 			#print('cloudlet service is {}'.format(msg.payload))
@@ -87,6 +88,8 @@ class Client(object):
 			(host, port) = address.split(':')
 			self.filesharingclient = FileSharingClient(self.username, self.ip, int(port))
 			self.activeserviceclients[servicename] = (self.filesharingclient)
+		elif (msg.topic=='server/login'):
+			print(msg.payload)
 		else:
 			print('received {0}, on channel {1}'.format(msg.payload, msg.topic))
 '''
@@ -137,6 +140,10 @@ class FileSharingClient(object):
 		return self.recv()
 	def getaccessiblefiles(self):
 		jsonstring = "{\"action\":\"getfiles\", \"requester\":\""+self.username+"\"}"
+		self.send(jsonstring)
+		return self.recv()
+	def checknewfiles(self):
+		jsonstring = "{\"action\":\"checknewfiles\", \"requester\":\""+self.username+"\"}"
 		self.send(jsonstring)
 		return self.recv()
 	def send(self, jsonstring):

@@ -23,7 +23,10 @@ class userMan(object):
 			self.connectedusers[(username,macaddress)] = set()
 			return 'OK'
 	def disconnect(self,username,macaddress):
-		del self.connectedusers[(username,macaddress)]
+		try:
+			del self.connectedusers[(username,macaddress)]
+		except Exception,e:
+			pass
 	#
 	# This method should be called by the communication
 	# handler when a client requests a service
@@ -47,13 +50,17 @@ class userMan(object):
 	# returns set of services
 	#
 	def get_servicesofclient(self,nameandmacaddr):
-		return self.connectedusers[nameandmacaddr]
+		if nameandmacaddr in self.connectedusers:
+			return self.connectedusers[nameandmacaddr]
+		else:
+			return []
 	#
 	# Method for listing users of service
 	#
 	def who_uses(self, servicename):
 		users = []
-		for user, servicelist in self.connectedusers:
+		for name, mac in self.connectedusers:
+			servicelist = self.connectedusers[(name, mac)]
 			if servicename in servicelist:
-				users.append(user[0])
+				users.append(name)
 		return users

@@ -10,7 +10,10 @@ import socket
 import json
 import os
 import threading
-
+import shutil
+import traceback
+import sys
+import time
 #
 # Copyright 2014 Zola Mahlaza
 #
@@ -36,6 +39,8 @@ class db(object):
 		return self.instance.getpublicfiles()
 	def getsharedfiles(self, requester):
 		return self.instance.getsharedfiles(requester)
+	def cleandata(self):
+		self.instance.cleandata()
 import MySQLdb
 class mysql(object):
 	def connect(self):
@@ -59,7 +64,6 @@ class mysql(object):
 				values = values+','
 		string = string+')'
 		values = values+')'
-		print('INSERT INTO {0}{1} VALUES {2};'.format(self.tablename, string, values))
 		self.cur.execute('INSERT INTO {0} {1} VALUES {2};'.format(self.tablename, string, values))
 		self.db.commit()
 	'''
@@ -96,6 +100,10 @@ class mysql(object):
 		cmd = "SELECT * FROM "+self.tablename+" where NOT (access=\"public\") AND accesslist LIKE \"%"+requester+"%\""
 		self.cur.execute(cmd)
 		return self.cur.fetchall()
+	def cleandata(self):
+		cmd = "DELETE FROM {}".format(self.tablename)
+		self.cur.execute(cmd)
+		self.db.commit()
 import bsddb3 as bsddb
 class berkelydb(object):
 	def connect(self):
@@ -106,21 +114,56 @@ class berkelydb(object):
 		self.db.put(key,data)
 	def get(self,keys):
 		return self.db.get(key)
+	def cleandata(self):
+		os.remove('{}.db'.format(self.dbname))
+		self.connect()
 
+'''
+Class responsible for deleting files after delay
+'''
+class delayremover(object):
+	def __init__(self, db, DIR):
+		self.delays = []
+		self.db = db
+		self.DIR = DIR
+	def remove(self, owner, filename, time):
+		t = threading.Thread(target=reallyremove, args=(owner, filename, time,))
+		t.daemon = True
+		t.start()
+	def reallyremove(self,owner,filename,time):
+		time.sleep(time*3600)
+		self.db.delete('{0}#{1}'.format(owner, filename))
+		os.remove('{0}/{1}/{2}'.format(self.DIR, owner, filename))
 
 class file_sharer():
 	def __init__(self):
+		#Creating and connecting to the database the file metadata will be stored in.
 		self.currdb = db('mysql')
 		self.currdb.set_credentials('localhost', 'root', 101, 'cloudletX', 'files')
 		self.currdb.connect()
+		#Starting server socket to enable clients to connect to file sharing service
 		self.sockt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.sockt.bind(('10.10.0.51', 0))
 		self.sockt.listen(1)
+		(host,port) = self.sockt.getsockname()
+		self.host = host
+		self.port = port
 		self.users = {}
 		self.curd = os.path.dirname(__file__)
-		print('service created')
+		#creating way of enabling temporal data
+		self.delayremoverX = delayremover(self.currdb, self.curd)
+		#Removing data from last session
+		try:
+			#cleaning database
+			self.currdb.cleandata()
+			#cleaning folders
+			dirs = [name for name in os.listdir(self.curd)]
+			for DIR in dirs:
+				if (os.path.isdir('{0}/{1}'.format(self.curd,DIR))):
+					shutil.rmtree('{0}/{1}'.format(self.curd,DIR))
+		except Exception,e:
+			traceback.print_exc()
 	def start(self):
-		print('starting')
 		t = threading.Thread(target=self.wait_connections)
 		t.daemon = True
 		t.start()
@@ -130,19 +173,33 @@ class file_sharer():
 			self.handle(conn, addr)
 	def handle(self, somesocket, address):
 		try:
+			cacheusername = None
+			cachefilelist = None
 			data = ''
 			lastend = None
+			#Handling requests from client
 			while True:
 				length = somesocket.recv(1024)
-				if (length!='' or length!=None):
+				#First if statement will be met
+				#when the client disconnects
+				if (sys.getsizeof(length)==0):
+					self.disconnect(cacheusername)
+					break
+				#Second if statement will be met when there is data
+				#recieved from client
+				elif (length!='' or length!=None):
 					dosomething = False
 					try:
+						#reading size of packet to be sent by client
 						length = int(length)
 						dosomething = True
 					except:
 						pass
+					#If the client will send an actual packet
 					if (dosomething):
+						#Tell client to send the packet
 						somesocket.sendall('OK')
+						#Recieving the data being sent by the client.
 						if (lastend!=None):
 							data=data+lastend
 							lastend = None
@@ -152,12 +209,15 @@ class file_sharer():
 						if (len(data)>length):
 							lastend = data[length:]
 							data = data[:length]
+						#parsing the data which was sent
+						#by the client as it's a json string
 						packet = json.loads(data)
+						#viewing what the client wants to do
 						action = packet['action']
 						if action=='heartbeat':
 							response = '{\"status\":\"OK\"}'
 							somesocket.sendall(len(response))
-							statusresponse = somesocket.recv(1024)
+							statusresponse = somesocket.recv(2)
 							if (statusresponse=='OK'):
 								somesocket.sendall(response)
 						elif action=='download':
@@ -167,7 +227,6 @@ class file_sharer():
 							filename = packet['filename']
 							result = self.currdb.get({'id':'{0}#{1}'.format(owner,filename)})
 							if (result==None):
-								print('db get result was null')
 								jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\"Request file does not exist.\"}"
 								if (requester==owner):
 									self.send2(somesocket, jsonstring)
@@ -184,16 +243,18 @@ class file_sharer():
 											self.send2(somesocket, jsonstring)
 										else:
 											self.send(requester, jsonstring)
+										print('downloading successful')
 									except IOError, e:
 										jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\""+str(e)+"\"}"
 										if (requester==ownerX):
 											self.send2(somesocket, jsonstring)
 										else:
 											self.send(requester, jsonstring)
+										print('downloading failed')
 								else:
-									print('no access.')
 									jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\"Do not have access to file.\"}"
 									self.send(requester, jsonstring)
+									print('downloading failed')
 						elif action=='upload':
 							print('uploading something')
 							duration = packet['duration']
@@ -207,14 +268,10 @@ class file_sharer():
 							filename = packet['filename']
 							owner = packet['owner']
 							objectdata = packet['objectdata']
-
-							print('checking existence of folder: {}'.format(owner))
 							if not os.path.exists('{0}/{1}'.format(self.curd, owner)):
 								os.makedirs('{0}/{1}'.format(self.curd,owner))
-								print('owner did not have any shared files. his folder has been created')
 							filepath = '{2}/{0}/{1}'.format(owner, filename, self.curd)
 							if not os.path.isfile(filepath):
-								print('The upload does not yet exist')
 								#primary key
 								primkey = '{0}#{1}'.format(owner,filename)
 								try:
@@ -224,17 +281,21 @@ class file_sharer():
 									_file.close()
 									jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"OK\"}"
 									self.send2(somesocket, jsonstring)
+									print('uploading successful')
 								except MySQLdb.Error,e:
-									print(e)
 									jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \""+str(e)+"\"}"
 									self.send2(somesocket, jsonstring)
+									print('uploading failed')
 							else:
 								jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \"The file already exists.\"}"
 								self.send2(somesocket, jsonstring)
+								print('uploading failed')
 						elif action == 'identify':
 							accessor = json.loads(data)
+							cacheusername = accessor['username']
 							self.users[accessor['username']] = (somesocket, address)
 						elif action == 'remove':
+							print('removing something')
 							owner = packet['owner']
 							requester = packet['requester']
 							filename = packet['filename']
@@ -245,13 +306,17 @@ class file_sharer():
 									os.remove(filepath)
 									jsonstring = jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"OK\"}"
 									self.send2(somesocket, jsonstring)
+									print('removing successful')
 								except Exception,e:
 									jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"NOTOK\", \"reason\": \""+str(e)+"\"}"
 									self.send2(somesocket, jsonstring)
+									print('removing failed')
 							else:
 								jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"NOTOK\", \"reason\": \"Access denied.\"}"
 								self.send2(somesocket, jsonstring)
+								print('removing failed')
 						elif action == 'getfiles':
+							print('getting files')
 							requester = packet['requester']
 							#compiling a json list with the files
 							filelist = "\"files\" : ["
@@ -280,9 +345,49 @@ class file_sharer():
 							#compiling final json response
 							jsonstring = "{\"actionresponse\":\"getfiles\", "+filelist+"}"
 							self.send2(somesocket, jsonstring)
+							cachefilelist = jsonstring #caching the available files for this guy
+							print('getting files done')
+						elif action == 'checknewfiles':
+							print('checking for new files')
+							requester = packet['requester']
+							#compiling a json list with the files
+							filelist = "\"files\" : ["
+							public = self.currdb.getpublicfiles()
+							lenpublic = len(public)
+							accesssible = self.currdb.getsharedfiles(requester)
+							lenaccesssible = len(accesssible)
+							i = 0
+							for row in public:
+								(idX, accessX, filenameX, ownerX, accesslistX, compressionX) = row
+								filelist += "{\"id\":\""+idX+"\", \"access\":\""+accessX+"\", \"filename\":\""+filenameX+"\", \"compression\":\""+compressionX+"\", \"owner\":\""+ownerX+"\"}"
+								if (i != lenpublic-1):
+									filelist += ','
+								i += 1
+							i = 0
+							if (lenaccesssible==0):
+								filelist += ']'
+							else:
+								for row in accesssible:
+									(idX, accessX, filenameX, ownerX, accesslistX, compressionX) = row
+									filelist += "{\"id\":\""+idX+"\", \"access\":\""+accessX+"\", \"filename\":\""+filenameX+"\", \"compression\":\""+compressionX+"\", \"owner\":\""+ownerX+"\"}"
+									if (i != lenaccesssible-1):
+										filelist += ','
+									i += 1
+								filelist += ']'
+							#compiling final json response
+							jsonstring = "{\"actionresponse\":\"getfiles\", "+filelist+"}"
+							if (jsonstring==cachefilelist):
+								jsonstring = "{\"actionresponse\":\"checknewfiles\", \"status\":\"nonewfiles\"}"
+								self.send2(somesocket, jsonstring)
+								print('no new files')
+							else:
+								jsonstring = "{\"actionresponse\":\"checknewfiles\", \"status\":\"newfiles\"}"
+								cachefilelist = jsonstring
+								self.send2(somesocket, jsonstring)
+								print('foud new files')
 						data = ''
 		except Exception,e:
-			print(e)
+			pass
 	def send(self,username, data):
 		(sock, addr) = self.users[username]
 		length = len(data)
@@ -297,7 +402,7 @@ class file_sharer():
 		if (response=='OK'):
 			somesocket.sendall(data)
 	def stop(self):
-		print('stopping')
+		#print('stopping')
 		self.sockt.close()
 	def request_service(self):
 		(host,port) = self.sockt.getsockname()
