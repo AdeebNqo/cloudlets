@@ -64,7 +64,7 @@ class commHandler(object):
 			print('received msg. topic is server/servicelist')
 		elif (msg.topic=='server/logout'):
 			(name, mac) = msg.payload.split('|')
-			broadcaster.connect(name,mac)
+			broadcaster.disconnect(name,mac)
 		elif (msg.topic=='server/serviceusers'):
 			#channel used by client when requesting to know users of a specific service
 			try:
