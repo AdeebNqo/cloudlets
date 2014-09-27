@@ -48,8 +48,8 @@ def clientwork(i):
         sleep(2)
         #client.requestavailableservices()
         #client.requestconnectedusers()
+        #client.requestservice('file_sharer')
         #client.requestserviceuserlist('file_sharer')
-        client.requestservice('file_sharer')
         while (client.filesharingclient == None):
                 pass
         #Perfoming the assigned actions
@@ -64,7 +64,7 @@ def clientwork(i):
                 if (actionX=='upload'):
                         for i in range(numtimes):
                                 start = datetime.datetime.now()
-                                client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile)
+                                print(client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile))
                                 diff = datetime.datetime.now() - start
                                 rate = (os.path.getsize(transferfile) / abs(diff.total_seconds()))
                                 uploadrates.append(rate)
@@ -74,6 +74,7 @@ def clientwork(i):
                                 client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile)
                                 start = datetime.datetime.now()
                                 recv = client.filesharingclient.download(client.filesharingclient.username, client.filesharingclient.username, transferfile)
+                                print(recv)
                                 diff = datetime.datetime.now() - start
                                 rate = (sys.getsizeof(recv) / abs(diff.total_seconds()))
                                 downloadrates.append(rate)
@@ -85,7 +86,7 @@ def clientwork(i):
                         for i in range(numtimes):
                                 client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile)
                                 start = datetime.datetime.now()
-                                client.filesharingclient.remove(client.filesharingclient.username, transferfile)
+                                print(client.filesharingclient.remove(client.filesharingclient.username, transferfile))
                                 diff = datetime.datetime.now() - start
                                 rate = abs(diff.total_seconds())
                                 removerates.append(rate)
@@ -94,7 +95,7 @@ def clientwork(i):
                                 start = datetime.datetime.now()
                                 response = client.filesharingclient.getaccessiblefiles()
                                 print(response)
-                                diff = datetime.datetime.now() - start
+				diff = datetime.datetime.now() - start
                                 rate = abs(diff.total_seconds())
                                 viewrates.append(rate)
         print('name: user{}'.format(i))

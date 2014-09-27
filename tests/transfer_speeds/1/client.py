@@ -139,6 +139,10 @@ class FileSharingClient(object):
 		jsonstring = "{\"action\":\"getfiles\", \"requester\":\""+self.username+"\"}"
 		self.send(jsonstring)
 		return self.recv()
+	def checknewfiles(self):
+		jsonstring = "{\"action\":\"checknewfiles\", \"requester\":\""+self.username+"\"}"
+		self.send(jsonstring)
+		return self.recv()
 	def send(self, jsonstring):
 		length = len(jsonstring)
 		self.s.sendall("{}".format(length))
