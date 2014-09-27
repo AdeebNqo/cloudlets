@@ -31,14 +31,13 @@ public class FileActivity extends Activity
 	FileSharingClient filesharingclient = null;
 	CProtocol protocol = null;
 	
-	private boolean alreadyCreated = false;
+//	private boolean alreadyCreated = false;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
-		if (!isCreated())
-		{
-			alreadyCreated = true;
+//		if (!isCreated())
+//		{
 			super.onCreate(savedInstanceState);
 			setContentView(R.layout.activity_file_list);
 			
@@ -52,11 +51,11 @@ public class FileActivity extends Activity
 			String owner = intent.getStringExtra("owner");
 			filesharingclient = FileSharingClient.getFileSharingClient();
 			protocol = CProtocol.getCProtocol();
-			Log.d("cloudletXdebug","owner is not mobile phone");
 			try
 			{
 				JSONArray array = filesharingclient.files.getJSONArray("files");
 				int size = array.length();
+				Log.d("cloudletXdebug","found "+size+" files");
 				for (int i=0; i<size; ++i)
 				{
 					 JSONObject obj = array.getJSONObject(i);	
@@ -74,21 +73,21 @@ public class FileActivity extends Activity
 			{
 				e.printStackTrace();
 			}
-			
-			fileListView.setOnItemClickListener(new OnItemClickListener()
-		    {
-				@Override
-				public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
-						long arg3) 
-				{
-					// If file name is selected download the file.
-					String fileName = 
-					Object chosenFile = fileListView.getItemAtPosition(arg2);
-					String c = (String)chosenFile;
-					filesharingclient.download(c, protocol.name, filename)
-				}
-		    });
-		}
+//			alreadyCreated = true;
+//			fileListView.setOnItemClickListener(new OnItemClickListener()
+//		    {
+//				@Override
+//				public void onItemClick(AdapterView<?> parent, View view, int position,
+//						long id) 
+//				{
+//					// If file name is selected download the file.
+//					Object chosenFile = fileListView.getItemAtPosition(position);
+//					String c = (String)chosenFile;
+//					Log.d("cloudletXdebug", "CSTR: "+c);
+////					filesharingclient.download(c, protocol.name, );
+//				}
+//		    });
+//		}
 	}
 	
 	/*
@@ -159,8 +158,8 @@ public class FileActivity extends Activity
 	/*
 	 * Method to check if this activity was created before within this session.
 	 */
-	private boolean isCreated()
-	{
-		return alreadyCreated;
-	}
+//	private boolean isCreated()
+//	{
+//		return alreadyCreated;
+//	}
 }

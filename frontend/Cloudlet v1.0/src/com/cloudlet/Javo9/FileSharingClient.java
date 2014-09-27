@@ -30,9 +30,9 @@ public class FileSharingClient {
 	
 	public FileSharingClient(String username, String ip, int port) {
 		try {
-			Log.d("cloudletXdebug", "filesharing: socket created");
+			Log.d("cloudletXdebug", "socket creating");
 			s = new Socket(ip, port);
-			Log.d("cloudletXdebug", "filesharing: socket created");
+			Log.d("cloudletXdebug", "socket created");
 			dos = new DataOutputStream(s.getOutputStream());
 			dis = new DataInputStream(s.getInputStream());
 			// to-do: print who client is connecting to.
@@ -180,6 +180,7 @@ public class FileSharingClient {
 	 */
 	public void send(String data) {
 		try {
+			Log.d("cloudletXdebug", "DATA.LENGTH: "+data.length());
 			dos.writeBytes(data.length() + "");
 			byte[] ok = new byte[2];
 			dis.read(ok);

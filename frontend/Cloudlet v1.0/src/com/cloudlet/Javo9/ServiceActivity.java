@@ -40,7 +40,6 @@ public class ServiceActivity extends Activity implements CProtocolInterface {
 	{
 		if (!isCreated())
 		{
-			alreadyCreated = true;
 			super.onCreate(savedInstanceState);
 			setContentView(R.layout.activity_service);
 			final ListView servicelist = (ListView) findViewById(R.id.servicelist);
@@ -55,6 +54,8 @@ public class ServiceActivity extends Activity implements CProtocolInterface {
 			} catch (MqttException e1) {
 				e1.printStackTrace();
 			}
+			
+			alreadyCreated = true;
 			
 			servicelist.setOnItemClickListener(new OnItemClickListener() 
 			{

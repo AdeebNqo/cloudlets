@@ -2,6 +2,8 @@ package com.cloudlet.Javo9;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -39,21 +41,29 @@ public class UserActivity extends Activity implements CProtocolInterface
 	
 	Button sync = null;
 	Button upload = null;
-	private boolean alreadyCreated = false;
 	
+	private boolean alreadyCreated = false;
 	private static final int REQUEST_CHOOSER = 6384;
+	
+	private int syncInterval = 10000; // Sync every 10s.
+	private Handler syncHandler = null;
+	private Timer timer = null;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
 		if (!isCreated())
 		{
-			alreadyCreated = true;
 			super.onCreate(savedInstanceState);
 			setContentView(R.layout.activity_user);
 			userListView = (ListView) findViewById(R.id.userlist);
 		    adapter = new UserAdapter(getBaseContext(), R.layout.user, list);
 		    userListView.setAdapter(adapter);
+		    alreadyCreated = true;
+		    
+		    syncHandler = new Handler();
+		    timer = new Timer();
+		    
 		    userListView.setOnItemClickListener(new OnItemClickListener()
 		    {
 				@Override
@@ -215,4 +225,68 @@ public class UserActivity extends Activity implements CProtocolInterface
 	{
 		return alreadyCreated;
 	}
+	
+//	private void initialiseSync()
+//	{
+//		//Set the schedule function and rate
+//		timer.scheduleAtFixedRate(new TimerTask() {
+//
+//		    @Override
+//		    public void run() {
+//		        //Called each time when 10000 milliseconds (10 seconds) (the period parameter)
+//		    	new Thread()
+//				{
+//					public void run()
+//					{
+//						filesharing.sync();
+//					}
+//				}.start();
+//		    }
+//
+//		},
+//		//Set how long before to start calling the TimerTask (in milliseconds)
+//		0,
+//		//Set the amount of time between each execution (in milliseconds)
+//		10000);
+//	}
+	
+	/*
+	 * Method to automatically syncronise the items on the list.
+	 */
+//	private void initialiseSync()
+//	{
+//		timerTask = new TimerTask() 
+//		{
+//			@Override
+//			public void run() 
+//			{
+//				new Thread()
+//				{
+//					public void run()
+//					{
+//						filesharing.sync();
+//					}
+//				}.start();
+//			}
+//		};
+//	}
+	
+//	Runnable syncStatusChecker = new Runnable() 
+//	{
+//	    @Override 
+//	    public void run() {
+//		    updateStatus(); //this function can change value of syncInterval.
+//		    syncHandler.postDelayed(syncStatusChecker, syncInterval);
+//	    }
+//	};
+//
+//	void startAutoSync() 
+//	{
+//		syncStatusChecker.run(); 
+//	}
+//	
+//	void stopAutoSync() 
+//	{
+//		syncHandler.removeCallbacks(syncStatusChecker);
+//	}
 }

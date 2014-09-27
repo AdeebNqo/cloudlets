@@ -22,6 +22,7 @@
         android:theme="@style/AppTheme" >
         <activity
             android:name="com.cloudlet.Javo9.LogInActivity"
+            android:launchMode="singleTop"
             android:label="@string/title_activity_service" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -31,14 +32,17 @@
         </activity>
         <activity
             android:name="com.cloudlet.Javo9.UserActivity"
+            android:launchMode="singleTop"
             android:label="@string/title_activity_user" >
         </activity>
         <activity
             android:name="com.cloudlet.Javo9.ServiceActivity"
+            android:launchMode="singleTop"
             android:label="@string/title_activity_service" >
         </activity>
         <activity
             android:name="com.cloudlet.Javo9.FileActivity"
+            android:launchMode="singleTop"
             android:label="@string/files" >
         </activity>
         <activity
