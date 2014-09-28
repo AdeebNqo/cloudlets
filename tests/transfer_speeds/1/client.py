@@ -21,7 +21,6 @@ class Client(object):
 		self.ip = ip
 		self.port = portX
 		self.identifier = '{0}|{1}'.format(username, macaddress)
-		self.iprequestpattern = re.compile('client/service_request/.*/'+self.identifier+'/recvIP')
 		self.mqttclient = mosquitto.Mosquitto(self.identifier)
 		#self.mqttclient.on_publish = self.on_publish
 		self.mqttclient.on_message = self.on_message
@@ -45,6 +44,8 @@ class Client(object):
 		self.mqttclient.publish('server/connectedusers',self.username)
 	def requestavailableservices(self):
 		self.mqttclient.publish('server/servicelist', self.username)
+	def disconnectmanually(self):
+		self.mqttclient.publish('server/login', '{0}/{1}'.format(self.username))
 	def advertizeservices(self,services):
 		self.mqttclient.publish('server/service',services)
 	def requestserviceuserlist(self,servicename):
@@ -59,7 +60,7 @@ class Client(object):
 			self.mqttclient.subscribe('client/service/{}'.format(self.username),1)#receive available service
 			self.mqttclient.subscribe('client/serviceuserslist/{}'.format(self.username),1)#receive available service
 			self.mqttclient.subscribe('client/service_request/{}'.format(self.identifier),1)#receive service requests
-			self.mqttclient.subscribe('client/service_request/+/{0}/recvIP'.format(self.identifier),1)#receive ip:port for service requests made
+			self.mqttclient.subscribe('client/service_request/recvIP'.format(self.identifier),1)#receive ip:port for service requests made
 			self.mqttclient.subscribe('server/login')
 	def on_message(self, mosq, obj, msg):
 		if (msg.topic==('client/service/{}'.format(self.username))):
@@ -83,11 +84,12 @@ class Client(object):
 			#(ip,port) = serversocket.getsockname()
 			mqttclient.publish('server/service_request/{0}/{1}|{2}'.format(servicename, usrname, macaddr), "{0}:{1}".format('127.0.0.1', 80))
 			#print('just sent address {0}:{1}'.format(ip, port))
-		elif (self.iprequestpattern.match(msg.topic)):
-			(servicename, address) = msg.payload.split('|')
-			(host, port) = address.split(':')
-			self.filesharingclient = FileSharingClient(self.username, self.ip, int(port))
-			self.activeserviceclients[servicename] = (self.filesharingclient)
+		elif (msg.topic=='client/service_request/recvIP'):
+			(servicename, address, username, macaddress) = msg.payload.split('|')
+			if (self.macaddress==macaddress):
+				(host, port) = address.split(':')
+				self.filesharingclient = FileSharingClient(self.username, self.ip, int(port))
+				self.activeserviceclients[servicename] = (self.filesharingclient)
 		elif (msg.topic=='server/login'):
 			print(msg.payload)
 		else:
