@@ -316,7 +316,7 @@ class file_sharer():
 											self.send(requester, jsonstring)
 										print('downloading successful')
 									except IOError, e:
-										jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\""+str(e)+"\"}"
+										jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\""+self.cleansend(str(e))+"\"}"
 										if (requester==ownerX):
 											self.send2(somesocket, jsonstring)
 										else:
@@ -362,7 +362,7 @@ class file_sharer():
 											durationX = ''.join(chars[:len(chars)-1])
 											self.delayremoverX.remove(owner,filename,int(durationX))
 								except MySQLdb.Error,e:
-									jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \""+str(e)+"\"}"
+									jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \""+self.cleansend(str(e))+"\"}"
 									self.send2(somesocket, jsonstring)
 									print('uploading failed')
 							else:
@@ -387,7 +387,7 @@ class file_sharer():
 									self.send2(somesocket, jsonstring)
 									print('removing successful')
 								except Exception,e:
-									jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"NOTOK\", \"reason\": \""+str(e)+"\"}"
+									jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"NOTOK\", \"reason\": \""+self.cleansend(str(e))+"\"}"
 									self.send2(somesocket, jsonstring)
 									print('removing failed')
 							else:
@@ -495,3 +495,7 @@ class file_sharer():
 			del self.users[username]
 		except:
 			pass
+	def cleansend(self,someval):
+		someval = someval.replace('\"',"")
+		someval = someval.replace('\'',"")
+		return someval
