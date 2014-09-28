@@ -236,7 +236,9 @@ class file_sharer():
 	def wait_connections(self):
 		while True:
 			conn, addr = self.sockt.accept()
-			self.handle(conn, addr)
+			t = threading.Thread(target=self.handle, args=(conn,addr,))
+			t.daemon = True
+			t.start()
 	def handle(self, somesocket, address):
 		try:
 			cacheusername = None
