@@ -1,12 +1,19 @@
 package com.cloudlet.Javo9;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -14,12 +21,13 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.cloudlet.R;
-import com.cloudlet.Javo9.FileUtils;
 
 public class FileChooserActivity extends Activity {
 	 private static final String TAG = "FileChooserExampleActivity";
 	 private static final int REQUEST_CODE = 6384; // onActivityResult request
 	 // code
+	 
+	 FileSharingClient filesharing = null;
 	 
 	 @Override
 	 public void onCreate(Bundle savedInstanceState) {
@@ -35,6 +43,7 @@ public class FileChooserActivity extends Activity {
 			 }
 			 });
 		 setContentView(button);
+		 filesharing = FileSharingClient.getFileSharingClient();
 	 }
 	 
 	 private void showChooser() {
@@ -66,8 +75,30 @@ public class FileChooserActivity extends Activity {
 							 "File Selected: " + path, Toast.LENGTH_LONG).show();
 							 // Alternatively, use FileUtils.getFile(Context, Uri)
 				             if (path != null && FileUtils.isLocal(path)) {
-				            	 File file = new File(path);
-				            	 
+				            	 final File file = new File(path);
+				            	 byte[] b = new byte[(int) file.length()];
+				                 try 
+				                 {
+				                       FileInputStream fis = new FileInputStream(file);
+				                       fis.read(b);
+				                  } catch (FileNotFoundException e) {
+				                	  Log.d("cloudletXdebug", "File Not Found.");
+				                	  e.printStackTrace();
+				                  }
+				                  catch (IOException e1) {
+				                	  Log.d("cloudletXdebug", "Error Reading The File.");
+				                	  e1.printStackTrace();
+				                  }
+				                 byte[] encodedByteArray = Base64.encode(b, Base64.NO_WRAP);
+				                 final String encodedDataStr = new String(encodedByteArray);
+				                 new Thread()
+				                 {
+				                	 public void run()
+				                	 {
+				                		 JSONObject uploadResponseObj = filesharing.upload("1h", "public", "None", "0", file.getName(), filesharing.getUsername(), encodedDataStr);
+				                		 Log.d("cloudletXdebug", "JSONOBJ: "+uploadResponseObj.toString());
+				                	 }
+				                 }.start();
 				             }
 						 } catch (Exception e) {
 							 Log.e("FileSelectorTestActivity", "File select error", e);

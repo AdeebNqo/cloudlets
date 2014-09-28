@@ -16,19 +16,8 @@ import android.widget.Toast;
 
 import com.example.cloudlet.R;
 
-public class LogInActivity extends Activity implements CProtocolInterface {
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		try {
-			protocol.disconnectFromCloudlet();
-		} catch (NullPointerException e) {
-			e.printStackTrace();
-		} catch (MqttException e) {
-			e.printStackTrace();
-		}
-	}
-
+public class LogInActivity extends Activity implements CProtocolInterface 
+{
 	private EditText nametextbox = null;
 	private Button loginButton = null;
 	private CProtocol protocol = null;
@@ -70,6 +59,19 @@ public class LogInActivity extends Activity implements CProtocolInterface {
 			}
 		});
 	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		try {
+			protocol.disconnectFromCloudlet();
+			finish();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		} catch (MqttException e) {
+			e.printStackTrace();
+		}
+	}
 
 	@Override
 	public void connectionLost(Throwable arg0) {
@@ -86,6 +88,10 @@ public class LogInActivity extends Activity implements CProtocolInterface {
 			if (reply.equals("OK")) {
 				Intent intent = new Intent(this, ServiceActivity.class);
 				startActivity(intent);
+			}
+			else if (reply.equals("UDUP"))
+			{
+				Toast.makeText(getApplicationContext(), "The username is taken.", Toast.LENGTH_LONG).show();
 			}
 		}
 	}

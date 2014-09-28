@@ -11,58 +11,87 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.AdapterView.OnItemClickListener;
 
 import com.example.cloudlet.R;
 
-public class FileActivity extends Activity {
-
-	ListView listv = null;
+public class FileActivity extends Activity 
+{
+	ListView fileListView = null;
 	ArrayList<String> container = null;
 	FileAdapter adapter = null;
 	
 	FileSharingClient filesharingclient = null;
 	CProtocol protocol = null;
+	
+//	private boolean alreadyCreated = false;
+	
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_file_list);
-		
-		listv = (ListView)findViewById(R.id.filelistX);
-		container = new ArrayList<String>();
-		adapter = new FileAdapter(getApplicationContext(), R.layout.file, container);
-		listv.setAdapter(adapter);
-		
-		Log.d("cloudletXdebug","unpacking intent");
-		Intent intent = getIntent();
-		String owner = intent.getStringExtra("owner");
-		filesharingclient = FileSharingClient.getFileSharingClient();
-		protocol = CProtocol.getCProtocol();
-		if (!owner.equals(protocol.name)){
-			Log.d("cloudletXdebug","owner is not mobile phone");
-			try{
+	protected void onCreate(Bundle savedInstanceState) 
+	{
+//		if (!isCreated())
+//		{
+			super.onCreate(savedInstanceState);
+			setContentView(R.layout.activity_file_list);
+			
+			fileListView = (ListView)findViewById(R.id.filelistX);
+			container = new ArrayList<String>();
+			adapter = new FileAdapter(getApplicationContext(), R.layout.file, container);
+			fileListView.setAdapter(adapter);
+			
+			Log.d("cloudletXdebug","unpacking intent");
+			Intent intent = getIntent();
+			String owner = intent.getStringExtra("owner");
+			filesharingclient = FileSharingClient.getFileSharingClient();
+			protocol = CProtocol.getCProtocol();
+			try
+			{
 				JSONArray array = filesharingclient.files.getJSONArray("files");
 				int size = array.length();
-				for (int i=0; i<size; ++i){
+				Log.d("cloudletXdebug","found "+size+" files");
+				for (int i=0; i<size; ++i)
+				{
 					 JSONObject obj = array.getJSONObject(i);	
 					 String objowner = (String) obj.get("owner");
 					 Log.d("cloudletXdebug","looking at file owned by "+objowner);
-					 if (objowner.equals(owner)){
+					 Log.d("cloudletXdebug","file owner: "+objowner+", chosen user: "+owner);
+					 if (objowner.equals(owner))
+					 {
 						 Log.d("cloudletXdebug","adding file to list");
 						 addFile(obj.toString());
 					 }
 				}
-			}catch(Exception e){
+			}
+			catch(Exception e)
+			{
 				e.printStackTrace();
 			}
-		}
+//			alreadyCreated = true;
+//			fileListView.setOnItemClickListener(new OnItemClickListener()
+//		    {
+//				@Override
+//				public void onItemClick(AdapterView<?> parent, View view, int position,
+//						long id) 
+//				{
+//					// If file name is selected download the file.
+//					Object chosenFile = fileListView.getItemAtPosition(position);
+//					String c = (String)chosenFile;
+//					Log.d("cloudletXdebug", "CSTR: "+c);
+////					filesharingclient.download(c, protocol.name, );
+//				}
+//		    });
+//		}
 	}
+	
 	/*
-	 * 
+	 * Method to add file name to the screen.
 	 */
 	public void addFile(String file){
 		runOnUiThread(new myRunnable(file));
@@ -81,8 +110,9 @@ public class FileActivity extends Activity {
     		Log.d("cloudletXdebug","after adapter add");
     	}
     }
+    
 	/*
-	 * Custom adapter for list of services
+	 * Custom adapter for list of files.
 	 */
 	public class FileAdapter extends ArrayAdapter<String> {
 		private Context context;
@@ -112,4 +142,24 @@ public class FileActivity extends Activity {
 			return customv;
 		}
 	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle action bar item clicks here. The action bar will
+		// automatically handle clicks on the Home/Up button, so long
+		// as you specify a parent activity in AndroidManifest.xml.
+		int id = item.getItemId();
+		if (id == R.id.action_settings) {
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+	
+	/*
+	 * Method to check if this activity was created before within this session.
+	 */
+//	private boolean isCreated()
+//	{
+//		return alreadyCreated;
+//	}
 }

@@ -9,6 +9,7 @@ package com.cloudlet.Javo9;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
@@ -19,6 +20,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
@@ -35,7 +37,7 @@ public class CProtocol implements MqttCallback {
 	private static CProtocol instance = null;
 	private String cloudletAddress = null;
 	private MqttClient mqttClient = null;
-	private MemoryPersistence persistence = new MemoryPersistence();
+	private MemoryPersistence persistence = null;
 	LinkedList<CProtocolInterface> cprotocollisteners = new LinkedList<CProtocolInterface>();
 
 	String name = null;
@@ -126,22 +128,46 @@ public class CProtocol implements MqttCallback {
 		if (mqttClient == null) {
 			throw new NullPointerException("Mqtt Client is null.");
 		} else {
-			Handler mainHandler = new Handler(
-					applicationContext.getMainLooper());
-			Runnable killer = new Runnable() {
-
-				@Override
-				public void run() {
-					try {
-						Runtime.getRuntime().exec(
-								"kill -SIGINT " + android.os.Process.myPid());
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			};
-			mainHandler.post(killer);
+//			Handler mainHandler = new Handler(
+//					applicationContext.getMainLooper());
+//			Runnable killer = new Runnable() {
+//
+//				@Override
+//				public void run() {
+//					try {
+//						mqttClient.disconnect(1);
+//					} catch (MqttException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					}
+//						/*Set<Thread> threads = Thread.getAllStackTraces().keySet();
+//						Thread[] threadarray = threads.toArray(new Thread[threads.size()]);
+//						for (Thread t: threadarray){
+//							String rep = t.toString();
+//							if (rep.contains("MQTT")){
+//								t.interrupt();
+//							}
+//						}*/
+//						//manager.setWifiEnabled(false);
+//						/*for (Thread t: threadarray){
+//							String rep = t.toString();
+//							if (rep.contains("MQTT")){
+//								while(t.isAlive()){
+//									Log.d("cloudletXdebug","context is null: "+(applicationContext==null));
+//									ProgressDialog dialog = ProgressDialog.show(applicationContext, "Quiting", "Please wait...");
+//								}
+//							}
+//						}*/
+//						//manager.setWifiEnabled(true);
+//						//Runtime.getRuntime().exec("kill -SIGKILL " + android.os.Process.myPid());
+//				}
+//			};
+//			mainHandler.post(killer);
+//			String str = identifier + "|" + macaddress;
+			MqttMessage msg = new MqttMessage(identifier.getBytes());
+			Log.d("cloudletXdebug","logging out with "+identifier);
+			mqttClient.publish("server/logout", msg);
+			mqttClient.disconnect(10);
 		}
 	}
 
@@ -158,7 +184,7 @@ public class CProtocol implements MqttCallback {
 				mqttClient.setCallback(CProtocol.this);
 				MqttConnectOptions connOpts = new MqttConnectOptions();
 				connOpts.setCleanSession(true);
-				//connOpts.setKeepAliveInterval(10);
+				connOpts.setKeepAliveInterval(60);
 				mqttClient.connect(connOpts);
 				mqttClient.subscribe("server/login/" + username);
 				mqttClient.subscribe("client/connecteduser/" + username); // connected

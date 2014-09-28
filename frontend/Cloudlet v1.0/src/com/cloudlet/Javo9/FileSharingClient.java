@@ -30,9 +30,9 @@ public class FileSharingClient {
 	
 	public FileSharingClient(String username, String ip, int port) {
 		try {
-			Log.d("cloudletXdebug", "filesharing: socket created");
+			Log.d("cloudletXdebug", "socket creating");
 			s = new Socket(ip, port);
-			Log.d("cloudletXdebug", "filesharing: socket created");
+			Log.d("cloudletXdebug", "socket created");
 			dos = new DataOutputStream(s.getOutputStream());
 			dis = new DataInputStream(s.getInputStream());
 			// to-do: print who client is connecting to.
@@ -62,10 +62,19 @@ public class FileSharingClient {
 		}
 		return instance;
 	}
+	
 	public void sync(){
 		files = getaccessiblefiles(username);
 	}
 
+	/*
+	 * Accessors.
+	 */
+	public String getUsername()
+	{
+		return username;
+	}
+	
 	/*
 	 * Method for determining if client is connected
 	 */
@@ -90,17 +99,19 @@ public class FileSharingClient {
 	/*
 	 * Method to upload.
 	 */
-	public void upload(String duration, String access, String accessList,
-			String compression, String filename, String owner, String objectData) {
-		if (accessList == null) {
-			accessList = "";
-			String sendString = "{\"duration\":\"" + duration
-					+ "\", \"access\":\"" + access + "\", \"accesslist\":"
-					+ accessList + ",\"compression\":\"" + compression
-					+ "\", \"filename\":\"" + filename + "\", \"owner\":\""
-					+ owner + "\", \"objectdata\":\"" + objectData + "\"}";
-			this.send(sendString);
-		}
+	public JSONObject upload(String duration, String access, String accessList,
+		String compression, String filename, String owner, String objectData) 
+	{
+		String sendString = "{\"action\":\"upload\", \"duration\":\"" + duration
+				+ "\", \"access\":\"" + access + "\", \"accesslist\":\""
+				+ accessList + "\",\"compression\":\"" + compression
+				+ "\", \"filename\":\"" + filename + "\", \"owner\":\""
+				+ owner + "\", \"objectdata\":\"" + objectData + "\"}";
+		Log.d("cloudletXdebug", objectData);
+		Log.d("cloudletXdebug", sendString);
+		this.send(sendString);
+		
+		return this.recv();
 	}
 	/*
 	 * Method for retrieving accessible files
@@ -108,7 +119,8 @@ public class FileSharingClient {
 	public JSONObject getaccessiblefiles(String name){
 		String jsonstring = "{\"action\":\"getfiles\", \"requester\":\""+name+"\"}";
 		send(jsonstring);
-		return recv();
+		
+		return this.recv();
 	}
 	/*
 	 * Method to remove shared files on the cloudlet.
@@ -123,12 +135,13 @@ public class FileSharingClient {
 	/*
 	 * Method to download files from the cloudlet.
 	 */
-	public void download(String owner, String requester, String filename) {
+	public JSONObject download(String owner, String requester, String filename) {
 		String sendString = "{\"owner\":\"" + owner + "\", \"requester\":\""
 				+ requester + "\", \"filename\":\"" + filename + "\"}";
 
 		this.send(sendString);
-		JSONObject response = this.recv();
+		
+		return this.recv();
 	}
 
 	/*
@@ -167,6 +180,7 @@ public class FileSharingClient {
 	 */
 	public void send(String data) {
 		try {
+			Log.d("cloudletXdebug", "DATA.LENGTH: "+data.length());
 			dos.writeBytes(data.length() + "");
 			byte[] ok = new byte[2];
 			dis.read(ok);
