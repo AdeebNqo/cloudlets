@@ -64,7 +64,7 @@ class commHandler(object):
 			print('received msg. topic is server/servicelist')
 		elif (msg.topic=='server/logout'):
 			(name, mac) = msg.payload.split('|')
-			broadcaster.connect(name,mac)
+			broadcaster.disconnect(name,mac)
 		elif (msg.topic=='server/serviceusers'):
 			#channel used by client when requesting to know users of a specific service
 			try:
@@ -87,7 +87,6 @@ class commHandler(object):
 				print('service request: service manager says {}'.format(response))
 				if (response[0]=='OK'):
 					ipport = response[1]
-					print('client has successfully requested service and should get it.')
 					if ('|' in ipport):
 						#creating channel with the identifier of the mobile that is requesting service.
 						self.mqttserver.subscribe('server/service_request/{2}/{0}|{1}'.format(username,macaddress, servicename),1)
@@ -98,8 +97,7 @@ class commHandler(object):
 						#or not to reject the connection
 						self.mqttserver.publish('client/service_request/{}'.format(ipport),'{0}|{1}|{2}'.format(username,macaddress,servicename))
 					elif (ipport != 'Service not available'):
-						print('requested service is available')
-						self.mqttserver.publish('client/service_request/{2}/{0}|{1}/recvIP'.format(username,macaddress, servicename), '{0}|{1}'.format(servicename, ipport))
+						self.mqttserver.publish('client/service_request/recvIP', '{0}|{1}|{2}|{3}'.format(servicename, ipport, username, macaddress))
 				else:
 					self.mqttserver.publish('client/useservice/{}'.format(items[0]),'NE')
 			else:

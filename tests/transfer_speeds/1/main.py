@@ -9,7 +9,7 @@ import datetime
 import random
 import os
 import sys
-
+import time
 '''
 Method for retrieving mac address of the interface provided.
 args:
@@ -43,8 +43,8 @@ macaddress = getrealmac(interface)
 transferfile = config.get('DEFAULT', 'testfile')
 actions = action.split(',')
 
-def clientwork(i):
-        client = Client('user{}'.format(i), getfakemac(), ip, port)
+def clientwork(num):
+        client = Client('user{}'.format(num), getfakemac(), ip, port)
         sleep(2)
         #client.requestavailableservices()
         #client.requestconnectedusers()
@@ -63,58 +63,67 @@ def clientwork(i):
         removerates = []
         viewrates = []
         for actionX in actions:
-                print('user{1} is testing action: {0}'.format(actionX,i))
+                print('user{1} is testing action: {0}'.format(actionX,num))
                 if (actionX=='upload'):
                         for i in range(numtimes):
+                                print(i)
                                 start = datetime.datetime.now()
-                                print(client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile))
+                                client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile)
                                 diff = datetime.datetime.now() - start
                                 rate = (os.path.getsize(transferfile) / abs(diff.total_seconds()))
                                 uploadrates.append(rate)
                                 client.filesharingclient.remove(client.filesharingclient.username, transferfile)
                 elif(actionX=='download'):
                         for i in range(numtimes):
-                                print(client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile))
+                                print(i)
+                                client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile)
                                 start = datetime.datetime.now()
                                 recv = client.filesharingclient.download(client.filesharingclient.username, client.filesharingclient.username, transferfile)
                                 diff = datetime.datetime.now() - start
                                 rate = (sys.getsizeof(recv) / abs(diff.total_seconds()))
                                 downloadrates.append(rate)
-                                print(client.filesharingclient.remove(client.filesharingclient.username, transferfile))
+                                client.filesharingclient.remove(client.filesharingclient.username, transferfile)
                 #
                 # For the following actions, we will measure the
                 # time it takes to get a response.
                 #
                 elif(actionX=='remove'):
                         for i in range(numtimes):
-                                print(client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile))
+                                print(i)
+                                client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile)
                                 start = datetime.datetime.now()
-                                print(client.filesharingclient.remove(client.filesharingclient.username, transferfile))
+                                client.filesharingclient.remove(client.filesharingclient.username, transferfile)
                                 diff = datetime.datetime.now() - start
                                 rate = abs(diff.total_seconds())
                                 removerates.append(rate)
                 elif(actionX=='view'):
                         for i in range(numtimes):
+                                print(i)
                                 start = datetime.datetime.now()
                                 response = client.filesharingclient.getaccessiblefiles()
-                                print(response)
 				diff = datetime.datetime.now() - start
                                 rate = abs(diff.total_seconds())
                                 viewrates.append(rate)
+                elif (action=='checknewfiles'):
+                        for i in range(numtimes):
+                                print(i)
+                                print(client.filesharingclient.checknewfiles())
+                                print(client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile))
+                                print(client.filesharingclient.checknewfiles())
+                                print(client.filesharingclient.remove(client.filesharingclient.username, transferfile))
+                                print(client.filesharingclient.checknewfiles())
+                                print(client.filesharingclient.checknewfiles())
         print('name: user{}'.format(i))
         print('upload (bytes/s): {}'.format(uploadrates))
         print('download (bytes/s): {}'.format(downloadrates))
-        print('remove response times: {}'.format(removerates))
+        print('remove response times (seconds): {}'.format(removerates))
         print('view response times: {}'.format(viewrates))
         print('\n')
 clients = []
 for i in range(numclients):
-        print('starting thread for user {}'.format(i))
         t = threading.Thread(target=clientwork, args=(i,))
-        t.daemon = True
+        #t.daemon = True
         t.start()
         clients.append(t)
-#for t in clients:
-#        t.join()
-while True:
-        pass
+for t in clients:
+        t.join()
