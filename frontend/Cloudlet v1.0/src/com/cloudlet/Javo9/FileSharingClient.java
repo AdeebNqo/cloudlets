@@ -110,7 +110,6 @@ public class FileSharingClient {
 		Log.d("cloudletXdebug", objectData);
 		Log.d("cloudletXdebug", sendString);
 		this.send(sendString);
-		
 		return this.recv();
 	}
 	/*
@@ -119,7 +118,14 @@ public class FileSharingClient {
 	public JSONObject getaccessiblefiles(String name){
 		String jsonstring = "{\"action\":\"getfiles\", \"requester\":\""+name+"\"}";
 		send(jsonstring);
-		
+		return this.recv();
+	}
+	/*
+	 * Method for retrieving accessible files
+	 */
+	public JSONObject checknewfiles(String name){
+		String jsonstring = "{\"action\":\"checknewfiles\", \"requester\":\""+name+"\"}";
+		send(jsonstring);
 		return this.recv();
 	}
 	/*
@@ -136,7 +142,7 @@ public class FileSharingClient {
 	 * Method to download files from the cloudlet.
 	 */
 	public JSONObject download(String owner, String requester, String filename) {
-		String sendString = "{\"owner\":\"" + owner + "\", \"requester\":\""
+		String sendString = "{\"action\":\"download\", \"owner\":\"" + owner + "\", \"requester\":\""
 				+ requester + "\", \"filename\":\"" + filename + "\"}";
 
 		this.send(sendString);
@@ -178,7 +184,7 @@ public class FileSharingClient {
 	/*
 	 * Method to send data.
 	 */
-	public void send(String data) {
+	public synchronized void send(String data) {
 		try {
 			Log.d("cloudletXdebug", "DATA.LENGTH: "+data.length());
 			dos.writeBytes(data.length() + "");
@@ -197,7 +203,7 @@ public class FileSharingClient {
 	/*
 	 * Method to receive data.
 	 */
-	public JSONObject recv() {
+	public synchronized JSONObject recv() {
 		int length = -1;
 		try{
 			Log.d("cloudletXdebug","attempting to read");

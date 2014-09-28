@@ -24,10 +24,11 @@ import com.example.cloudlet.R;
 
 public class FileChooserActivity extends Activity {
 	 private static final String TAG = "FileChooserExampleActivity";
-	 private static final int REQUEST_CODE = 6384; // onActivityResult request
-	 // code
+	 private static final int REQUEST_CODE = 6384; // onActivityResult request code
 	 
 	 FileSharingClient filesharing = null;
+	 
+	 private boolean fileUploadCheck = true; // Check to see if upload completes without problems.
 	 
 	 @Override
 	 public void onCreate(Bundle savedInstanceState) {
@@ -83,10 +84,12 @@ public class FileChooserActivity extends Activity {
 				                       fis.read(b);
 				                  } catch (FileNotFoundException e) {
 				                	  Log.d("cloudletXdebug", "File Not Found.");
+				                	  fileUploadCheck = false;
 				                	  e.printStackTrace();
 				                  }
 				                  catch (IOException e1) {
 				                	  Log.d("cloudletXdebug", "Error Reading The File.");
+				                	  fileUploadCheck = false;
 				                	  e1.printStackTrace();
 				                  }
 				                 byte[] encodedByteArray = Base64.encode(b, Base64.NO_WRAP);
@@ -101,7 +104,17 @@ public class FileChooserActivity extends Activity {
 				                 }.start();
 				             }
 						 } catch (Exception e) {
+							 fileUploadCheck = false;
 							 Log.e("FileSelectorTestActivity", "File select error", e);
+						 }
+						 
+						 if (fileUploadCheck)
+						 {
+							 Toast.makeText(getApplicationContext(), "Upload successful!",Toast.LENGTH_LONG).show();
+						 }
+						 else
+						 {
+							 Toast.makeText(getApplicationContext(), "Upload failed!",Toast.LENGTH_LONG).show();
 						 }
 					 }
 				 }
