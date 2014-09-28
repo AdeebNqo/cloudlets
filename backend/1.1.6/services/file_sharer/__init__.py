@@ -14,6 +14,8 @@ import shutil
 import traceback
 import sys
 import time
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import broadcaster
 #
 # Copyright 2014 Zola Mahlaza
 #
@@ -22,9 +24,9 @@ class db(object):
 		if (dbtype=='mysql'):
 			self.instance = mysql()
 			self.instance.dbtype = 'mysql'
-		elif (dbtype=='berkelydb'):
-			self.instance = berkelydb()
-			self.instance.dbtype = 'berkelydb'
+		elif (dbtype=='berkeleydb'):
+			self.instance = berkeleydb()
+			self.instance.dbtype = 'berkeleydb'
 	def set_credentials(self,host,username,password,dbname,tablename):
 		(self.instance.host, self.instance.username, self.instance.password, self.instance.dbname, self.instance.tablename) = (host, username, password, dbname, tablename)
 	def connect(self):
@@ -105,18 +107,68 @@ class mysql(object):
 		self.cur.execute(cmd)
 		self.db.commit()
 import bsddb3 as bsddb
-class berkelydb(object):
+class berkeleydb(object):
 	def connect(self):
 		self.db = bsddb.db.DB()
 		self.db.open(self.dbname, None, bsddb.db.DB_HASH, bsddb.db.DB_CREATE)
 		self.cur = self.db.cursor()
-	def insert(self,key,data):
-		self.db.put(key,data)
-	def get(self,keys):
-		return self.db.get(key)
+	def insert(self,keys,data):
+		self.db.put(data[0],'?',join(data))
+	def get(self,key):
+		val = self.db.get(key)
+		return tuple(val.split('?'))
+	def update(self, key, keys, data):
+		vals = self.get(key)
+		length = len(keys)
+		for i in range(length):
+			val = keys[i]
+			if (val=='id'):
+				vals[0] = data[i]
+			elif (val=='access'):
+				vals[1] = data[i]
+			elif (val=='filename'):
+				vals[2] = data[i]
+			elif (val=='owner'):
+				vals[3] = data[i]
+			elif (val=='accesslist'):
+				vals[4] = data[i]
+			elif (val=='compression'):
+				vals[5] = data[i]
+		self.insert(key,vals)
+	def delete(self, key):
+		try:
+			self.db.delete(key['id'])
+			return 0
+		except Exception,e:
+			traceback.print_exc()
+			return 1
+	def getpublicfiles(self):
+		returnval = []
+		rec = self.cur.first()
+		while rec:
+			vals = tuple(rec[1].split('?'))
+			if (vals[1]=='public'):
+				returnval.append(vals)
+			rec = self.cur.next()
+		self.cur = self.db.cursor()
+		return returnval
+	def getsharedfiles(self, requester):
+		returnval = []
+		rec = self.cur.first()
+		while rec:
+			vals = tuple(rec[1].split('?'))
+			if (requester in vals[4]):
+				returnval.append(vals)
+			rec = self.cur.next()
+		self.cur = self.db.cursor()
+		return returnval
 	def cleandata(self):
-		os.remove('{}.db'.format(self.dbname))
-		self.connect()
+		try:
+			os.remove('{1}/{0}.db'.format(self.dbname,os.path.dirname(__file__)))
+			self.connect()
+		except Exception,e:
+			pass
+			#traceback.print_exc()
 
 '''
 Class responsible for deleting files after delay
@@ -126,19 +178,32 @@ class delayremover(object):
 		self.delays = []
 		self.db = db
 		self.DIR = DIR
+		self.users = {}
+		broadcaster.disconnectsubscribe(self.ondisconnect)
 	def remove(self, owner, filename, time):
-		t = threading.Thread(target=reallyremove, args=(owner, filename, time,))
+		t = threading.Thread(target=self.reallyremove, args=(owner, filename, time,))
 		t.daemon = True
 		t.start()
-	def reallyremove(self,owner,filename,time):
-		time.sleep(time*3600)
+	def reallyremove(self,owner,filename,timeX):
+		time.sleep(timeX*3600)
 		self.db.delete('{0}#{1}'.format(owner, filename))
 		os.remove('{0}/{1}/{2}'.format(self.DIR, owner, filename))
+	def removeonleave(self,name,filedetails):
+		if name in self.users:
+			self.users[name].append(filedetails)
+		else:
+			self.users[name] = [filedetails]
+	def ondisconnect(self,name,mac):
+		filedetailsX = self.users[name]
+		for filedetails in filedetailsX:
+			(owner,filename) = filedetails
+			self.db.delete('{0}#{1}'.format(owner, filename))
+			os.remove('{0}/{1}/{2}'.format(self.DIR, owner, filename))
 
 class file_sharer():
 	def __init__(self):
 		#Creating and connecting to the database the file metadata will be stored in.
-		self.currdb = db('mysql')
+		self.currdb = db('berkeleydb')
 		self.currdb.set_credentials('localhost', 'root', 101, 'cloudletX', 'files')
 		self.currdb.connect()
 		#Starting server socket to enable clients to connect to file sharing service
@@ -161,6 +226,7 @@ class file_sharer():
 			for DIR in dirs:
 				if (os.path.isdir('{0}/{1}'.format(self.curd,DIR))):
 					shutil.rmtree('{0}/{1}'.format(self.curd,DIR))
+			broadcaster.disconnectsubscribe(self.reallydisconnect)
 		except Exception,e:
 			traceback.print_exc()
 	def start(self):
@@ -183,7 +249,10 @@ class file_sharer():
 				#First if statement will be met
 				#when the client disconnects
 				if (sys.getsizeof(length)==0):
-					self.disconnect(cacheusername)
+					try:
+						self.disconnect(cacheusername)
+					except:
+						pass
 					break
 				#Second if statement will be met when there is data
 				#recieved from client
@@ -282,6 +351,14 @@ class file_sharer():
 									jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"OK\"}"
 									self.send2(somesocket, jsonstring)
 									print('uploading successful')
+									#scheduling a delete after some the specified time, if neccessary
+									if (duration!=None or duration!=""):
+										if (duration=='Onleave'):
+											self.delayremoverX.removeonleave(cacheusername,(owner,filename)):
+										else:
+											chars = list(duration)
+											durationX = ''.join(chars[:len(chars)-1])
+											self.delayremoverX.remove(owner,filename,int(durationX))
 								except MySQLdb.Error,e:
 									jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \""+str(e)+"\"}"
 									self.send2(somesocket, jsonstring)
@@ -345,7 +422,6 @@ class file_sharer():
 							#compiling final json response
 							jsonstring = "{\"actionresponse\":\"getfiles\", "+filelist+"}"
 							self.send2(somesocket, jsonstring)
-							cachefilelist = jsonstring #caching the available files for this guy
 							print('getting files done')
 						elif action == 'checknewfiles':
 							print('checking for new files')
@@ -377,14 +453,14 @@ class file_sharer():
 							#compiling final json response
 							jsonstring = "{\"actionresponse\":\"getfiles\", "+filelist+"}"
 							if (jsonstring==cachefilelist):
-								jsonstring = "{\"actionresponse\":\"checknewfiles\", \"status\":\"nonewfiles\"}"
-								self.send2(somesocket, jsonstring)
+								jsonstringX = "{\"actionresponse\":\"checknewfiles\", \"status\":\"nonewfiles\"}"
+								self.send2(somesocket, jsonstringX)
 								print('no new files')
 							else:
-								jsonstring = "{\"actionresponse\":\"checknewfiles\", \"status\":\"newfiles\"}"
+								jsonstringX = "{\"actionresponse\":\"checknewfiles\", \"status\":\"newfiles\"}"
 								cachefilelist = jsonstring
-								self.send2(somesocket, jsonstring)
-								print('foud new files')
+								self.send2(somesocket, jsonstringX)
+								print('found new files')
 						data = ''
 		except Exception,e:
 			pass
@@ -407,6 +483,8 @@ class file_sharer():
 	def request_service(self):
 		(host,port) = self.sockt.getsockname()
 		return '{0}:{1}'.format(host,port)
+	def reallydisconnect(self,name,mac):
+		self.disconnect(name)
 	#Method for disconnecting user
 	def disconnect(self, username):
 		try:
