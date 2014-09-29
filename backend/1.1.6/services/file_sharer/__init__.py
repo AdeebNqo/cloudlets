@@ -113,9 +113,9 @@ class berkeleydb(object):
 		self.db.open(self.dbname, None, bsddb.db.DB_HASH, bsddb.db.DB_CREATE)
 		self.cur = self.db.cursor()
 	def insert(self,keys,data):
-		self.db.put(data[0],'?',join(data))
+		self.db.put(data[0],'?'.join(data))
 	def get(self,key):
-		val = self.db.get(key)
+		val = self.db.get(key['id'])
 		return tuple(val.split('?'))
 	def update(self, key, keys, data):
 		vals = self.get(key)
@@ -194,11 +194,12 @@ class delayremover(object):
 		else:
 			self.users[name] = [filedetails]
 	def ondisconnect(self,name,mac):
-		filedetailsX = self.users[name]
-		for filedetails in filedetailsX:
-			(owner,filename) = filedetails
-			self.db.delete('{0}#{1}'.format(owner, filename))
-			os.remove('{0}/{1}/{2}'.format(self.DIR, owner, filename))
+		if name in self.users:
+			filedetailsX = self.users[name]
+			for filedetails in filedetailsX:
+				(owner,filename) = filedetails
+				self.db.delete('{0}#{1}'.format(owner, filename))
+				os.remove('{0}/{1}/{2}'.format(self.DIR, owner, filename))
 
 class file_sharer():
 	def __init__(self):
@@ -322,6 +323,10 @@ class file_sharer():
 										else:
 											self.send(requester, jsonstring)
 										print('downloading failed')
+										try:
+											self.currdb.connect()
+										except:
+											pass
 								else:
 									jsonstring = "{\"actionresponse\":\"download\", \"status\":\"NOTOK\", \"reason\":\"Do not have access to file.\"}"
 									self.send(requester, jsonstring)
@@ -356,7 +361,7 @@ class file_sharer():
 									#scheduling a delete after some the specified time, if neccessary
 									if (duration!=None or duration!=""):
 										if (duration=='Onleave'):
-											self.delayremoverX.removeonleave(cacheusername,(owner,filename)):
+											self.delayremoverX.removeonleave(cacheusername,(owner,filename))
 										else:
 											chars = list(duration)
 											durationX = ''.join(chars[:len(chars)-1])
@@ -365,6 +370,10 @@ class file_sharer():
 									jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \""+self.cleansend(str(e))+"\"}"
 									self.send2(somesocket, jsonstring)
 									print('uploading failed')
+									try:
+										self.currdb.connect()
+									except:
+										pass
 							else:
 								jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \"The file already exists.\"}"
 								self.send2(somesocket, jsonstring)
@@ -390,6 +399,10 @@ class file_sharer():
 									jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"NOTOK\", \"reason\": \""+self.cleansend(str(e))+"\"}"
 									self.send2(somesocket, jsonstring)
 									print('removing failed')
+									try:
+										self.currdb.connect()
+									except:
+										pass
 							else:
 								jsonstring = "{\"actionresponse\":\"remove\", \"status\":\"NOTOK\", \"reason\": \"Access denied.\"}"
 								self.send2(somesocket, jsonstring)
