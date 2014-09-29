@@ -45,7 +45,7 @@ actions = action.split(',')
 
 def clientwork(num):
         client = Client('user{}'.format(num), getfakemac(), ip, port)
-        sleep(2)
+        sleep(3)
         #client.requestavailableservices()
         #client.requestconnectedusers()
         print('requesing file_sharer')
@@ -54,7 +54,8 @@ def clientwork(num):
         #client.requestserviceuserlist('file_sharer')
         while (client.filesharingclient == None):
                 pass
-        #Perfoming the assigned actions
+        print('have access to file_sharer')
+	#Perfoming the assigned actions
         f = open(transferfile, 'r')
         somfile = f.read()
 
@@ -67,6 +68,7 @@ def clientwork(num):
                 if (actionX=='upload'):
                         for i in range(numtimes):
                                 print(i)
+
                                 start = datetime.datetime.now()
                                 client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile)
                                 diff = datetime.datetime.now() - start
@@ -76,6 +78,7 @@ def clientwork(num):
                 elif(actionX=='download'):
                         for i in range(numtimes):
                                 print(i)
+
                                 client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile)
                                 start = datetime.datetime.now()
                                 recv = client.filesharingclient.download(client.filesharingclient.username, client.filesharingclient.username, transferfile)
@@ -90,6 +93,7 @@ def clientwork(num):
                 elif(actionX=='remove'):
                         for i in range(numtimes):
                                 print(i)
+
                                 client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile)
                                 start = datetime.datetime.now()
                                 client.filesharingclient.remove(client.filesharingclient.username, transferfile)
@@ -99,6 +103,7 @@ def clientwork(num):
                 elif(actionX=='view'):
                         for i in range(numtimes):
                                 print(i)
+
                                 start = datetime.datetime.now()
                                 response = client.filesharingclient.getaccessiblefiles()
 				diff = datetime.datetime.now() - start
@@ -107,6 +112,7 @@ def clientwork(num):
                 elif (action=='checknewfiles'):
                         for i in range(numtimes):
                                 print(i)
+
                                 print(client.filesharingclient.checknewfiles())
                                 print(client.filesharingclient.upload('1h', 'public', None, '0', transferfile, somfile))
                                 print(client.filesharingclient.checknewfiles())
@@ -125,5 +131,6 @@ for i in range(numclients):
         #t.daemon = True
         t.start()
         clients.append(t)
+	print('started...')
 for t in clients:
         t.join()

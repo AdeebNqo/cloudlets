@@ -62,6 +62,7 @@ class Client(object):
 			self.mqttclient.subscribe('client/service_request/{}'.format(self.identifier),1)#receive service requests
 			self.mqttclient.subscribe('client/service_request/recvIP'.format(self.identifier),1)#receive ip:port for service requests made
 			self.mqttclient.subscribe('server/login')
+			print('client connected!')
 	def on_message(self, mosq, obj, msg):
 		if (msg.topic==('client/service/{}'.format(self.username))):
 			#print('cloudlet service is {}'.format(msg.payload))
