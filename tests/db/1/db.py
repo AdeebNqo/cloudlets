@@ -69,8 +69,8 @@ class berkelydb(object):
 			if not '#' in item:
 				dataX += item+','
 		self.db.put(key,dataX)
-	def get(self,keys):
-		return self.db.get(keys)
+	def get(self,key):
+		return self.db.get(key)
 	def update(self,key,keys,data):
 		old = self.db.get(key)
 		oldvals = old.split(',')

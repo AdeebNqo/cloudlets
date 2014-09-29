@@ -1,6 +1,8 @@
 import ConfigParser
 from db import db
 import datetime
+import cProfile
+import base64
 
 #opening config file
 config = ConfigParser.ConfigParser()
@@ -11,8 +13,7 @@ numtimes = int(config.get('DEFAULT','numtimes'))
 action = config.get('DEFAULT','action')
 testdb = config.get('DEFAULT','db')
 
-keys = config.get('DEFAULT','key')
-data = config.get('DEFAULT','data')
+key = config.get('DEFAULT','key')
 useblob = config.get('DEFAULT','useblob')
 
 host = config.get('dbconfig','host')
@@ -31,37 +32,33 @@ testdbs = testdb.split(',')
 #getting which actions are to be executed
 actions = action.split(',')
 
-#testing each selected db
-for currdb in testdbs:
-	print('testing db: {}'.format(currdb))
-	somedb = db(currdb)
-	if currdb == 'berkelydb':
-		somedb.set_credentials(host,username,password,dbnameBerkely,tablename)
-	else:
-		somedb.set_credentials(host,username,password,dbname,tablename)
-	somedb.connect()
-	inserttime = 0
-	retrievetime = 0
-	updatetime = 0
-	for i in range(numtimes):
-		for someaction in actions:
-			if someaction=='insert':
-				start = datetime.datetime.now()
-				somedb.insert(tuple(keys.split(',')),tuple(data.split(',')))
-				diff = datetime.datetime.now()-start
-				inserttime += diff.total_seconds()
-			elif someaction=='get':
-				start = datetime.datetime.now()
-				somedb.get(data.split(',')[0])
-				diff = datetime.datetime.now()-start
-				retrievetime += diff.total_seconds()
-			elif someaction=='update':
-				start = datetime.datetime.now()
-				somedb.update('anele#data.mp3',('access',),('private',))
-				diff = datetime.datetime.now()-start
-				updatetime += diff.total_seconds()
-	print('Number of runs: {}'.format(numtimes))
-	print('Insert time: {} seconds'.format(inserttime))
-	print('Retrieve time: {} seconds'.format(retrievetime))
-	print('Update time: {} seconds'.format(updatetime))
-	print('\n')
+datastring = base64.b64encode(open('audio0.mp3','r').read())
+data = datastring
+keyval = 'teststring'
+
+class DatabaseTest(object):
+	def __init__(self,dbtype):
+		self.somedb = db(dbtype)
+		if dbtype == 'berkelydb':
+			self.somedb.set_credentials(host,username,password,dbnameBerkely,tablename)
+		else:
+			self.somedb.set_credentials(host,username,password,dbname,tablename)
+		self.somedb.connect()
+	def test_insert(self):
+		cProfile.runctx('self.reallytest_insert()', globals(), locals())
+	def reallytest_insert(self):
+		self.somedb.insert(('id','objectdata',), (keyval, data,))
+	def test_get(self):
+		cProfile.runctx('self.reallytest_get()', globals(), locals())
+	def reallytest_get(self):
+		self.somedb.get(keyval)
+	def test_update(self):
+		cProfile.runctx('self.reallytest_update()', globals(), locals())
+	def reallytest_update(self):
+		self.somedb.update(keyval, ('id','objectdata',), (keyval, data,))
+if __name__=='__main__':
+	for dbtype in testdbs:
+		dbX = DatabaseTest(dbtype)
+		dbX.test_insert()
+		dbX.test_get()
+		dbX.test_update()
