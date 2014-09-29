@@ -1,14 +1,20 @@
 package com.cloudlet.Javo9;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -19,6 +25,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.Toast;
 
 import com.example.cloudlet.R;
 
@@ -30,6 +37,8 @@ public class FileActivity extends Activity
 	
 	FileSharingClient filesharingclient = null;
 	CProtocol protocol = null;
+
+	private boolean fileDownloadCheck = true; // Check to see if download completes without problems.
 	
 //	private boolean alreadyCreated = false;
 	
@@ -74,19 +83,67 @@ public class FileActivity extends Activity
 				e.printStackTrace();
 			}
 //			alreadyCreated = true;
-//			fileListView.setOnItemClickListener(new OnItemClickListener()
-//		    {
-//				@Override
-//				public void onItemClick(AdapterView<?> parent, View view, int position,
-//						long id) 
-//				{
-//					// If file name is selected download the file.
-//					Object chosenFile = fileListView.getItemAtPosition(position);
-//					String c = (String)chosenFile;
-//					Log.d("cloudletXdebug", "CSTR: "+c);
-////					filesharingclient.download(c, protocol.name, );
-//				}
-//		    });
+			fileListView.setOnItemClickListener(new OnItemClickListener()
+		    {
+				@Override
+				public void onItemClick(AdapterView<?> parent, View view, int position,
+						long id) 
+				{
+					// If file name is selected download the file.
+					Object chosenFile = fileListView.getItemAtPosition(position);
+					final String c = (String)chosenFile;
+					Log.d("cloudletXdebug", "CSTR: "+c);
+					final JSONObject jsonObjInput;
+					try 
+					{
+						jsonObjInput = new JSONObject(c);
+						new Thread()
+						{
+							public void run()
+							{
+								try 
+								{
+									JSONObject jsonObjOutput = filesharingclient.download(jsonObjInput.getString("owner"), protocol.name, jsonObjInput.getString("filename"));
+									Log.d("cloudletXdebug", "DOWNLOAD: "+jsonObjOutput.toString());
+									
+									String encodedDataStr = jsonObjOutput.getString("objectdata");
+									Log.d("cloudletXdebug", "FILENAME: "+jsonObjInput.getString("filename"));
+									byte[] decodedByteArray = Base64.decode(encodedDataStr, Base64.NO_WRAP); // this is the file in a byte array.
+									File fileDirectory = getAlbumStorageDir("Cloudlet Downloads");
+									try 
+									{
+										writeFile(decodedByteArray, fileDirectory, jsonObjInput.getString("filename"));
+									} 
+									catch (IOException e) 
+									{
+										fileDownloadCheck = false;
+										e.printStackTrace();
+									}
+								} 
+								catch (JSONException e) 
+								{
+									fileDownloadCheck = false;
+									e.printStackTrace();
+								}
+							}
+						}.start();
+					} 
+					catch (JSONException e) 
+					{
+						fileDownloadCheck = false;
+						e.printStackTrace();
+					}
+					
+					if (fileDownloadCheck)
+					{
+						Toast.makeText(getApplicationContext(), "Download successful!",Toast.LENGTH_LONG).show();
+					}
+					else
+					{
+						Toast.makeText(getApplicationContext(), "Download failed!",Toast.LENGTH_LONG).show();
+					}
+				}
+		    });
 //		}
 	}
 	
@@ -153,6 +210,53 @@ public class FileActivity extends Activity
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+	
+	/*
+	 * Method to write data onto a File object.
+	 */
+	public void writeFile(byte[] data, File fileDirectory, String fileName) throws IOException
+	{
+		File file = new File(fileDirectory.getPath(), fileName);
+		FileOutputStream out = new FileOutputStream(file);
+		out.write(data);
+		out.close();
+	}
+	
+	/*
+	 * Method to get the storage directory of a picture file.
+	 */
+	public File getAlbumStorageDir(String albumName) {
+	    // Get the directory for the user's public pictures directory. 
+	    File file = new File(Environment.getExternalStoragePublicDirectory(
+	            Environment.DIRECTORY_DOWNLOADS), albumName);
+	    if (!file.mkdirs()) {
+	        Log.d("cloudletXdebug", "Directory not created");
+	    }
+	    return file;
+	}
+	
+	/* 
+	 * Checks if external storage is available for read and write
+	 */
+	public boolean isExternalStorageWritable() {
+	    String state = Environment.getExternalStorageState();
+	    if (Environment.MEDIA_MOUNTED.equals(state)) {
+	        return true;
+	    }
+	    return false;
+	}
+
+	/* 
+	 * Checks if external storage is available to at least read 
+	 */
+	public boolean isExternalStorageReadable() {
+	    String state = Environment.getExternalStorageState();
+	    if (Environment.MEDIA_MOUNTED.equals(state) ||
+	        Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+	        return true;
+	    }
+	    return false;
 	}
 	
 	/*

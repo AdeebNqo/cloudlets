@@ -10,9 +10,12 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,23 +39,31 @@ public class ServiceActivity extends Activity implements CProtocolInterface {
 	private boolean alreadyCreated = false;
 
 	@Override
-	public void onCreate(Bundle savedInstanceState) 
+	public void onCreate(Bundle savedInstanceState)
 	{
 		if (!isCreated())
 		{
 			super.onCreate(savedInstanceState);
 			setContentView(R.layout.activity_service);
 			final ListView servicelist = (ListView) findViewById(R.id.servicelist);
-			adapter = new ServiceAdapter(this, R.layout.service, list);
-			servicelist.setAdapter(adapter);
-			protocol = CProtocol.getCProtocol();
-			protocol.setCProtocolListener(ServiceActivity.this);
-			try {
-				protocol.requestAvailableServices();
-			} catch (MqttPersistenceException e1) {
-				e1.printStackTrace();
-			} catch (MqttException e1) {
-				e1.printStackTrace();
+			
+			//creating adapter
+			if (adapter==null){
+				adapter = new ServiceAdapter(this, R.layout.service, list);
+				servicelist.setAdapter(adapter);
+			}
+			
+			//retrieving protocol class
+			if (protocol==null){
+				protocol = CProtocol.getCProtocol();
+				protocol.setCProtocolListener(ServiceActivity.this);
+				try {
+					protocol.requestAvailableServices();
+				} catch (MqttPersistenceException e1) {
+					e1.printStackTrace();
+				} catch (MqttException e1) {
+					e1.printStackTrace();
+				}
 			}
 			
 			alreadyCreated = true;
@@ -67,15 +78,29 @@ public class ServiceActivity extends Activity implements CProtocolInterface {
 								position).toString();
 						String[] items = chosenservice.split(";");
 						String name = items[0].split("=")[1];
-						try {
+						try 
+						{
+								try
+								{
+									Thread.sleep((long)2.0);
+								} 
+								catch (InterruptedException e) 
+								{
+									e.printStackTrace();
+								}
+							
 							protocol.requestService(protocol.identifier, name);
-						} catch (MqttPersistenceException e) {
+						} 
+						catch (MqttPersistenceException e) {
 							e.printStackTrace();
-						} catch (MqttException e) {
+						} 
+						catch (MqttException e) {
 							e.printStackTrace();
 						}
 					} else {
 						// start file sharing activity
+						Intent intent = new Intent(ServiceActivity.this, UserActivity.class);
+						startActivity(intent);
 					}
 				}
 			});
@@ -114,23 +139,17 @@ public class ServiceActivity extends Activity implements CProtocolInterface {
 		Log.d("cloudletXdebug", "1. recieved msg on channel "+arg0);
 		if (arg0.equals("client/service/" + protocol.name)) {
 			addService(msg);
-		} else if (arg0.equals("client/service_request/file_sharer/"
-				+ protocol.name + "|" + protocol.macaddress + "/recvIP")) {
-
+		}else if (arg0.equals("client/service_request/recvIP")){
+			Log.d("cloudletXdebug","recieved ip and port");
 			String[] vals = new String(arg1.getPayload()).split("\\|");
-			String[] portandip = vals[1].split(":");
-			final String ip = portandip[0];
-			final String port = portandip[1];
-			Log.d("cloudletXdebug", "ip:" + ip + ", port:" + port
-					+ ", username: " + protocol.name);
-			filesharingclient = FileSharingClient.getFileSharingClient(
-					protocol.name, ip, Integer.parseInt(port));
-			Log.d("cloudletXdebug", "done creating filesharingclient");
-			Intent intent = new Intent(this, UserActivity.class);
-			startActivity(intent);
-		} else if (Pattern.matches("client/service_request/.*/" + identifier
-				+ "/recvIP", arg0)) {
-			// some other service, other than file sharing
+			if (vals[3].equals(protocol.macaddress)){
+				String[] portandip = vals[1].split(":");
+				final String ip = portandip[0];
+				final String port = portandip[1];
+				String[] param = {ip, port};
+				FileSharingClientConnector filesharingconnector = new FileSharingClientConnector(this);
+				filesharingconnector.execute(param);
+			}
 		}
 	}
 
@@ -194,5 +213,37 @@ public class ServiceActivity extends Activity implements CProtocolInterface {
 	private boolean isCreated()
 	{
 		return alreadyCreated;
+	}
+	
+	/*
+	 * Class for connecting to file sharing client
+	 */
+	private class FileSharingClientConnector extends AsyncTask<String, Void, Void> {
+
+		ProgressDialog dialog;
+		public FileSharingClientConnector(Activity activity){
+//			Looper.prepare();
+//			this.dialog = new ProgressDialog(activity);
+		}
+		protected void onPreExecute() {
+//			dialog.setTitle("Requesting file sharer");
+//			dialog.setMessage("Please wait...");
+			//dialog.show();
+		}
+		@Override
+		protected Void doInBackground(String... params) {
+			String ip = params[0];
+			int port = Integer.parseInt(params[1]);
+			
+			filesharingclient = FileSharingClient.getFileSharingClient(
+					protocol.name, ip, port);
+			Log.d("cloudletXdebug", "done creating filesharingclient");
+			return null;
+		}
+		protected void onPostExecute(Void result) {
+			Intent intent = new Intent(ServiceActivity.this, UserActivity.class);
+			startActivity(intent);
+		}
+	
 	}
 }

@@ -3,12 +3,15 @@ package com.cloudlet.Javo9;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
+import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Context;
@@ -48,6 +51,9 @@ public class UserActivity extends Activity implements CProtocolInterface
 	private int syncInterval = 10000; // Sync every 10s.
 	private Handler syncHandler = null;
 	private Timer timer = null;
+	
+	// scheduler for checking if there are new files
+	private ScheduledExecutorService scheduleTaskExecutor = null;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
@@ -133,6 +139,45 @@ public class UserActivity extends Activity implements CProtocolInterface
 				}
 		    	
 		    });
+		    
+		    //creating recurring task scheduler
+		    if (scheduleTaskExecutor==null){
+		    	scheduleTaskExecutor= Executors.newScheduledThreadPool(5);
+		    	Log.d("cloudletXdebug","created recurring");
+		        // This schedule a task to run every 10 minutes:
+		        scheduleTaskExecutor.scheduleAtFixedRate(new Runnable() {
+		          public void run() {
+		        	  try{
+		        		  JSONObject obj = filesharing.checknewfiles(protocol.name);
+		        		  String status = obj.get("status").toString();
+		        		  Log.d("cloudletXdebug","there are new files in file sharer: "+status);
+		        		  if (status.equalsIgnoreCase("newfiles")){
+		        			  filesharing.sync();
+		        		  }
+		        	  }catch(Exception e){
+		        		  e.printStackTrace();
+		        	  }
+		          }
+		        }, 0, 10, TimeUnit.SECONDS);
+		        
+//		        //requesting users of file_sharer
+//		        scheduleTaskExecutor.scheduleAtFixedRate(new Runnable() {
+//			          public void run() {
+//			        	  try{
+//			        		  try 
+//			      		    {
+////			      				protocol.requestUsersOnService("file_sharer");
+//			      			} 
+//			      		    catch (MqttPersistenceException e)
+//			      		    {
+//			      				e.printStackTrace();
+//			      			} 
+//			        	  }catch(Exception e){
+//			        		  e.printStackTrace();
+//			        	  }
+//			          }
+//			        }, 0, 12, TimeUnit.SECONDS);
+		    }
 		}
 	}
 
@@ -150,7 +195,7 @@ public class UserActivity extends Activity implements CProtocolInterface
 
 	//Method for adding user in listview
 	public void addUser(String someuser){
-		if (!list.contains(new String(someuser)))
+		if (!list.contains(someuser))
 			runOnUiThread(new myRunnable(someuser));
     }
     class myRunnable implements Runnable{

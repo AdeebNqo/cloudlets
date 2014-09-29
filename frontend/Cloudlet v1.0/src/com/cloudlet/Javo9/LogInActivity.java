@@ -7,6 +7,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -91,7 +92,9 @@ public class LogInActivity extends Activity implements CProtocolInterface
 			}
 			else if (reply.equals("UDUP"))
 			{
+				Looper.prepare();
 				Toast.makeText(getApplicationContext(), "The username is taken.", Toast.LENGTH_LONG).show();
+				protocol.disconnectFromCloudlet();
 			}
 		}
 	}
