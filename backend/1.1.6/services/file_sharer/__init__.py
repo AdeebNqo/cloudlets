@@ -185,7 +185,7 @@ class delayremover(object):
 		t.daemon = True
 		t.start()
 	def reallyremove(self,owner,filename,timeX):
-		time.sleep(timeX*3600)
+		time.sleep(timeX)
 		self.db.delete('{0}#{1}'.format(owner, filename))
 		os.remove('{0}/{1}/{2}'.format(self.DIR, owner, filename))
 	def removeonleave(self,name,filedetails):
@@ -365,7 +365,7 @@ class file_sharer():
 										else:
 											chars = list(duration)
 											durationX = ''.join(chars[:len(chars)-1])
-											self.delayremoverX.remove(owner,filename,int(durationX))
+											self.delayremoverX.remove(owner,filename,float(durationX))
 								except MySQLdb.Error,e:
 									jsonstring = jsonstring = "{\"actionresponse\":\"upload\", \"status\":\"NOTOK\", \"reason\": \""+self.cleansend(str(e))+"\"}"
 									self.send2(somesocket, jsonstring)
