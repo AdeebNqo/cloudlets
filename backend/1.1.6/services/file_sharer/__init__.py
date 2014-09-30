@@ -253,7 +253,8 @@ class file_sharer():
 				#when the client disconnects
 				if (sys.getsizeof(length)==0):
 					try:
-						self.disconnect(cacheusername)
+						length = None
+						#self.disconnect(cacheusername)
 					except:
 						pass
 					break
@@ -275,7 +276,10 @@ class file_sharer():
 						if (lastend!=None):
 							data=data+lastend
 							lastend = None
-						data = data+somesocket.recv(length)
+						try:
+							data = data+somesocket.recv(length)
+						except:
+							pass
 						while (len(data) < length):
 							data = data + somesocket.recv(length)
 						if (len(data)>length):
