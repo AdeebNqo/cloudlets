@@ -438,6 +438,55 @@ class file_sharer():
 							jsonstring = "{\"actionresponse\":\"getfiles\", "+filelist+"}"
 							self.send2(somesocket, jsonstring)
 							print('getting files done')
+						elif (action == 'update'):
+							#
+							# Retrieving metadata
+							#
+							print('updating file')
+							duration = packet['duration']
+							access = packet['access']
+							accesslist = packet['accesslist']
+							if (accesslist=='None'):
+								accesslist = []
+							if (access!='public'):
+								accesslist = packet['accesslist']
+							compression = packet['compression']
+							filename = packet['filename']
+							owner = packet['owner']
+
+							primkey = '{0}#{1}'.format(owner,filename)
+							#checking if file exists
+							result = self.currdb.get(primkey)
+							if (result!=None):
+								try:
+									self.currdb.insert(('id', 'access', 'filename', 'owner', 'accesslist','compression'), (primkey, access, filename, owner, ':'.join(accesslist), compression))
+									if ('objectdata' in packet):
+										filepath = '{2}/{0}/{1}'.format(owner, filename, self.curd)
+										if os.path.isfile(filepath):
+											os.remove(filepath)
+										_file = open(filepath, 'w')
+										_file.write(packet['objectdata'])
+										_file.close()
+										jsonstring = jsonstring = "{\"actionresponse\":\"update\", \"status\":\"OK\"}"
+										self.send2(somesocket, jsonstring)
+										print('uploading successful')
+									else:
+										jsonstring = jsonstring = "{\"actionresponse\":\"update\", \"status\":\"OK\"}"
+										self.send2(somesocket, jsonstring)
+										print('uploading successful')
+								except Exception,e:
+									jsonstring = jsonstring = "{\"actionresponse\":\"update\", \"status\":\"NOTOK\", \"reason\": \""+self.cleansend(str(e))+"\"}"
+									self.send2(somesocket, jsonstring)
+									print('uploading failed')
+									try:
+										self.currdb.connect()
+									except:
+										pass
+							else:
+								jsonstring = "{\"actionresponse\":\"update\", \"status\":\"NOTOK\", \"reason\": \"No such file.\"}"
+								self.send2(somesocket, jsonstring)
+								print('updating failed')
+
 						elif action == 'checknewfiles':
 							print('checking for new files')
 							requester = packet['requester']
