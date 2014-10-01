@@ -1,6 +1,7 @@
 #
 # Copyright 2014 Zola Mahlaza
 #
+import traceback
 class db(object):
 	def __init__(self,dbtype):
 		if (dbtype=='mysql'):
@@ -23,6 +24,8 @@ class db(object):
 		return self.instance.getpublicfiles()
 	def getsharedfiles(self, requester):
 		return self.instance.getsharedfiles(requester)
+	def update(self, key, keys, data):
+		self.instance.update(key, keys, data)
 	def cleandata(self):
 		self.instance.cleandata()
 import MySQLdb
@@ -61,11 +64,11 @@ class mysql(object):
 		length = len(keys)
 		updatestring = ''
 		for i in range(length):
-			updatestring = updatestring+keys[i]+'='+data[i]
+			updatestring = updatestring+keys[i]+'=\"'+data[i]+'\"'
 			if (i!=length-1):
-				updatestring=updatestring+','
+				updatestring=updatestring+', '
 		self.cur.execute('UPDATE {0} SET {1} where \"{2}\"=\"{3}\"'.format(self.tablename, updatestring, key.keys()[0], key.values()[0]))
-		self.cur.commit()
+		self.db.commit()
 	# Method for deleting item from database
 	def delete(self, key):
 		try:
@@ -100,7 +103,7 @@ class berkeleydb(object):
 		val = self.db.get(key['id'])
 		return tuple(val.split('?'))
 	def update(self, key, keys, data):
-		vals = self.get(key)
+		vals = list(self.get(key))
 		length = len(keys)
 		for i in range(length):
 			val = keys[i]
@@ -116,13 +119,13 @@ class berkeleydb(object):
 				vals[4] = data[i]
 			elif (val=='compression'):
 				vals[5] = data[i]
-		self.insert(key,vals)
+		self.insert(key,tuple(vals))
 	def delete(self, key):
 		try:
 			self.db.delete(key['id'])
 			return 0
 		except Exception,e:
-			traceback.print_exc()
+			#traceback.print_exc()
 			return 1
 	def getpublicfiles(self):
 		returnval = []
