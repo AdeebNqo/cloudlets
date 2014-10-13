@@ -80,14 +80,17 @@ public class ServiceActivity extends Activity implements CProtocolInterface {
 						String name = items[0].split("=")[1];
 						try 
 						{
-								try
-								{
-									Thread.sleep((long)2.0);
-								} 
-								catch (InterruptedException e) 
-								{
-									e.printStackTrace();
-								}
+								//try
+							//	{
+									while(protocol.subscribed==false){}
+									Log.d("cloudletXdebug", "THREAD SLEEP started!");
+									//Thread.sleep((long)5.0);
+								//} 
+//								catch (InterruptedException e) 
+//								{
+//									Log.d("cloudletXdebug", "THREAD SLEEP FAILED!");
+//									e.printStackTrace();
+//								}
 							
 							protocol.requestService(protocol.identifier, name);
 						} 
@@ -244,6 +247,11 @@ public class ServiceActivity extends Activity implements CProtocolInterface {
 			Intent intent = new Intent(ServiceActivity.this, UserActivity.class);
 			startActivity(intent);
 		}
+	}
 	
+	@Override
+	public void onBackPressed() 
+	{
+	  finish();
 	}
 }

@@ -226,7 +226,7 @@ public final class R {
         public static final int animation_layout_content=0x7f070001;
         public static final int animation_layout_sidebar=0x7f070000;
         public static final int authors=0x7f070010;
-        public static final int bottompanel=0x7f070008;
+        public static final int bottompanel=0x7f070007;
         public static final int container=0x7f070002;
         public static final int copyright=0x7f070011;
         public static final int description=0x7f07000e;
@@ -236,12 +236,12 @@ public final class R {
         public static final int nametextbox=0x7f070004;
         public static final int servicelist=0x7f070006;
         public static final int submitname=0x7f070005;
-        public static final int sync=0x7f070009;
         public static final int textView1=0x7f07000c;
-        public static final int upload=0x7f07000a;
-        public static final int userlist=0x7f070007;
+        public static final int upload=0x7f070009;
         public static final int usernameXfield=0x7f070013;
         public static final int version=0x7f070012;
+        public static final int view_files_on_cloudlet=0x7f070008;
+        public static final int view_files_on_phone=0x7f07000a;
         public static final int website=0x7f07000f;
     }
     public static final class layout {
@@ -261,22 +261,25 @@ public final class R {
     public static final class string {
         public static final int action_settings=0x7f080002;
         public static final int app_name=0x7f080000;
-        public static final int choose_file=0x7f08000f;
-        public static final int chooser_title=0x7f08000c;
+        public static final int choose_file=0x7f080010;
+        public static final int chooser_title=0x7f08000d;
         public static final int connect_text=0x7f080003;
         public static final int connectionfailed_text=0x7f080004;
-        public static final int empty_directory=0x7f08000d;
-        public static final int error_selecting_file=0x7f080010;
-        public static final int files=0x7f08000b;
+        public static final int empty_directory=0x7f08000e;
+        public static final int error_selecting_file=0x7f080011;
+        public static final int files=0x7f08000c;
         public static final int hello_world=0x7f080001;
-        public static final int internal_storage=0x7f080011;
+        public static final int internal_storage=0x7f080012;
         public static final int service_text=0x7f080006;
-        public static final int storage_removed=0x7f08000e;
-        public static final int sync=0x7f080009;
+        public static final int storage_removed=0x7f08000f;
         public static final int title_activity_file_list=0x7f080007;
+        public static final int title_activity_file_view=0x7f080013;
         public static final int title_activity_service=0x7f080005;
         public static final int title_activity_user=0x7f080008;
-        public static final int upload=0x7f08000a;
+        public static final int upload=0x7f08000b;
+        public static final int view_file=0x7f080014;
+        public static final int view_files_on_cloudlet=0x7f080009;
+        public static final int view_files_on_phone=0x7f08000a;
     }
     public static final class style {
         /** 

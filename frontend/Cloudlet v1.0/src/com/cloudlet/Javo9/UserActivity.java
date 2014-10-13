@@ -42,8 +42,9 @@ public class UserActivity extends Activity implements CProtocolInterface
 	ListView userListView = null;
 	UserAdapter adapter = null;
 	
-	Button sync = null;
-	Button upload = null;
+	Button viewFilesOnCloudletButton = null;
+	Button uploadButton = null;
+	Button viewFilesOnPhoneButton = null;
 	
 	private boolean alreadyCreated = false;
 	private static final int REQUEST_CHOOSER = 6384;
@@ -62,30 +63,30 @@ public class UserActivity extends Activity implements CProtocolInterface
 		{
 			super.onCreate(savedInstanceState);
 			setContentView(R.layout.activity_user);
-			userListView = (ListView) findViewById(R.id.userlist);
+//			userListView = (ListView) findViewById(R.id.userlist);
 		    adapter = new UserAdapter(getBaseContext(), R.layout.user, list);
-		    userListView.setAdapter(adapter);
+//		    userListView.setAdapter(adapter);
 		    alreadyCreated = true;
 		    
 		    syncHandler = new Handler();
 		    timer = new Timer();
 		    
-		    userListView.setOnItemClickListener(new OnItemClickListener()
-		    {
-				@Override
-				public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
-						long arg3) {
-					Object chosenuser = userListView.getItemAtPosition(arg2);
-					String c = (String)chosenuser;
-					Log.d("cloudletXdebug","chosen "+c);
-					Intent liststarter = new Intent(getApplicationContext(), FileActivity.class);
-					Log.d("cloudletXdebug","putting chosen user in intent");
-					liststarter.putExtra("owner", c);
-					Log.d("cloudletXdebug","starting file activity");
-					startActivity(liststarter);
-					Log.d("cloudletXdebug","started file activity");
-				}
-		    });
+//		    userListView.setOnItemClickListener(new OnItemClickListener()
+//		    {
+//				@Override
+//				public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+//						long arg3) {
+//					Object chosenuser = userListView.getItemAtPosition(arg2);
+//					String c = (String)chosenuser;
+//					Log.d("cloudletXdebug","chosen "+c);
+//					Intent liststarter = new Intent(getApplicationContext(), FileActivity.class);
+//					Log.d("cloudletXdebug","putting chosen user in intent");
+//					liststarter.putExtra("owner", c);
+//					Log.d("cloudletXdebug","starting file activity");
+//					startActivity(liststarter);
+//					Log.d("cloudletXdebug","started file activity");
+//				}
+//		    });
 		    
 		    protocol = CProtocol.getCProtocol();
 		    protocol.setCProtocolListener(this);
@@ -113,8 +114,8 @@ public class UserActivity extends Activity implements CProtocolInterface
 				e.printStackTrace();
 			}
 		    
-		    sync = (Button) findViewById(R.id.sync);
-		    sync.setOnClickListener(new OnClickListener(){
+		    viewFilesOnCloudletButton = (Button) findViewById(R.id.view_files_on_cloudlet);
+		    viewFilesOnCloudletButton.setOnClickListener(new OnClickListener(){
 	
 				@Override
 				public void onClick(View arg0) {
@@ -122,18 +123,31 @@ public class UserActivity extends Activity implements CProtocolInterface
 					{
 						public void run()
 						{
-							filesharing.sync();
+							Intent fileActivityIntent = new Intent(getApplicationContext(), FileDownloadActivity.class);
+							startActivity(fileActivityIntent);
 						}
 					}.start();
 				}
 		    	
 		    });
-		    upload = (Button) findViewById(R.id.upload);
-		    upload.setOnClickListener(new OnClickListener(){
+		    uploadButton = (Button) findViewById(R.id.upload);
+		    uploadButton.setOnClickListener(new OnClickListener(){
 	
 				@Override
 				public void onClick(View arg0) {
 					Intent uploadIntent = new Intent(getApplicationContext(), FileChooserActivity.class);
+					uploadIntent.setType(Phone.CONTENT_TYPE);
+					startActivityForResult(uploadIntent, REQUEST_CHOOSER);
+				}
+		    	
+		    });
+		    
+		    viewFilesOnPhoneButton = (Button) findViewById(R.id.view_files_on_phone);
+		    viewFilesOnPhoneButton.setOnClickListener(new OnClickListener(){
+	
+				@Override
+				public void onClick(View arg0) {
+					Intent uploadIntent = new Intent(getApplicationContext(), FileViewActivity.class);
 					uploadIntent.setType(Phone.CONTENT_TYPE);
 					startActivityForResult(uploadIntent, REQUEST_CHOOSER);
 				}

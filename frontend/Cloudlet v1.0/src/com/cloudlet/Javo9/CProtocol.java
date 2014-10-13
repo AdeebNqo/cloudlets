@@ -43,7 +43,8 @@ public class CProtocol implements MqttCallback {
 	String name = null;
 	protected String identifier = null;
 	protected String macaddress = null;
-
+	public boolean subscribed = false;
+	
 	public static CProtocol getCProtocol() {
 		if (instance == null) {
 			instance = new CProtocol();
@@ -174,6 +175,7 @@ public class CProtocol implements MqttCallback {
 				mqttClient.subscribe("client/service_request/recvIP");
 				mqttClient.subscribe("client/service_request/" + identifier);
 				mqttClient.subscribe("client/serviceuserslist/" + name);
+				subscribed = true;
 				Log.d("cloudletXdebug", "done with connecting and subscribing");
 			} catch (MqttException e) {
 				Log.d("cloudletXdebug", "mqttClient creation failed");

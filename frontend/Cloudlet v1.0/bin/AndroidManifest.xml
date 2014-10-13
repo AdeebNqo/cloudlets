@@ -41,7 +41,7 @@
             android:label="@string/title_activity_service" >
         </activity>
         <activity
-            android:name="com.cloudlet.Javo9.FileActivity"
+            android:name="com.cloudlet.Javo9.FileDownloadActivity"
             android:launchMode="singleTop"
             android:label="@string/files" >
         </activity>
@@ -71,6 +71,21 @@
 		            <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
 		        </intent-filter>
 		</provider>
+		<activity
+		    android:name="com.cloudlet.Javo9.FileViewActivity"
+		    android:icon="@drawable/ic_chooser"
+		    android:enabled="@bool/use_activity"
+		    android:exported="true"
+		    android:label="@string/view_file" >
+			<intent-filter>
+		        <action android:name="android.intent.action.GET_CONTENT" />
+		
+		        <category android:name="android.intent.category.DEFAULT" />
+		        <category android:name="android.intent.category.OPENABLE" />
+		
+		        <data android:mimeType="*/*" />
+	    	</intent-filter>
+		</activity>
     </application>
 
 </manifest>

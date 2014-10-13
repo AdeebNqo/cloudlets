@@ -7,13 +7,8 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+    android:gravity="center_vertical"
     tools:context="com.example.cloudlet.UserActivity" >
-
-    <ListView
-        android:id="@+id/userlist"
-        android:layout_width="wrap_content"
-        android:layout_height="184dp"
-        android:layout_weight="1.20" />
 
     <LinearLayout
         android:id="@+id/bottompanel"
@@ -22,18 +17,23 @@
         android:orientation="horizontal" >
 
         <Button
-            android:id="@+id/sync"
+            android:id="@+id/view_files_on_cloudlet"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:text="@string/sync" />
-
-        <Button
-            android:id="@+id/upload"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:text="@string/upload" />
+            android:text="@string/view_files_on_cloudlet" />
     </LinearLayout>
+
+    <Button
+        android:id="@+id/upload"
+        android:layout_width="fill_parent"
+        android:layout_height="66dp"
+        android:text="@string/upload" />
+    
+    <Button
+        android:id="@+id/view_files_on_phone"
+        android:layout_width="fill_parent"
+        android:layout_height="66dp"
+        android:text="@string/view_files_on_phone" />
 
 </LinearLayout>
