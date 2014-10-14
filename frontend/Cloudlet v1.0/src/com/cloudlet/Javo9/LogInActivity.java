@@ -21,6 +21,7 @@ public class LogInActivity extends Activity implements CProtocolInterface
 {
 	private EditText nametextbox = null;
 	private Button loginButton = null;
+	private Button exitButton = null;
 	private CProtocol protocol = null;
 	private String username = null;
 	private String identifier = null;
@@ -29,7 +30,7 @@ public class LogInActivity extends Activity implements CProtocolInterface
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_login);
-		setTitle("Cloudlet");
+		setTitle("Enter a user name");
 		nametextbox = (EditText) findViewById(R.id.nametextbox);
 		loginButton = (Button) findViewById(R.id.submitname);
 
@@ -59,6 +60,16 @@ public class LogInActivity extends Activity implements CProtocolInterface
 				}
 			}
 		});
+		
+		exitButton = (Button) findViewById(R.id.quit_app_button);
+
+		exitButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				onDestroy();
+			}
+		});
 	}
 	
 	@Override
@@ -72,6 +83,8 @@ public class LogInActivity extends Activity implements CProtocolInterface
 		} catch (MqttException e) {
 			e.printStackTrace();
 		}
+		
+		android.os.Process.killProcess(android.os.Process.myPid());
 	}
 
 	@Override

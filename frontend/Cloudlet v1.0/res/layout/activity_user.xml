@@ -36,4 +36,10 @@
         android:layout_height="66dp"
         android:text="@string/view_files_on_phone" />
 
+    <Button
+        android:id="@+id/return_to_services"
+        android:layout_width="fill_parent"
+        android:layout_height="66dp"
+        android:text="@string/return_to_services" />
+
 </LinearLayout>

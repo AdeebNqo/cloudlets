@@ -18,6 +18,12 @@
         android:id="@+id/submitname"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Log In" />
+        android:text="Continue to Cloudlet >>" />
+
+    <Button
+        android:id="@+id/quit_app_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="&lt;&lt; Exit" />
 	
 </LinearLayout>

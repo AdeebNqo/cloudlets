@@ -45,6 +45,7 @@ public class UserActivity extends Activity implements CProtocolInterface
 	Button viewFilesOnCloudletButton = null;
 	Button uploadButton = null;
 	Button viewFilesOnPhoneButton = null;
+	Button backToServicesButton = null;
 	
 	private boolean alreadyCreated = false;
 	private static final int REQUEST_CHOOSER = 6384;
@@ -130,6 +131,7 @@ public class UserActivity extends Activity implements CProtocolInterface
 				}
 		    	
 		    });
+		    
 		    uploadButton = (Button) findViewById(R.id.upload);
 		    uploadButton.setOnClickListener(new OnClickListener(){
 	
@@ -150,6 +152,16 @@ public class UserActivity extends Activity implements CProtocolInterface
 					Intent uploadIntent = new Intent(getApplicationContext(), FileViewActivity.class);
 					uploadIntent.setType(Phone.CONTENT_TYPE);
 					startActivityForResult(uploadIntent, REQUEST_CHOOSER);
+				}
+		    	
+		    });
+		    
+		    backToServicesButton = (Button) findViewById(R.id.return_to_services);
+		    backToServicesButton.setOnClickListener(new OnClickListener(){
+	
+				@Override
+				public void onClick(View arg0) {
+					onBackPressed();
 				}
 		    	
 		    });

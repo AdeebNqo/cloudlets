@@ -13,6 +13,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.media.MediaScannerConnection;
+import android.media.MediaScannerConnection.OnScanCompletedListener;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Base64;
@@ -50,7 +53,7 @@ public class FileDownloadActivity extends Activity
 //		{
 			super.onCreate(savedInstanceState);
 			setContentView(R.layout.activity_file_list);
-			
+			setTitle("Tap to download a file");
 			fileListView = (ListView)findViewById(R.id.filelistX);
 			container = new ArrayList<String>();
 			adapter = new FileAdapter(getApplicationContext(), R.layout.file, container);
@@ -70,12 +73,15 @@ public class FileDownloadActivity extends Activity
 				{
 					 JSONObject obj = array.getJSONObject(i);	
 					 String objowner = (String) obj.get("owner");
+					 String objFileName = (String) obj.get("filename");
+//					 Log.d("cloudletXdebug", "*FILENAME: " + objFileName);
 					 Log.d("cloudletXdebug","looking at file owned by "+objowner);
 					 Log.d("cloudletXdebug","file owner: "+objowner+", chosen user: "+owner);
 //					 if (objowner.equals(owner))
 					 {
 						 Log.d("cloudletXdebug","adding file to list");
-						 addFile(obj.toString());
+//						 addFile(obj.toString());
+						 addFile(objFileName + "|" + objowner + "|" + obj.toString());
 					 }
 				}
 			}
@@ -92,8 +98,10 @@ public class FileDownloadActivity extends Activity
 				{
 					// If file name is selected download the file.
 					Object chosenFile = fileListView.getItemAtPosition(position);
-					final String c = (String)chosenFile;
+					String temp = (String)chosenFile;
+					final String c = temp.split("\\|")[2];
 					Log.d("cloudletXdebug", "CSTR: "+c);
+					
 					final JSONObject jsonObjInput;
 					try 
 					{
@@ -110,7 +118,8 @@ public class FileDownloadActivity extends Activity
 									String encodedDataStr = jsonObjOutput.getString("objectdata");
 									Log.d("cloudletXdebug", "FILENAME: "+jsonObjInput.getString("filename"));
 									byte[] decodedByteArray = Base64.decode(encodedDataStr, Base64.NO_WRAP); // this is the file in a byte array.
-									File fileDirectory = getAlbumStorageDir("Cloudlet Downloads");
+									
+									File fileDirectory = getAlbumStorageDir("Cloudlet Downloads", jsonObjInput.getString("filename"));
 									try 
 									{
 										writeFile(decodedByteArray, fileDirectory, jsonObjInput.getString("filename"));
@@ -123,6 +132,7 @@ public class FileDownloadActivity extends Activity
 								} 
 								catch (JSONException e) 
 								{
+									Log.d("cloudletXdebug","ERRORQ");
 									fileDownloadCheck = false;
 									e.printStackTrace();
 								}
@@ -161,7 +171,7 @@ public class FileDownloadActivity extends Activity
     	}
     	public void run(){
     		Log.d("cloudletXdebug","before adapter add");
-    		Log.d("cloudletXdebug",file);
+    		Log.d("cloudletXdebug","before adapter add" + file);
     		//adapter.add(someuser);
     		container.add(file);
     		adapter.notifyDataSetChanged();
@@ -191,12 +201,15 @@ public class FileDownloadActivity extends Activity
 					.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			View customv = inflater.inflate(R.layout.file, parent, false);
 
-			String file = getItem(position);
-			Log.d("cloudletXdebug","from inside adapater, user is "+file);
+			String[] file = getItem(position).split("\\|");
+			Log.d("cloudletXdebug","from inside adapater, user is "+file[0]);
 			if (file != null) {
 				TextView filename = (TextView) customv.findViewById(R.id.textView1);
 				filename.setTextColor(Color.BLACK);
-				filename.setText(file);
+				filename.setText(file[0]);
+				
+				TextView owner = (TextView) customv.findViewById(R.id.owner);
+				owner.setText("Uploaded by "+file[1]);
 			}
 			return customv;
 		}
@@ -219,14 +232,30 @@ public class FileDownloadActivity extends Activity
 	 */
 	public void writeFile(byte[] data, File fileDirectory, String fileName) throws IOException
 	{
-		File file = new File(fileDirectory.getPath(), fileName);
+//		File outputFile = new File(fileDirectory.getPath());
+//		outputFile.mkdirs();
+//		File file = new File(fileDirectory.getPath(), fileName);
+		File file = new File(fileDirectory.getPath());
+		file.mkdirs();
+		file = new File(fileDirectory.getPath(), fileName);
 		FileOutputStream out = new FileOutputStream(file);
 		out.write(data);
 		out.close();
+		
+		// Update the file list on Android so that it can display.
+		MediaScannerConnection.scanFile(getApplicationContext(), 
+				new String[]{file.getAbsolutePath()}, 
+				null, 
+				new OnScanCompletedListener() {
+						@Override
+						public void onScanCompleted(String path, Uri uri) {
+							Log.v("cloudletXdebug", "file " + path + " was scanned seccessfully: " + uri);
+							
+						} });
 	}
 	
 	/*
-	 * Method to get the storage directory of a picture file.
+	 * Method to get the storage directory of a file (downloads directory).
 	 */
 	public File getAlbumStorageDir(String albumName) {
 	    // Get the directory for the user's public pictures directory. 
@@ -236,6 +265,50 @@ public class FileDownloadActivity extends Activity
 	        Log.d("cloudletXdebug", "Directory not created");
 	    }
 	    return file;
+	}
+	
+	/*
+	 * Method to get the storage directory of a any file.
+	 */
+	public File getAlbumStorageDir(String albumName, String filename) {
+		File path = null;
+		String extension = filename.split("\\.")[1];
+		Log.d("cloudletXdebug", "EXTENSION: "+ extension);
+		if (extension.equalsIgnoreCase("png") ||
+			extension.equalsIgnoreCase("gif") ||
+			extension.equalsIgnoreCase("jpg") ||
+			extension.equalsIgnoreCase("jpeg") ||
+			extension.equalsIgnoreCase("bmp"))
+		{
+			path = new File(Environment.getExternalStoragePublicDirectory(
+		            Environment.DIRECTORY_PICTURES), albumName);
+		    if (!path.mkdirs()) {
+		        Log.d("cloudletXdebug", "Directory not created");
+		    }
+		}
+		else if (extension.equalsIgnoreCase("mp3") ||
+				extension.equalsIgnoreCase("wav") ||
+				extension.equalsIgnoreCase("ogg") ||
+				extension.equalsIgnoreCase("mid") ||
+				extension.equalsIgnoreCase("midi")||
+				extension.equalsIgnoreCase("amr"))
+		{
+			path = new File(Environment.getExternalStoragePublicDirectory(
+		            Environment.DIRECTORY_MUSIC), albumName);
+		    if (!path.mkdirs()) {
+		        Log.d("cloudletXdebug", "Directory not created");
+		    }
+		}
+		else
+		{
+		    path = new File(Environment.getExternalStoragePublicDirectory(
+		            Environment.DIRECTORY_DOWNLOADS), albumName);
+		    if (!path.mkdirs()) {
+		        Log.d("cloudletXdebug", "Directory not created");
+		    }
+		}
+	    
+	    return path;
 	}
 	
 	/* 

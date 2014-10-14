@@ -2,7 +2,6 @@ package com.cloudlet.Javo9;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -15,14 +14,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -37,6 +37,7 @@ public class ServiceActivity extends Activity implements CProtocolInterface {
 	String username = null;
 	FileSharingClient filesharingclient = null;
 	private boolean alreadyCreated = false;
+	Button backToLoginButton = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -45,6 +46,7 @@ public class ServiceActivity extends Activity implements CProtocolInterface {
 		{
 			super.onCreate(savedInstanceState);
 			setContentView(R.layout.activity_service);
+			setTitle("Tap to open a service");
 			final ListView servicelist = (ListView) findViewById(R.id.servicelist);
 			
 			//creating adapter
@@ -65,6 +67,18 @@ public class ServiceActivity extends Activity implements CProtocolInterface {
 					e1.printStackTrace();
 				}
 			}
+			
+//			backToLoginButton = (Button) findViewById(R.id.return_to_login_button);
+//			if (backToLoginButton == null)
+//				Log.d("cloudletXdebug", "BACK BUTTON NULL");
+//			backToLoginButton.setOnClickListener(new OnClickListener(){
+//	
+//				@Override
+//				public void onClick(View arg0) {
+//					onBackPressed();
+//				}
+//		    	
+//		    });
 			
 			alreadyCreated = true;
 			

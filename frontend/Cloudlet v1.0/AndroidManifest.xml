@@ -50,7 +50,7 @@
 		    android:icon="@drawable/ic_chooser"
 		    android:enabled="@bool/use_activity"
 		    android:exported="true"
-		    android:label="@string/choose_file" >
+		    android:label="@string/download_file" >
 			<intent-filter>
 		        <action android:name="android.intent.action.GET_CONTENT" />
 		
