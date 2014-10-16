@@ -46,6 +46,7 @@ public class UserActivity extends Activity implements CProtocolInterface
 	Button uploadButton = null;
 	Button viewFilesOnPhoneButton = null;
 	Button backToServicesButton = null;
+	Button removeFilesOnCloudletButton = null;
 	
 	private boolean alreadyCreated = false;
 	private static final int REQUEST_CHOOSER = 6384;
@@ -152,6 +153,18 @@ public class UserActivity extends Activity implements CProtocolInterface
 					Intent uploadIntent = new Intent(getApplicationContext(), FileViewActivity.class);
 					uploadIntent.setType(Phone.CONTENT_TYPE);
 					startActivityForResult(uploadIntent, REQUEST_CHOOSER);
+				}
+		    	
+		    });
+		    
+		    removeFilesOnCloudletButton = (Button) findViewById(R.id.remove_files_on_cloudlet);
+		    removeFilesOnCloudletButton.setOnClickListener(new OnClickListener(){
+	
+				@Override
+				public void onClick(View arg0) {
+					Intent removeIntent = new Intent(getApplicationContext(), FileRemoveActivity.class);
+					removeIntent.setType(Phone.CONTENT_TYPE);
+					startActivityForResult(removeIntent, REQUEST_CHOOSER);
 				}
 		    	
 		    });

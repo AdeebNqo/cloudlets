@@ -12,6 +12,7 @@
     <string name="title_activity_user">File Sharer</string>
     <string name="view_files_on_cloudlet">Download Files from Cloudlet</string>
     <string name="view_files_on_phone">View Files on this Phone</string>
+    <string name="remove_files_from_cloudlet">Remove Files From Cloudlet</string>
     <string name="upload">Upload Files to Cloudlet</string>
     <string name="files">Files</string>
     <string name="chooser_title">Select A File</string>

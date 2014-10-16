@@ -46,6 +46,11 @@
             android:label="@string/files" >
         </activity>
         <activity
+            android:name="com.cloudlet.Javo9.FileRemoveActivity"
+            android:launchMode="singleTop"
+            android:label="@string/files" >
+        </activity>
+        <activity
 		    android:name="com.cloudlet.Javo9.FileChooserActivity"
 		    android:icon="@drawable/ic_chooser"
 		    android:enabled="@bool/use_activity"

@@ -11,6 +11,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -27,6 +28,8 @@ public class FileSharingClient {
 	DataInputStream dis;
 
 	JSONObject files = null;
+	
+	ArrayList<Integer> removedPositions = null;
 	
 	public FileSharingClient(String username, String ip, int port) {
 		try {
@@ -47,9 +50,25 @@ public class FileSharingClient {
 			e.printStackTrace();
 		}
 		files = getaccessiblefiles(username);
+		resetPositions();
 		Log.d("cloudletXdebug", files.toString());
 	}
 
+	public void resetPositions()
+	{
+		removedPositions = new ArrayList<Integer>();
+	}
+	
+	public void addPosition(int pos)
+	{
+		removedPositions.add(Integer.valueOf(pos));
+	}
+	
+	public void removePositions(int pos)
+	{
+		removedPositions.remove(Integer.valueOf(pos));
+	}
+	
 	public static FileSharingClient getFileSharingClient() {
 		return instance;
 	}
@@ -133,7 +152,7 @@ public class FileSharingClient {
 	 */
 	public void remove(String owner, String filename) {
 		String sendString = "{\"action\":\"remove\", \"owner\":\"" + owner
-				+ "\", \"filename\":\"" + filename + "\"}";
+				+ "\", \"requester\":\""+owner+ "\", \"filename\":\"" + filename + "\"}";
 		this.send(sendString);
 		recv();
 	}

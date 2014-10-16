@@ -46,7 +46,7 @@ public class ServiceActivity extends Activity implements CProtocolInterface {
 		{
 			super.onCreate(savedInstanceState);
 			setContentView(R.layout.activity_service);
-			setTitle("Tap to open a service");
+			setTitle("Tap a service to open");
 			final ListView servicelist = (ListView) findViewById(R.id.servicelist);
 			
 			//creating adapter

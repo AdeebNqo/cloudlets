@@ -53,7 +53,7 @@ public class FileDownloadActivity extends Activity
 //		{
 			super.onCreate(savedInstanceState);
 			setContentView(R.layout.activity_file_list);
-			setTitle("Tap to download a file");
+			setTitle("Tap a file to download");
 			fileListView = (ListView)findViewById(R.id.filelistX);
 			container = new ArrayList<String>();
 			adapter = new FileAdapter(getApplicationContext(), R.layout.file, container);

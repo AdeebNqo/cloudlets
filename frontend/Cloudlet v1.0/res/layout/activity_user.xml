@@ -37,6 +37,12 @@
         android:text="@string/view_files_on_phone" />
 
     <Button
+        android:id="@+id/remove_files_on_cloudlet"
+        android:layout_width="fill_parent"
+        android:layout_height="66dp"
+        android:text="@string/remove_files_from_cloudlet" />
+
+    <Button
         android:id="@+id/return_to_services"
         android:layout_width="fill_parent"
         android:layout_height="66dp"
