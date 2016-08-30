@@ -14,8 +14,7 @@ connection. But at the same time we, as Computer Scientists, know that using clo
 outright inefficient way of sharing files with the person next to you.
 
 The aim of this project is to run the same technologies that power WhatsApp, namely webservers, data stores, and
-databases at a smaller scale on embedded systems, such as the Raspberry Pi. Thus, transforming the cloud from a global panopticon
-to a hyper-localized, ad-hoc instantiations of the cloud: a cloudlet in short
+databases at a smaller scale on embedded systems, such as the Raspberry Pi. Thus, transforming the cloud from a global panopticon to a hyper-localized, ad-hoc instantiations of the cloud: a cloudlet in short
 
 #Notes
 
